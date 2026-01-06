@@ -32,6 +32,53 @@ function M.isLogBufferValid(buf)
   end
 end
 
+function M.cli(ctx, fargs)
+  local command = vim.fn.extend({ "jj" }, fargs)
+  -- local res = vim.system(command, { text = true, stdout = internal.stdprint("stdin"), stderr = internal.stdprint("stderr") }):wait()
+  local res = vim
+    .system(command, {
+      text = true,
+      cwd = ctx.root,
+      stdout = nil,
+      stderr = nil,
+    })
+    :wait()
+  -- TODO: is there a better way to diplay joined stderr/stdout output? E.g. by spawing a shell? - actually, pass in
+  -- the same receiver function for stderr and stdout
+  if res.code ~= 0 then
+    error("Command failed with non-zero exit code: " .. res.code)
+  end
+  return res.code
+end
+
+function M.ignoreImmtuable(args, force)
+  if force then
+    table.insert(args, "--ignore-immutable")
+  end
+  return args
+end
+
+function M.commitEdit(ctx, force)
+  return function()
+    local winid = vim.api.nvim_get_current_win()
+    local pos = vim.api.nvim_win_get_cursor(winid)
+    local line = vim.fn.getbufoneline(ctx.buf, pos[1])
+    local commit = M.parseCommit(line)
+    if commit == nil then
+      vim.notify("Unable to edit commit, no data found.", vim.log.levels.WARN)
+      return
+    end
+    if commit.status == "@" then
+      vim.notify("Already editing commit: " .. commit.id, vim.log.levels.INFO)
+      return
+    end
+    local args = { "edit", commit.id }
+    args = M.ignoreImmtuable(args, force)
+    M.cli(ctx, args)
+    vim.cmd.e() -- reload buffer
+  end
+end
+
 --- Configure log buffer
 --- @param ctx Context context
 --- @return Context
@@ -52,7 +99,9 @@ function M.logBufferConfigure(ctx)
   if ctx.curpos ~= nil then
     vim.api.nvim_win_set_cursor(winid, ctx.curpos)
   end
-  -- TODO: vim.api.nvim_buf_set_keymap(
+  vim.keymap.set("n", "<CR>", M.commitEdit(ctx), { desc = "Edit commit", buffer = true })
+  vim.keymap.set("n", "!<CR>", M.commitEdit(ctx, true), { desc = "Edit commit, ignore immutable", buffer = true })
+  vim.api.nvim_buf_set_var(ctx.buf, "jiejie_expanded", {})
   return ctx
 end
 
@@ -123,6 +172,23 @@ function M.parseUrl(url)
     root = root,
     path = string.sub(url, match),
   }
+end
+
+--- @class Commit
+--- @field status string Commit status, one of @ (current commit), × (conflict), ◆ (root), ○ (regular commit)
+--- @field id string Commit ID
+
+--- Parse commit string into structured data
+--- @param commit string Line containing a commit string
+--- @return Commit?
+function M.parseCommit(commit)
+  local match = vim.fn.matchlist(commit, [[^[─╯│ ]*\([@×◆○]\)  \([a-z]\+\)\t.*]])
+  local status = match[2]
+  local id = match[3]
+  if match == nil or status == nil or id == nil then
+    return nil
+  end
+  return { status = status, id = id }
 end
 
 --- Focus buffer in current tab
