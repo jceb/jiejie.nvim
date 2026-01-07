@@ -51,17 +51,18 @@ function M.cli(root, fargs)
   local config = M.config(root)
   repositories[config.root] = repositories[config.root] or config
   local command = vim.fn.extend({ "jj" }, fargs)
-  -- local res = vim.system(command, { text = true, stdout = internal.stdprint("stdin"), stderr = internal.stdprint("stderr") }):wait()
   local res = vim
     .system(command, {
       text = true,
       cwd = repositories[config.root].root,
-      stdout = internal.stdprint("stdout"),
-      stderr = internal.stdprint("stderr"),
+      -- stdout = print,
+      -- stdout = print,
     })
     :wait()
   -- TODO: is there a better way to diplay joined stderr/stdout output? E.g. by spawing a shell? - actually, pass in
   -- the same receiver function for stderr and stdout
+  print(res.stdout)
+  print(res.stderr)
   if res.code ~= 0 then
     error("Command failed with non-zero exit code: " .. res.code)
   end

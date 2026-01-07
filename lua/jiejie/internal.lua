@@ -34,7 +34,6 @@ end
 
 function M.cli(ctx, fargs)
   local command = vim.fn.extend({ "jj" }, fargs)
-  -- local res = vim.system(command, { text = true, stdout = internal.stdprint("stdin"), stderr = internal.stdprint("stderr") }):wait()
   local res = vim
     .system(command, {
       text = true,
@@ -226,19 +225,6 @@ function M.logFocus(ctx, vertical)
   end
   M.logBufferConfigure(ctx)
   return ctx
-end
-
---- Print command output
---- @param stdr string Input stream type
-function M.stdprint(stdx)
-  return function(err, data)
-    if err ~= nil then
-      vim.print("error", err)
-    end
-    if data ~= nil then
-      vim.print(data)
-    end
-  end
 end
 
 return M
