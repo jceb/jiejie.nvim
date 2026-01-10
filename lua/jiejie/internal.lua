@@ -110,6 +110,9 @@ end
 --- @return table
 function M.logRender(ctx, data)
   vim.api.nvim_set_option_value("modifiable", true, { buf = ctx.buf })
+  if data[#data] == "" then
+    data[#data] = nil
+  end
   vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, data)
   vim.api.nvim_set_option_value("modifiable", false, { buf = ctx.buf })
   for i = 1, #data do
