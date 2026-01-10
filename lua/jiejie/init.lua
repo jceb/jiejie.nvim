@@ -61,8 +61,8 @@ function M.cli(root, fargs)
     :wait()
   -- TODO: is there a better way to diplay joined stderr/stdout output? E.g. by spawing a shell? - actually, pass in
   -- the same receiver function for stderr and stdout
-  print(res.stdout)
-  print(res.stderr)
+  vim.notify(res.stdout, vim.log.levels.INFO)
+  vim.notify(res.stderr, vim.log.levels.ERROR)
   if res.code ~= 0 then
     error("Command failed with non-zero exit code: " .. res.code)
   end
