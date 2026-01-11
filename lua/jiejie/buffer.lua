@@ -43,6 +43,13 @@ function M.parseCommit(commit)
   return { status = status, id = id }
 end
 
+--- Create a header
+--- @param key string Header key
+--- @param value string Header value
+function M.createHeader(key, value)
+  return key .. ": " .. value
+end
+
 --- Load buffer contents into an existing buffer
 --- @param ctx Context context
 --- @return Context
@@ -62,7 +69,10 @@ function M.logLoad(ctx)
     error("Error getting log:\n" .. res.stderr)
   end
   local data = vim.split(res.stdout, "\n")
-  ctx.curpos = M.logRender(ctx, data)
+  local headers = {}
+  headers[#headers + 1] = M.createHeader("Help", "g?")
+  headers[#headers + 1] = ""
+  ctx.curpos = M.logRender(ctx, data, headers)
   return ctx
 end
 
@@ -125,6 +135,7 @@ function M.logBufferConfigure(ctx)
   end
   vim.keymap.set("n", "<CR>", M.commitEdit(ctx), { desc = "Edit commit", buffer = true })
   vim.keymap.set("n", "!<CR>", M.commitEdit(ctx, true), { desc = "Edit commit, ignore immutable", buffer = true })
+  vim.keymap.set("n", "g?", M.showHelp, { desc = "Show help", buffer = true })
   vim.api.nvim_buf_set_var(ctx.buf, "jiejie_expanded", {})
   return ctx
 end
@@ -132,18 +143,23 @@ end
 --- Render log output in buffer and return cursor position for current commit
 --- @param ctx Context context
 --- @param data table jj log output to display
+--- @param headers? table headers added before the data
 --- @return table
-function M.logRender(ctx, data)
+function M.logRender(ctx, data, headers)
   vim.api.nvim_set_option_value("modifiable", true, { buf = ctx.buf })
   if data[#data] == "" then
     data[#data] = nil
   end
-  vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, data)
+  if headers ~= nil and #headers > 0 then
+    vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, headers)
+  end
+  local headers_offset = headers and #headers or 0
+  vim.api.nvim_buf_set_lines(ctx.buf, -1, -1, false, data)
   vim.api.nvim_set_option_value("modifiable", false, { buf = ctx.buf })
   for i = 1, #data do
     local match = vim.regex("^[─╯│ ]*@  \\zs"):match_str(data[i])
     if match then
-      ctx.curpos = { i, match }
+      ctx.curpos = { i + headers_offset, match }
       break
     end
   end
@@ -197,6 +213,12 @@ function M.commitEdit(ctx, force)
     jujutsu.cli(ctx, args)
     vim.cmd.e() -- reload buffer
   end
+end
+
+--- Show help window
+--- @param ctx Context context
+function M.showHelp(ctx)
+  vim.cmd.h("jiejie-maps")
 end
 
 return M

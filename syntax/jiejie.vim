@@ -7,6 +7,10 @@ syn spell notoplevel
 
 syn include @jiejieDiff syntax/diff.vim
 
+syn region jiejieHead start=/^[A-Za-z]\+:/ end=/^$/ fold
+syn match jiejieHeader /^[A-Za-z]\+:/ contained containedin=jiejieHead nextgroup=jiejieHeaderValue skipwhite
+syn match jiejieHeaderValue /.*/ contained
+
 syn region jiejieCommit start=/^[─╯│ ]*[@×◆○]  / end=/$/ fold
 syn match jiejieCommitStatusNormal /^[─╯│ ]*\zs○/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
 syn match jiejieCommitStatusCurrent /^[─╯│ ]*\zs@/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
@@ -29,6 +33,9 @@ syn match jiejieGitHead /\( git_head()\)\?/ contained
 " syn match jiejieFiles /$/ contained
 
 syn match jiejieElided /^\~  .*$/
+
+hi def link jiejieHeader Normal
+hi def link jiejieHeaderValue Identifier
 
 hi def link jiejieCommitEmpty String
 hi def link jiejieCommitMessage Normal

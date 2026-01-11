@@ -1,0 +1,41 @@
+*jiejie.txt*
+
+                                    JIEJIE
+
+                                                                        *jiejie*
+Jiejie is a Jujutsu frontend in the style of fugitive.
+
+For further examples, see https://github.com/jceb/jiejie.nvim.
+
+INSTALLATION                                                      *jiejie-intro*
+
+CONFIGURATION                                                    *jiejie-config*
+
+COMMANDS                                                       *jiejie-commands*
+
+                                                                     *jiejie-:J*
+:J [args]               Same as :Jj, but one character shorter.
+
+                                                                *jiejie-summary*
+:Jj                     With no arguments, bring up a log window. If a summary
+                        window is already open for the current repository, it
+                        is focused instead.
+                        Press g? or see |jiejie-maps| for usage.
+
+                                                                           *:Jj*
+:Jj {args}              Run an arbitrary git command and display any output.
+
+MAPS                                                               *jiejie-maps*
+
+<CR>                      Edit commit under the cursor.
+
+                                                                     *jiejie_g?*
+g?                        Show help for |jiejie-maps|.
+
+ABOUT                                                             *jiejie-about*
+
+Grab the latest version or report a bug on GitHub:
+
+https://github.com/jceb/jiejie.nvim
+
+vim:tw=78:ts=8:sw=2:et:ft=help:norl:

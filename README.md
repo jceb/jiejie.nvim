@@ -29,10 +29,14 @@ return {
 
 - [x] Display log in window
 - [x] Make J / JJ a simple wrapper for jj CLI
-- [ ] Add convenience keybindings to perform jj operations
+- [x] Add help header and help key binding
+- [x] Add keybinding to edit commits
+- [ ] Write and edit commit messages from inside neovim
+- [ ] Add more convenience keybindings to perform jj operations
 - [ ] Display changed files in log commit view
 - [ ] Display file changes as diff inside the log window
-- [ ] A completion to JJ command
+- [ ] A completion to Jj command
+- [ ] A view of operations log
 
 ## References
 
