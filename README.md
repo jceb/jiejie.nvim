@@ -24,23 +24,28 @@ return {
 | --------------------- | ---------------------------------------------------- |
 | `:J` or `:Jj`         | Open or focus log window, when no argument is passed |
 | `:Jj <command>`       | Execute `jj <command>`                               |
+| `g?`                  | Show help for supported mappings                     |
 
 ## Roadmap
 
 - [x] Display log in window
-- [x] Make J / JJ a simple wrapper for jj CLI
+- [x] Make J / Jj a simple wrapper for jj CLI
 - [x] Add help header and help key binding
 - [x] Add keybinding to edit commits
-- [ ] Write and edit commit messages from inside neovim
+- [x] Describe commits
+- [ ] Basic feature:Display changed files in log commit view
+- [ ] Basic feature: Display file changes as diff inside the log window
 - [ ] Add more convenience keybindings to perform jj operations
-- [ ] Display changed files in log commit view
-- [ ] Display file changes as diff inside the log window
-- [ ] A completion to Jj command
-- [ ] A view of operations log
+- [ ] Basic feature: Make `Jj describe` open the commit editor
+- [ ] New feature: Operations log support
+- [ ] Feature: Completion for Jj command
+- [ ] New feature: Worktree support
+- [ ] Configuration: Make mappings configurable
 
 ## References
 
 Other jujutsu related plugins:
 
+- https://github.com/yannvanhalewyn/jujutsu.nvim
 - https://github.com/sivansh11/jj
 - https://github.com/NicolasGB/jj.nvim

@@ -11,8 +11,8 @@ local internal = require("jiejie.internal")
 local repositories = {
   --- @class Context
   --- @field root string repository root
-  --- @field buf number log buffer id
-  --- @field curpos table cursor position on current commit
+  --- @field buf? number log buffer id
+  --- @field curpos? table cursor position on current commit
 }
 
 --- Returns jj's root directory
@@ -35,7 +35,7 @@ function M.log(root, vertical)
 end
 
 --- Command executes jj commands, returns exit code
---- @param fargs table List of CLI arguments
+--- @param fargs string[] List of CLI arguments
 --- @param error_on_failure? boolean Throws an error if command fails, default false
 --- @param root? string Root directory of repository, determined automatically by the current buffer if not provided
 --- @return table
@@ -78,7 +78,7 @@ function M.setup(opts)
       M.cli(args.fargs)
     end
   end
-  local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*" }
+  local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*", range = 2 }
   if vim.fn.exists(":J") ~= 2 then
     vim.api.nvim_create_user_command("J", cmd, cmdOpts)
   end
@@ -89,9 +89,11 @@ function M.setup(opts)
     group = id,
     callback = function(ev)
       -- Loader function for files of type jiejie
+      vim.cmd.doau("BufReadPre")
       local url = buffer.parseUrl(ev.file)
       repositories[url.root] = buffer.logLoad({ root = url.root, buf = ev.buf, curpos = nil })
       buffer.logBufferConfigure(repositories[url.root])
+      vim.cmd.doau("BufReadPost")
     end,
   })
 end

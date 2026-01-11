@@ -32,6 +32,18 @@ MAPS                                                               *jiejie-maps*
                                                                      *jiejie_g?*
 g?                        Show help for |jiejie-maps|.
 
+                                                                     *jiejie_di*
+di                        Edit first line of commit message.
+
+                                                                    *jiejie_!di*
+!di                       Edit first line of immutable commit message.
+
+                                                                     *jiejie_de*
+de                        Edit commit message.
+
+                                                                    *jiejie_!de*
+!de                       Edit immutable commit message.
+
 ABOUT                                                             *jiejie-about*
 
 Grab the latest version or report a bug on GitHub:

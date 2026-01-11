@@ -11,11 +11,12 @@ syn region jiejieHead start=/^[A-Za-z]\+:/ end=/^$/ fold
 syn match jiejieHeader /^[A-Za-z]\+:/ contained containedin=jiejieHead nextgroup=jiejieHeaderValue skipwhite
 syn match jiejieHeaderValue /.*/ contained
 
-syn region jiejieCommit start=/^[─╯│ ]*[@×◆○]  / end=/$/ fold
-syn match jiejieCommitStatusNormal /^[─╯│ ]*\zs○/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
+syn region jiejieCommit start=/^[─╯│ ]*[@×◆◇○]  / end=/$/ fold
+syn match jiejieCommitStatusHead /^[─╯│ ]*\zs○/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
+syn match jiejieCommitStatusMutable /^[─╯│ ]*\zs◇/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
 syn match jiejieCommitStatusCurrent /^[─╯│ ]*\zs@/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
 syn match jiejieCommitStatusConflict /^[─╯│ ]*\zs×/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
-syn match jiejieCommitStatusRoot /^[─╯│ ]*\zs◆/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
+syn match jiejieCommitStatusImmutable /^[─╯│ ]*\zs◆/ contained containedin=jiejieCommit nextgroup=jiejieHash skipwhite
 
 syn match jiejieEmptyCommitSeparator /†/ contained conceal nextgroup=jiejieCommitEmpty
 syn match jiejieMessageSeparator /‡/ contained conceal nextgroup=jiejieCommitMessageEmpty,jiejieCommitMessage
@@ -40,10 +41,13 @@ hi def link jiejieHeaderValue Identifier
 hi def link jiejieCommitEmpty String
 hi def link jiejieCommitMessage Normal
 hi def link jiejieCommitMessageEmpty String
+
 hi def link jiejieCommitStatusConflict Error
 hi def link jiejieCommitStatusCurrent Todo
-hi def link jiejieCommitStatusNormal Normal
-hi def link jiejieCommitStatusRoot Typedef
+hi def link jiejieCommitStatusMutable Normal
+hi def link jiejieCommitStatusHead Search
+hi def link jiejieCommitStatusImmutable Constant
+
 hi def link jiejieElided NonText
 hi def link jiejieGitHead Include
 hi def link jiejieHash Identifier
