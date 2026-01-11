@@ -1,5 +1,7 @@
 local M = {}
 
+local buffer = require("jiejie.buffer")
+local jujutsu = require("jiejie.jujutsu")
 local internal = require("jiejie.internal")
 
 -- Each repository can have its own log buffer - one repository
@@ -18,18 +20,7 @@ local repositories = {
 --- open file
 --- @return string
 function M.getRoot(directory)
-  return internal.getRoot(directory)
-end
-
---- Get repository configuration
---- @param root? string Root directory of repository
---- @return Context
-function M.config(root)
-  return {
-    root = M.getRoot(root),
-    buf = nil,
-    curpos = nil,
-  }
+  return jujutsu.getRoot(directory)
 end
 
 --- Open or focus log window
@@ -37,36 +28,41 @@ end
 --- @param vertical? boolean If a new window needs to be created, split it vertically?
 --- @return Context
 function M.log(root, vertical)
-  local config = M.config(root)
-  repositories[config.root] = repositories[config.root] or config
-  internal.logFocus(repositories[config.root], vertical or false)
-  return repositories[config.root]
+  local ctx = internal.getContext(root)
+  repositories[ctx.root] = repositories[ctx.root] or ctx
+  buffer.logFocus(repositories[ctx.root], vertical or false)
+  return repositories[ctx.root]
 end
 
 --- Command executes jj commands, returns exit code
---- @param root? string Root directory of repository
 --- @param fargs table List of CLI arguments
---- @return number
-function M.cli(root, fargs)
-  local config = M.config(root)
-  repositories[config.root] = repositories[config.root] or config
+--- @param error_on_failure? boolean Throws an error if command fails, default false
+--- @param root? string Root directory of repository, determined automatically by the current buffer if not provided
+--- @return table
+function M.cli(fargs, error_on_failure, root)
+  local ctx = internal.getContext(root)
+  repositories[ctx.root] = repositories[ctx.root] or ctx
   local command = vim.fn.extend({ "jj" }, fargs)
   local res = vim
     .system(command, {
       text = true,
-      cwd = repositories[config.root].root,
+      cwd = repositories[ctx.root].root,
       -- stdout = print,
       -- stdout = print,
     })
     :wait()
   -- TODO: is there a better way to diplay joined stderr/stdout output? E.g. by spawing a shell? - actually, pass in
   -- the same receiver function for stderr and stdout
-  vim.notify(res.stdout, vim.log.levels.INFO)
-  vim.notify(res.stderr, vim.log.levels.ERROR)
-  if res.code ~= 0 then
-    error("Command failed with non-zero exit code: " .. res.code)
+  if res.stdout ~= "" then
+    vim.notify(res.stdout, vim.log.levels.INFO)
   end
-  return res.code
+  if res.code ~= 0 then
+    vim.notify(res.stderr, vim.log.levels.ERROR)
+    if error_on_failure then
+      error("Command failed with non-zero exit code: " .. res.code)
+    end
+  end
+  return res
 end
 
 --- @class jiejie.Config
@@ -79,7 +75,7 @@ function M.setup(opts)
     if vim.fn.len(args.fargs) == 0 then
       M.log(nil, args.smods.vertical)
     else
-      M.cli(nil, args.fargs)
+      M.cli(args.fargs)
     end
   end
   local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*" }
@@ -93,9 +89,9 @@ function M.setup(opts)
     group = id,
     callback = function(ev)
       -- Loader function for files of type jiejie
-      local url = internal.parseUrl(ev.file)
-      repositories[url.root] = internal.logLoad({ root = url.root, buf = ev.buf, curpos = nil })
-      internal.logBufferConfigure(repositories[url.root])
+      local url = buffer.parseUrl(ev.file)
+      repositories[url.root] = buffer.logLoad({ root = url.root, buf = ev.buf, curpos = nil })
+      buffer.logBufferConfigure(repositories[url.root])
     end,
   })
 end
