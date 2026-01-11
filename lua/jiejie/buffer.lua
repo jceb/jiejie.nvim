@@ -15,19 +15,28 @@ end
 --- @field status string Commit status, one of @ (current commit), × (conflict), ◆ (root), ○ (regular commit)
 --- @field id string Commit ID
 
---- Retrieve data of the commit that the cursor is on
+--- Retrieve data about the commit that the cursor is on
 --- @param ctx Context context
---- @return Commit?
-function M.getCommit(ctx)
-  local winid = vim.api.nvim_get_current_win()
-  local bufid = vim.api.nvim_win_get_buf(winid)
-  if bufid ~= ctx.buf then
-    -- somehow the incorrect window/buffer is being edited
-    return nil
+--- @param fn function Callback that is called with Context and the extracted commit information. The function is only
+---                    called when a commit id is found at the cursor position
+--- @return function
+function M.withCommit(ctx, fn)
+  return function()
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return nil
+    end
+    local pos = vim.api.nvim_win_get_cursor(winid)
+    local line = vim.fn.getbufoneline(ctx.buf, pos[1])
+    local commit = M.parseCommit(line)
+    if commit == nil then
+      vim.notify("No commit data found.", vim.log.levels.WARN)
+    else
+      fn(ctx, commit)
+    end
   end
-  local pos = vim.api.nvim_win_get_cursor(winid)
-  local line = vim.fn.getbufoneline(ctx.buf, pos[1])
-  return M.parseCommit(line)
 end
 
 --- Parse commit string into structured data
@@ -133,8 +142,8 @@ function M.logBufferConfigure(ctx)
   if ctx.curpos ~= nil then
     vim.api.nvim_win_set_cursor(winid, ctx.curpos)
   end
-  vim.keymap.set("n", "<CR>", M.commitEdit(ctx), { desc = "Edit commit", buffer = true })
-  vim.keymap.set("n", "!<CR>", M.commitEdit(ctx, true), { desc = "Edit commit, ignore immutable", buffer = true })
+  vim.keymap.set("n", "<CR>", M.withCommit(ctx, M.commitEdit()), { desc = "Edit commit", buffer = true })
+  vim.keymap.set("n", "!<CR>", M.withCommit(ctx, M.commitEdit(true)), { desc = "Edit commit, ignore immutable", buffer = true })
   vim.keymap.set("n", "g?", M.showHelp, { desc = "Show help", buffer = true })
   vim.api.nvim_buf_set_var(ctx.buf, "jiejie_expanded", {})
   return ctx
@@ -196,14 +205,11 @@ function M.parseUrl(url)
 end
 
 --- Edit commit
---- @param ctx Context context
-function M.commitEdit(ctx, force)
-  return function()
-    local commit = M.getCommit(ctx)
-    if commit == nil then
-      vim.notify("Unable to edit commit, no data found.", vim.log.levels.WARN)
-      return
-    end
+--- @param force? boolean Edit immutable commits
+--- @return function
+function M.commitEdit(force)
+  --- @param ctx Context context
+  return function(ctx, commit)
     if commit.status == "@" then
       vim.notify("Already editing commit: " .. commit.id, vim.log.levels.INFO)
       return
