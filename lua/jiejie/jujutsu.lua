@@ -4,7 +4,7 @@ local M = {}
 --- @param args string[] List of arguments
 --- @param force boolean If true, --ignore-immutable flag is added
 --- @return string[]
-function M.ignoreImmtuable(args, force)
+function M.ignore_immtuable(args, force)
   if force then
     table.insert(args, "--ignore-immutable")
   end
@@ -53,11 +53,11 @@ end
 --- @field script string Path to dummy editor script
 --- @field delete function Delete editor script and all other related files
 --- @field exit function Terminate editor
---- @field getEditedFile function File that contains the name of the file that shall be edited
+--- @field get_edited_file function File that contains the name of the file that shall be edited
 
 --- Create a dummy editor that will be executed by jj
 --- @return Editor
-function M.createDummyEditor()
+function M.create_dummy_editor()
   local fd, editorScript, err_msgx = vim.uv.fs_mkstemp((vim.env.TMPDIR or "/tmp") .. "/jj_editor_XXXXXX")
   if fd == nil or err_msgx ~= nil then
     error(err_msgx)
@@ -98,7 +98,7 @@ exit 0
     end,
     --- Returns the edited file name or nil if the file doesn't exist, yet
     --- @return string?
-    getEditedFile = function()
+    get_edited_file = function()
       local stat, err_name = vim.uv.fs_stat(editedFile)
       if not stat or err_name then
         return
@@ -120,7 +120,7 @@ end
 --- @param directory? string Dirtory to start look at. If not present, start looking in the directory of the currently
 --- open file
 --- @return string
-function M.getRoot(directory)
+function M.get_root(directory)
   local cwd = directory or vim.fn.expand("%:p:h")
   local repo_stats = vim.uv.fs_stat(cwd)
   if repo_stats == nil or repo_stats.type ~= "directory" then

@@ -3,7 +3,7 @@ local M = {}
 --- Execute callback function at the interval until timer is stopped
 --- @param interval number Timer interval
 --- @param callback fun(timer) Callback function that's called after interval and receives the timer object as an argument
-function M.setInterval(interval, callback)
+function M.set_interval(interval, callback)
   local timer = vim.uv.new_timer()
   timer:start(interval, interval, function()
     callback(timer)
@@ -12,7 +12,7 @@ function M.setInterval(interval, callback)
 end
 
 --- Stop interval timer
-function M.clearInterval(timer)
+function M.clear_interval(timer)
   timer:stop()
   timer:close()
 end
