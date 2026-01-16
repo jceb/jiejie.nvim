@@ -22,6 +22,8 @@ function M.load(ctx)
     "10", -- FIXME: make this dynamic
     "-T",
     template,
+    "-r",
+    "::",
   }
   local res = vim.system(command, { text = true, cwd = ctx.root }):wait()
   if res.code ~= 0 then
