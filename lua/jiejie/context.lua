@@ -10,7 +10,7 @@ local contexts = {
   --- @class Context
   --- @field root string repository root
   --- @field buf? number log buffer id
-  --- @field curpos? table cursor position on current commit
+  --- @field curpos? table cursor position on current change
 }
 
 --- Get an existing repository context, or create a empty one one

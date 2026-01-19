@@ -2,8 +2,8 @@
 local eq = assert.are.same
 
 describe("jiejie", function()
-  it("When parsing an empty root commit, the parser shall yield the correct status and id", function()
-    local result = require("jiejie.buffer").parseCommit("◆  z	†(empty) ‡(no description set)⌠⌡∬")
+  it("When parsing an empty root change, the parser shall yield the correct status and id", function()
+    local result = require("jiejie.buffer").parse_change("◆  z	†(empty) ‡(no description set)⌠⌡∬")
     local expected = { status = "◆", id = "z" }
     eq(expected, result)
   end)

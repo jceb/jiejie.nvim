@@ -3,11 +3,11 @@ local jujutsu = require("jiejie.jujutsu")
 --- Parser functions
 local M = {}
 
---- Parse commit string into structured data
---- @param commit string Line containing a commit string
---- @return Commit?
-function M.parseCommit(commit)
-  local match = vim.fn.matchlist(commit, [[^[─╯│ ]*\([@×◆◇○]\)  \([a-z]\+\)\t.*]])
+--- Parse change string into structured data
+--- @param change string Line containing a change string
+--- @return Change?
+function M.parse_change(change)
+  local match = vim.fn.matchlist(change, [[^[─╯│ ]*\([@×◆◇○]\)  \([a-z]\+\)\t.*]])
   local status = match[2]
   local id = match[3]
   if match == nil or status == nil or id == nil then
@@ -24,7 +24,7 @@ end
 --- Parse jiejie:// URL into its componentens
 --- @param url string URL
 --- @return JiejieURL
-function M.parseUrl(url)
+function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     error("Error: unknown URL scheme: " .. url)
   end

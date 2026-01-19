@@ -3,19 +3,102 @@ local jujutsu = require("jiejie.jujutsu")
 local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
 
+--- @param ctx Context context
+--- @param cmd string JJ command
+--- @param args? string[] List of additional arguments
+--- @param force? boolean Modify immutable change
+local function start_dummy_editor(ctx, cmd, args, force)
+  -- Start dummy editor in the background
+  local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+  local editor = jujutsu.create_dummy_editor()
+  local exec = jujutsu.cli(
+    ctx,
+    jujutsu.ignore_immtuable(
+      vim.list_extend(
+        vim.list_extend({ cmd }, {
+          "--edit",
+          "--no-pager",
+          "--color",
+          "never",
+          "--quiet",
+          -- "--debug",
+          -- "-r",
+        }),
+        args or {}
+      ),
+      force
+    ),
+    {
+      stdin = false,
+      stdout = false,
+      stderr = false,
+      env = {
+        EDITOR = editor.script,
+      },
+    },
+    --- @param out vim.SystemCompleted
+    function(out)
+      -- cleanup remaining files
+      editor.delete()
+      if out.code == 0 then
+        -- trigger reload
+        buffer_dirty_check.dirty_mark_content(ctx.buf)
+      else
+        vim.schedule(function()
+          vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
+        end)
+      end
+    end
+  )
+  -- wait for a maximum of 50msec * 100 = 5 sec for the editor to start
+  local i = 1
+  timer.set_interval(50, function(t)
+    if i > 100 and vim.uv.os_getpriority(exec.pid) == nil then
+      timer.clear_interval(t)
+      return
+    end
+    i = i + 1
+    local file = editor.get_edited_file()
+    if file then
+      timer.clear_interval(t)
+      vim.schedule(function()
+        -- Open the file locally
+        vim.cmd.sp(file)
+        -- Clejnup dummy editor
+        local bufId = vim.api.nvim_win_get_buf(0)
+        vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = bufId })
+        vim.api.nvim_create_autocmd({ "BufWipeout", "VimLeave" }, {
+          buffer = bufId,
+          callback = function(ev)
+            editor.exit()
+          end,
+        })
+      end)
+    end
+  end)
+end
+
 --- Commands that manipulate the log
 local M = {}
 
---- @class Commit
---- @field status string Commit status, one of @ (current commit), × (conflict), ◆ (root), ○ (regular commit)
---- @field id string Commit ID
+--- @class Change
+--- @field status string Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
+--- @field id string change ID
 
---- Retrieve data about the commit that the cursor is on
+local CHANGE = {
+  CURRENT = "@",
+  IMMUTABLE = "◆",
+  CONFLICT = "×",
+  MUTUABLE = "◇",
+  HEAD = "○",
+}
+
+--- Retrieve data about the change that the cursor is on
 --- @param ctx Context context
---- @param fn fun(ctx: Context, commit: Commit) Callback that is called with Context and the extracted commit information. The function is only
----                    called when a commit id is found at the cursor position
+--- @param fn fun(ctx: Context, change: Change) Callback that is called with Context and the extracted change information. The function is only
+---                    called when a change id is found at the cursor position
 --- @return function
-function M.with_commit_at_position(ctx, fn)
+function M.with_change_at_position(ctx, fn)
   return function()
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
@@ -25,11 +108,11 @@ function M.with_commit_at_position(ctx, fn)
     end
     local pos = vim.api.nvim_win_get_cursor(winid)
     local line = vim.fn.getbufoneline(ctx.buf, pos[1])
-    local commit = parsers.parseCommit(line)
-    if commit == nil then
-      vim.notify("No commit data found.", vim.log.levels.WARN)
+    local change = parsers.parse_change(line)
+    if change == nil then
+      vim.notify("No change data found.", vim.log.levels.WARN)
     else
-      fn(ctx, commit)
+      fn(ctx, change)
     end
   end
 end
@@ -52,32 +135,73 @@ function M.show_log(root, vertical)
   return ctx
 end
 
---- Edit commit
---- @param force? boolean Edit immutable commits
+--- Create new change
+--- @param ctx Context context
 --- @return function
-function M.commit_edit(force)
+function M.change_new()
+  return function(ctx, change)
+    local args = { "new", change.id }
+    -- TODO mark tree as dirty
+    jujutsu.cli(ctx, args)
+  end
+end
+
+--- Commit change
+--- @param ctx Context context
+--- @return function
+function M.change_commit(ctx)
+  return function()
+    start_dummy_editor(ctx, "commit")
+  end
+end
+
+--- Squash chcanges
+--- @return function
+function M.change_squash(force)
   --- @param ctx Context context
-  return function(ctx, commit)
-    if commit.status == "@" then
-      vim.notify("Already editing commit: " .. commit.id, vim.log.levels.INFO)
+  --- @param change Change current change
+  return function(ctx, change)
+    -- TODO: do I need a target change ID?
+    local args = { "squash", "-r", change.id }
+    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force))
+  end
+end
+
+--- Edit change
+--- @param force? boolean Edit immutable change
+--- @return function
+function M.change_edit(force)
+  --- @param ctx Context context
+  --- @param change Change current change
+  return function(ctx, change)
+    if change.status == CHANGE.CURRENT then
+      vim.notify("Already editing change! ID: " .. change.id, vim.log.levels.INFO)
       return
     end
-    local args = { "edit", commit.id }
+    if change.status == CHANGE.IMMUTABLE and not force then
+      vim.notify("Change is immutable, use force to modify it! ID: " .. change.id, vim.log.levels.ERROR)
+      return
+    end
+    local args = { "edit", change.id }
     jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force))
     local buffer_dirty_check = require("jiejie.buffer_dirty_check")
     buffer_dirty_check.dirty_mark_everything(ctx.buf)
   end
 end
 
---- Describe commit
---- @param force? boolean Edit immutable commits
+--- Describe change
+--- @param force? boolean Edit immutable change
 --- @param firstline? boolean Edit just the first line
 --- @return function
-function M.commit_describe(force, firstline)
+function M.change_describe(force, firstline)
   --- @param ctx Context context
-  --- @param commit Commit Commit data
-  return function(ctx, commit)
+  --- @param change Change Change data
+  return function(ctx, change)
     local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+    if change.status == CHANGE.IMMUTABLE and not force then
+      vim.notify("Change is immutable, use force to modify it! ID: " .. change.id, vim.log.levels.ERROR)
+      return
+    end
     -- get current description
     local res = jujutsu.cli(ctx, {
       "log",
@@ -86,7 +210,7 @@ function M.commit_describe(force, firstline)
       "--color",
       "never",
       "-r",
-      commit.id,
+      change.id,
       "-T",
       "description",
     })
@@ -95,7 +219,7 @@ function M.commit_describe(force, firstline)
     -- edit description
     if firstline then
       return vim.schedule(function()
-        vim.ui.input({ prompt = "Describe change (" .. commit.id .. "): ", default = current_description[1] }, function(input)
+        vim.ui.input({ prompt = "Describe change (" .. change.id .. "): ", default = current_description[1] }, function(input)
           if input == nil then
             return
           end
@@ -105,7 +229,7 @@ function M.commit_describe(force, firstline)
             jujutsu.ignore_immtuable({
               "describe",
               "-r",
-              commit.id,
+              change.id,
               "--stdin",
               "--no-edit",
               "--no-pager",
@@ -119,69 +243,7 @@ function M.commit_describe(force, firstline)
         end)
       end)
     end
-    -- Start dummy editor in the background
-    local editor = jujutsu.create_dummy_editor()
-    local exec = jujutsu.cli(
-      ctx,
-      jujutsu.ignore_immtuable({
-        "describe",
-        "--edit",
-        "--no-pager",
-        "--color",
-        "never",
-        "--quiet",
-        -- "--debug",
-        -- "-r",
-        commit.id,
-      }, force),
-      {
-        stdin = false,
-        stdout = false,
-        stderr = false,
-        env = {
-          EDITOR = editor.script,
-        },
-      },
-      --- @param out vim.SystemCompleted
-      function(out)
-        -- cleanup remaining files
-        editor.delete()
-        if out.code == 0 then
-          -- trigger reload
-          buffer_dirty_check.dirty_mark_content(ctx.buf)
-        else
-          vim.schedule(function()
-            vim.notify("Editing commit failed, maybe it's immutable!", vim.log.levels.ERROR)
-          end)
-        end
-      end
-    )
-    -- wait for a maximum of 50msec * 100 = 5 sec for the editor to start
-    local i = 1
-    timer.set_interval(50, function(t)
-      if i > 100 and vim.uv.os_getpriority(exec.pid) == nil then
-        timer.clear_interval(timer)
-        return
-      end
-      i = i + 1
-      local file = editor.get_edited_file()
-      if file then
-        timer.clear_interval(t)
-        vim.schedule(function()
-          -- Open the file locally
-          vim.cmd.sp(file)
-          -- Clejnup dummy editor
-          local bufId = vim.api.nvim_win_get_buf(0)
-          vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = bufId })
-          vim.api.nvim_create_autocmd({ "BufWipeout", "VimLeave" }, {
-            buffer = bufId,
-            callback = function(ev)
-              editor.exit()
-            end,
-          })
-        end)
-      end
-    end)
+    start_dummy_editor(ctx, "describe", { change.id }, force)
   end
 end
 

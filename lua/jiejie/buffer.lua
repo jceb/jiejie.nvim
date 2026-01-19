@@ -17,7 +17,7 @@ function M.create_header(key, value)
   return key .. ": " .. value
 end
 
---- Render log output in buffer and return cursor position for current commit
+--- Render log output in buffer and return cursor position of current change
 --- @param ctx Context context
 --- @param data string[] jj log output to display
 --- @param headers? string[] headers added before the data
@@ -103,7 +103,7 @@ function M.setup_buffer(ctx)
   vim.wo[winid][0].conceallevel = 2
   vim.wo[winid][0].concealcursor = "nvic"
   vim.wo[winid][0].listchars = "tab:  "
-  -- Place cursor on the current commit
+  -- Place cursor on the current change
   if ctx.curpos ~= nil then
     vim.api.nvim_win_set_cursor(winid, ctx.curpos)
   end
@@ -113,26 +113,34 @@ function M.setup_buffer(ctx)
   end
   local commands = require("jiejie.commands")
   -- TODO: make configuration dynamic
-  vim.keymap.set("n", "<CR>", commands.with_commit_at_position(ctx, commands.commit_edit()), { desc = "Edit commit", buffer = true })
-  vim.keymap.set("n", "!<CR>", commands.with_commit_at_position(ctx, commands.commit_edit(true)), { desc = "Edit commit, ignore immutable", buffer = true })
-  vim.keymap.set("n", "de", commands.with_commit_at_position(ctx, commands.commit_describe(false)), { desc = "Describe commit", buffer = true })
+  vim.keymap.set("n", "cc", function()
+    commands.change_commit(ctx)
+  end, { desc = "Commit current change and create a new change", buffer = true })
+  vim.keymap.set("n", "<CR>", commands.with_change_at_position(ctx, commands.change_edit()), { desc = "Edit change under the cursor", buffer = true })
+  vim.keymap.set(
+    "n",
+    "!<CR>",
+    commands.with_change_at_position(ctx, commands.change_edit(true)),
+    { desc = "Edit immutable change under the cursor", buffer = true }
+  )
+  vim.keymap.set("n", "de", commands.with_change_at_position(ctx, commands.change_describe(false)), { desc = "Edit change description", buffer = true })
   vim.keymap.set(
     "n",
     "!de",
-    commands.with_commit_at_position(ctx, commands.commit_describe(true)),
-    { desc = "Describe commit, ignore immutable", buffer = true }
+    commands.with_change_at_position(ctx, commands.change_describe(true)),
+    { desc = "Edit immutable change description", buffer = true }
   )
   vim.keymap.set(
     "n",
-    "di",
-    commands.with_commit_at_position(ctx, commands.commit_describe(false, true)),
-    { desc = "Describe commit in one line", buffer = true }
+    "dd",
+    commands.with_change_at_position(ctx, commands.change_describe(false, true)),
+    { desc = "Edit first line of change description", buffer = true }
   )
   vim.keymap.set(
     "n",
-    "!di",
-    commands.with_commit_at_position(ctx, commands.commit_describe(true, true)),
-    { desc = "Describe commit in one line, ignore immutable", buffer = true }
+    "!dd",
+    commands.with_change_at_position(ctx, commands.change_describe(true, true)),
+    { desc = "Edit first line of an immutable change description", buffer = true }
   )
   vim.keymap.set("n", "g?", commands.show_help, { desc = "Show help", buffer = true })
   require("jiejie.buffer_dirty_check").setup_buffer(ctx)

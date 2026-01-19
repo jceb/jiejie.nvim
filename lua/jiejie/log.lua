@@ -10,7 +10,7 @@ local M = {}
 --- @param callback fun(ctx: Context) Asynchronous callback
 M.load = function(ctx, callback)
   local template =
-    'change_id.shortest() ++ "\t" ++ if(empty, "†(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", truncate_end(50, description.first_line(), "…")) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∬" ++ if(git_head, " git_head()")'
+    'change_id.shortest() ++ "\t" ++ if(empty, "†(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", truncate_end(50, description.first_line(), "…")) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∬" ++ if(git_head, " git_head()") ++ "∮" ++ if(conflict, " conflict")'
   local command = {
     "jj",
     "log",
@@ -19,6 +19,7 @@ M.load = function(ctx, callback)
     "never",
     "-n",
     "10", -- FIXME: make this configurable
+    "-s",
     "-T",
     template,
     "-r",
@@ -50,7 +51,7 @@ function M.setup(id)
     callback = function(ev)
       -- Loader function for files of type jiejie
       vim.cmd.doau("BufReadPre")
-      local url = parsers.parseUrl(ev.file)
+      local url = parsers.parse_url(ev.file)
       M.load({ root = url.root, buf = ev.buf, curpos = nil }, function(ctx)
         context.set_context(ctx)
         buffer.setup_buffer(ctx)

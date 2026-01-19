@@ -28,15 +28,15 @@ return {
 
 ## Roadmap
 
-- [x] Display log in window
-- [x] Make J / Jj a simple wrapper for jj CLI
-- [x] Add help header and help key binding
-- [x] Add keybinding to edit commits
-- [x] Describe commits
-- [ ] Basic feature:Display changed files in log commit view
+- [x] Basic feature: Display log in window
+- [x] Basic feature: Make J / Jj a simple wrapper for jj CLI
+- [x] Basic feature: Add help header and help key binding
+- [x] Basic feature: Add keybinding to edit a change
+- [x] Basic feature: Describe a change
+- [x] Basic feature: Make `Jj describe` open the change editor
+- [x] Basic feature: Display changed files in log view
 - [ ] Basic feature: Display file changes as diff inside the log window
 - [ ] Add more convenience keybindings to perform jj operations
-- [ ] Basic feature: Make `Jj describe` open the commit editor
 - [ ] New feature: Operations log support
 - [ ] Feature: Completion for Jj command
 - [ ] New feature: Worktree support

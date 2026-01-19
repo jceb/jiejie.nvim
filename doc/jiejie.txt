@@ -27,22 +27,30 @@ COMMANDS                                                       *jiejie-commands*
 
 MAPS                                                               *jiejie-maps*
 
-<CR>                      Edit commit under the cursor.
+                                                                    *jiejie_<CR>*
+<CR>                      Edit change under the cursor.
+
+
+                                                                   *jiejie_!<CR>*
+!<CR>                     Edit immutable change under the cursor.
 
                                                                      *jiejie_g?*
 g?                        Show help for |jiejie-maps|.
 
-                                                                     *jiejie_di*
-di                        Edit first line of commit message.
+                                                                     *jiejie_cc*
+cc                        Commit current change and create a new change.
 
-                                                                    *jiejie_!di*
-!di                       Edit first line of immutable commit message.
+                                                                     *jiejie_dd*
+dd                        Edit first line of change description.
+
+                                                                    *jiejie_!dd*
+!dd                       Edit first line of an immutable change description.
 
                                                                      *jiejie_de*
-de                        Edit commit message.
+de                        Edit change description.
 
                                                                     *jiejie_!de*
-!de                       Edit immutable commit message.
+!de                       Edit immutable change description.
 
 ABOUT                                                             *jiejie-about*
 
