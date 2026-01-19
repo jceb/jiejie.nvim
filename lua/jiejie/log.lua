@@ -1,15 +1,14 @@
+local buffer = require("jiejie.buffer")
 local context = require("jiejie.context")
+local parsers = require("jiejie.parsers")
 
 --- Jujutsu log related operations
 local M = {}
 
-local buffer = require("jiejie.buffer")
-local parsers = require("jiejie.parsers")
-
 --- Load/reload log contents into the jujutsu buffer
 --- @param ctx Context context
---- @return Context
-function M.load(ctx)
+--- @param callback fun(ctx: Context) Asynchronous callback
+M.load = function(ctx, callback)
   local template =
     'change_id.shortest() ++ "\t" ++ if(empty, "†(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", truncate_end(50, description.first_line(), "…")) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∬" ++ if(git_head, " git_head()")'
   local command = {
@@ -19,20 +18,27 @@ function M.load(ctx)
     "--color",
     "never",
     "-n",
-    "10", -- FIXME: make this dynamic
+    "10", -- FIXME: make this configurable
     "-T",
     template,
     "-r",
-    "::",
+    "::", -- FIMXE: make this configurable
   }
-  local res = vim.system(command, { text = true, cwd = ctx.root }):wait()
-  if res.code ~= 0 then
-    error("Error getting log:\n" .. res.stderr)
-  end
-  local data = vim.split(res.stdout, "\n")
-  local headers = { buffer.create_header("Help", "g?") }
-  ctx.curpos = buffer.render(ctx, data, headers)
-  return ctx
+  vim.system(
+    command,
+    { text = true, cwd = ctx.root },
+    vim.schedule_wrap(function(res)
+      if res.code ~= 0 then
+        error("Error getting log:\n" .. res.stderr)
+      end
+      local data = vim.split(res.stdout, "\n")
+      local headers = { buffer.create_header("Help", "g?") }
+      ctx.curpos = buffer.render(ctx, data, headers)
+      if callback then
+        callback(ctx)
+      end
+    end)
+  )
 end
 
 --- Setup log model
@@ -45,9 +51,11 @@ function M.setup(id)
       -- Loader function for files of type jiejie
       vim.cmd.doau("BufReadPre")
       local url = parsers.parseUrl(ev.file)
-      local ctx = context.set_context(M.load({ root = url.root, buf = ev.buf, curpos = nil }))
-      buffer.setup_buffer(ctx)
-      vim.cmd.doau("BufReadPost")
+      M.load({ root = url.root, buf = ev.buf, curpos = nil }, function(ctx)
+        context.set_context(ctx)
+        buffer.setup_buffer(ctx)
+        vim.cmd.doau("BufReadPost")
+      end)
     end,
   })
 end

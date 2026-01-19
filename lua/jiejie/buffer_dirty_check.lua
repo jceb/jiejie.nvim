@@ -1,9 +1,6 @@
-local context = require("jiejie.context")
-local commands = require("jiejie.commands")
 local buffer = require("jiejie.buffer")
-
-local DIRTY_CONTENT = 2 ^ 1
-local DIRTY_CURSOR = 2 ^ 2
+local commands = require("jiejie.commands")
+local context = require("jiejie.context")
 
 local function is_dirty(buf, key)
   if buffer.is_valid(buf) then
@@ -21,6 +18,9 @@ end
 --- Opeations that help with invalidating buffer data
 local M = {}
 
+M.DIRTY_CONTENT = 2 ^ 0
+M.DIRTY_CURSOR = 2 ^ 1
+
 function M.dirty_check(ev)
   if not vim.b.jiejie_dirty or not vim.b.jiejie_root then
     return
@@ -29,13 +29,14 @@ function M.dirty_check(ev)
   local ctx = context.get_context(vim.b.jiejie_root)
   if M.dirty_check_content(bufid) then
     local curpos_current = vim.api.nvim_win_get_cursor(0)
-    local curpos_new = commands.reload_log(ctx).curpos
-    if M.dirty_check_cursor(bufid) and curpos_new ~= nil then
-      vim.api.nvim_win_set_cursor(0, curpos_new)
-    else
-      vim.api.nvim_win_set_cursor(0, curpos_current)
-    end
-    M.dirty_clear(bufid)
+    commands.reload_log(ctx, function(ctx)
+      if M.dirty_check_cursor(bufid) and ctx.curpos ~= nil then
+        vim.api.nvim_win_set_cursor(0, ctx.curpos)
+      else
+        vim.api.nvim_win_set_cursor(0, curpos_current)
+      end
+      M.dirty_clear(bufid)
+    end)
   elseif M.dirty_check_cursor(bufid) then
     local curpos = M.get_dirty_cursor(bufid)
     if curpos ~= nil then
@@ -46,11 +47,11 @@ function M.dirty_check(ev)
 end
 
 function M.dirty_check_content(buf)
-  return is_dirty(buf, DIRTY_CONTENT)
+  return is_dirty(buf, M.DIRTY_CONTENT)
 end
 
 function M.dirty_check_cursor(buf)
-  return is_dirty(buf, DIRTY_CURSOR)
+  return is_dirty(buf, M.DIRTY_CURSOR)
 end
 
 function M.get_dirty_cursor(buf)
@@ -67,12 +68,23 @@ function M.dirty_clear(buf)
   end
 end
 
+--- Mark everything dirty to trigger a reload
+--- @param buf number Buffer ID
+function M.dirty_mark_everything(buf)
+  vim.schedule(function()
+    if buffer.is_valid(buf) then
+      set_dirty(buf, bit.bor(M.DIRTY_CONTENT, M.DIRTY_CURSOR))
+      vim.cmd.doau("User JiejieDirtyCheck")
+    end
+  end)
+end
+
 --- Mark buffer content as dirty to trigger a reload
 --- @param buf number Buffer ID
 function M.dirty_mark_content(buf)
   vim.schedule(function()
     if buffer.is_valid(buf) then
-      set_dirty(buf, DIRTY_CONTENT)
+      set_dirty(buf, M.DIRTY_CONTENT)
       vim.cmd.doau("User JiejieDirtyCheck")
     end
   end)
@@ -82,7 +94,7 @@ end
 --- @param ctx Context context
 function M.dirty_mark_cursor(ctx)
   vim.schedule(function()
-    if set_dirty(ctx.buf, DIRTY_CURSOR) then
+    if set_dirty(ctx.buf, M.DIRTY_CURSOR) then
       vim.api.nvim_buf_set_var(ctx.buf, "jiejie_dirty_cursor", ctx.curpos)
       vim.cmd.doau("User JiejieDirtyCheck")
     end

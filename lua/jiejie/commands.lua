@@ -1,7 +1,7 @@
-local jujutsu = require("jiejie.jujutsu")
-local timer = require("jiejie.timer")
-local parsers = require("jiejie.parsers")
 local context = require("jiejie.context")
+local jujutsu = require("jiejie.jujutsu")
+local parsers = require("jiejie.parsers")
+local timer = require("jiejie.timer")
 
 --- Commands that manipulate the log
 local M = {}
@@ -65,7 +65,7 @@ function M.commit_edit(force)
     local args = { "edit", commit.id }
     jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force))
     local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-    buffer_dirty_check.dirty_mark_content(ctx.buf)
+    buffer_dirty_check.dirty_mark_everything(ctx.buf)
   end
 end
 
@@ -187,12 +187,12 @@ end
 
 --- Open or focus log window
 --- @param ctx Context context
---- @return Context?
-function M.reload_log(ctx)
+--- @param callback fun(ctx: Context?) Asynchronous callback
+function M.reload_log(ctx, callback)
   if vim.api.nvim_get_current_buf() ~= ctx.buf then
-    return
+    callback(nil)
   end
-  return require("jiejie.log").load(ctx)
+  require("jiejie.log").load(ctx, callback)
 end
 
 --- Command executes jj commands, returns exit code
