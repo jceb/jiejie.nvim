@@ -27,7 +27,6 @@ local function start_dummy_editor(ctx, cmd, args, force)
     jujutsu.ignore_immtuable(
       vim.list_extend(
         vim.list_extend({ cmd }, {
-          -- "--edit",
           "--quiet",
           -- "--debug",
           -- "-r",
@@ -53,7 +52,6 @@ local function start_dummy_editor(ctx, cmd, args, force)
         buffer_dirty_check.dirty_mark_content(ctx.buf)
       else
         vim.schedule(function()
-          print("editor")
           vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
         end)
       end
@@ -258,7 +256,7 @@ function M.change_describe(force, firstline)
         end)
       end)
     end
-    start_dummy_editor(ctx, "describe", { change.id }, force)
+    start_dummy_editor(ctx, "describe", { "--edit", change.id }, force)
   end
 end
 
@@ -279,27 +277,31 @@ end
 --- @return table
 function M.cli(fargs, error_on_failure, root)
   local ctx = context.get_context(root)
-  local command = vim.fn.extend({ "jj" }, fargs)
-  local out = vim
-    .system(command, {
-      text = true,
-      cwd = ctx.root,
-      -- stdout = print,
-      -- stdout = print,
-    })
-    :wait()
-  -- TODO: is there a better way to diplay joined stderr/stdout output? E.g. by spawing a shell? - actually, pass in
-  -- the same receiver function for stderr and stdout
-  if out.stdout ~= "" then
-    vim.notify(out.stdout, vim.log.levels.INFO)
-  end
-  if out.code ~= 0 then
-    vim.notify(out.stderr, vim.log.levels.ERROR)
-    if error_on_failure then
-      error("Command failed with non-zero exit code: " .. out.code)
+  local printer = function(err, data)
+    if data then
+      if err then
+        vim.notify(data, vim.log.levels.ERROR)
+      else
+        vim.notify(data, vim.log.levels.INFO)
+      end
     end
   end
-  return out
+  jujutsu.cli(
+    ctx,
+    fargs,
+    {
+      stdout = vim.schedule_wrap(printer),
+      stderr = vim.schedule_wrap(printer),
+    },
+    --- @param out vim.SystemCompleted Options to the CLI
+    function(out)
+      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+      buffer_dirty_check.dirty_mark_content(ctx.buf)
+      if out.code ~= 0 and error_on_failure then
+        error("Command failed with non-zero exit code: " .. out.code)
+      end
+    end
+  )
 end
 
 --- Configure commands

@@ -36,9 +36,10 @@ return {
 - [x] Basic feature: Make `Jj describe` open the change editor
 - [x] Basic feature: Display changed files in log view
 - [ ] Basic feature: Display file changes as diff inside the log window
-- [ ] Add more convenience keybindings to perform jj operations
+- [ ] Basic feature: Add more convenience keybindings to perform jj operations
+- [ ] Basic feature: Jump to file from log window
 - [ ] New feature: Operations log support
-- [ ] Feature: Completion for Jj command
+- [ ] New Feature: Completion for Jj command
 - [ ] New feature: Worktree support
 - [ ] Configuration: Make mappings configurable
 
@@ -46,6 +47,6 @@ return {
 
 Other jujutsu related plugins:
 
-- https://github.com/yannvanhalewyn/jujutsu.nvim
-- https://github.com/sivansh11/jj
-- https://github.com/NicolasGB/jj.nvim
+- [https://github.com/NicolasGB/jj.nvim](https://github.com/NicolasGB/jj.nvim)
+- [https://github.com/sivansh11/jj](https://github.com/sivansh11/jj)
+- [https://github.com/yannvanhalewyn/jujutsu.nvim](https://github.com/yannvanhalewyn/jujutsu.nvim)
