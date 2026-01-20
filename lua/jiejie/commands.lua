@@ -3,20 +3,31 @@ local jujutsu = require("jiejie.jujutsu")
 local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
 
+--- Notifu use if change is immutable and no force is applied
+--- @param change Change current change
+--- @param force? boolean Edit immutable change
+--- @return boolean
+local function notify_immutable(change, force)
+  if change.immutable and not force then
+    vim.notify("Change is immutable, use force to modify it! ID: " .. change.id_short, vim.log.levels.ERROR)
+    return true
+  end
+  return false
+end
+
 --- @param ctx Context context
 --- @param cmd string JJ command
 --- @param args? string[] List of additional arguments
 --- @param force? boolean Modify immutable change
 local function start_dummy_editor(ctx, cmd, args, force)
   -- Start dummy editor in the background
-  local buffer_dirty_check = require("jiejie.buffer_dirty_check")
   local editor = jujutsu.create_dummy_editor()
   local exec = jujutsu.cli(
     ctx,
     jujutsu.ignore_immtuable(
       vim.list_extend(
         vim.list_extend({ cmd }, {
-          "--edit",
+          -- "--edit",
           "--quiet",
           -- "--debug",
           -- "-r",
@@ -38,10 +49,11 @@ local function start_dummy_editor(ctx, cmd, args, force)
       -- cleanup remaining files
       editor.delete()
       if out.code == 0 then
-        -- trigger reload
+        local buffer_dirty_check = require("jiejie.buffer_dirty_check")
         buffer_dirty_check.dirty_mark_content(ctx.buf)
       else
         vim.schedule(function()
+          print("editor")
           vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
         end)
       end
@@ -81,8 +93,16 @@ local M = {}
 --- @class Change
 --- @field status string Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
 --- @field id string change ID
+--- @field id_short string Short change ID
+--- @field empty boolean It's an empty change
+--- @field description_shortened string Description, truncated first line
+--- @field bookmarks string[] Bookmarks
+--- @field tags string[] Tags
+--- @field git_head boolean Git head is on this change
+--- @field conflict boolean Change is in a state of conflict
+--- @field immutable boolean Change is immutable
 
-local CHANGE = {
+local CHANGE_STATUS_ICON = {
   CURRENT = "@",
   IMMUTABLE = "◆",
   CONFLICT = "×",
@@ -175,12 +195,11 @@ function M.change_edit(force)
   --- @param ctx Context context
   --- @param change Change current change
   return function(ctx, change)
-    if change.status == CHANGE.CURRENT then
+    if change.status == CHANGE_STATUS_ICON.CURRENT then
       vim.notify("Already editing change! ID: " .. change.id, vim.log.levels.INFO)
       return
     end
-    if change.status == CHANGE.IMMUTABLE and not force then
-      vim.notify("Change is immutable, use force to modify it! ID: " .. change.id, vim.log.levels.ERROR)
+    if notify_immutable(change, force) then
       return
     end
     local args = { "edit", change.id }
@@ -198,9 +217,7 @@ function M.change_describe(force, firstline)
   --- @param ctx Context context
   --- @param change Change Change data
   return function(ctx, change)
-    local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-    if change.status == CHANGE.IMMUTABLE and not force then
-      vim.notify("Change is immutable, use force to modify it! ID: " .. change.id, vim.log.levels.ERROR)
+    if notify_immutable(change, force) then
       return
     end
     -- get current description
@@ -217,7 +234,7 @@ function M.change_describe(force, firstline)
     -- edit description
     if firstline then
       return vim.schedule(function()
-        vim.ui.input({ prompt = "Describe change (" .. change.id .. "): ", default = current_description[1] }, function(input)
+        vim.ui.input({ prompt = "Describe change (" .. change.id_short .. "): ", default = current_description[1] }, function(input)
           if input == nil then
             return
           end
@@ -236,6 +253,7 @@ function M.change_describe(force, firstline)
               stdin = new_description,
             }
           )
+          local buffer_dirty_check = require("jiejie.buffer_dirty_check")
           buffer_dirty_check.dirty_mark_content(ctx.buf)
         end)
       end)

@@ -7,13 +7,36 @@ local M = {}
 --- @param change string Line containing a change string
 --- @return Change?
 function M.parse_change(change)
-  local match = vim.fn.matchlist(change, [[^[─╯│ ]*\([@×◆◇○]\)  \([a-z]\+\)\t.*]])
+  local match = vim.fn.matchlist(
+    change,
+    [[^[─╯│ ]*\([@×◆◇○]\)  \([a-z]\+\)\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)]]
+  )
+  local match2 = vim.fn.matchlist(match[10], [[^[^∮]*∮\([^∴]*\)∴\(.\+\)]])
   local status = match[2]
-  local id = match[3]
-  if match == nil or status == nil or id == nil then
+  local id_short = match[3]
+  local empty = match[4] == "(empty) "
+  local description_shortened = match[5] ~= "(no description set)" and match[5] or ""
+  local bookmarks = match[6]
+  local tags = match[7]
+  local git_head = match[8] == " git_head()"
+  local conflict = match[9] == " conflict"
+  local immutable = match2[2] == " immutable"
+  local id = match2[3]
+  if match == nil or status == nil or id_short == nil then
     return nil
   end
-  return { status = status, id = id }
+  return {
+    status = status,
+    id = id,
+    id_short = id_short,
+    empty = empty,
+    description_shortened = description_shortened,
+    bookmarks = bookmarks,
+    tags = tags,
+    git_head = git_head,
+    conflict = conflict,
+    immutable = immutable,
+  }
 end
 
 --- @class JiejieURL
