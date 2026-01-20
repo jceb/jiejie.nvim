@@ -17,9 +17,6 @@ local function start_dummy_editor(ctx, cmd, args, force)
       vim.list_extend(
         vim.list_extend({ cmd }, {
           "--edit",
-          "--no-pager",
-          "--color",
-          "never",
           "--quiet",
           -- "--debug",
           -- "-r",
@@ -136,13 +133,17 @@ function M.show_log(root, vertical)
 end
 
 --- Create new change
---- @param ctx Context context
 --- @return function
 function M.change_new()
+  --- @param ctx Context context
+  --- @param change Change Change data
   return function(ctx, change)
     local args = { "new", change.id }
     -- TODO mark tree as dirty
-    jujutsu.cli(ctx, args)
+    jujutsu.cli(ctx, args, nil, function()
+      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+      buffer_dirty_check.dirty_mark_everything(ctx.buf)
+    end)
   end
 end
 
@@ -206,9 +207,6 @@ function M.change_describe(force, firstline)
     local res = jujutsu.cli(ctx, {
       "log",
       "--no-graph",
-      "--no-pager",
-      "--color",
-      "never",
       "-r",
       change.id,
       "-T",
@@ -232,7 +230,6 @@ function M.change_describe(force, firstline)
               change.id,
               "--stdin",
               "--no-edit",
-              "--no-pager",
               "--quiet",
             }, force),
             {

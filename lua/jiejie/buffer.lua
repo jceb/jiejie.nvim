@@ -112,10 +112,13 @@ function M.setup_buffer(ctx)
     vim.keymap.set("", key, "<Nop>", { buffer = true })
   end
   local commands = require("jiejie.commands")
-  -- TODO: make configuration dynamic
-  vim.keymap.set("n", "cc", function()
-    commands.change_commit(ctx)
-  end, { desc = "Commit current change and create a new change", buffer = true })
+  vim.keymap.set("n", "cc", commands.change_commit(ctx), { desc = "Commit current change and create a new change", buffer = true })
+  vim.keymap.set(
+    "n",
+    "cn",
+    commands.with_change_at_position(ctx, commands.change_new()),
+    { desc = "Create a new change after the change at cursor position", buffer = true }
+  )
   vim.keymap.set("n", "<CR>", commands.with_change_at_position(ctx, commands.change_edit()), { desc = "Edit change under the cursor", buffer = true })
   vim.keymap.set(
     "n",

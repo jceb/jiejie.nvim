@@ -14,9 +14,6 @@ M.load = function(ctx, callback)
   local command = {
     "jj",
     "log",
-    "--no-pager",
-    "--color",
-    "never",
     "-n",
     "10", -- FIXME: make this configurable
     "-s",

@@ -28,29 +28,34 @@ COMMANDS                                                       *jiejie-commands*
 MAPS                                                               *jiejie-maps*
 
                                                                     *jiejie_<CR>*
-<CR>                      Edit change under the cursor.
+<CR>                    Edit change at cursor position.
 
 
-                                                                   *jiejie_!<CR>*
-!<CR>                     Edit immutable change under the cursor.
+                                                                  *jiejie_!<CR>*
+!<CR>                   Edit immutable change at cursor position.
 
                                                                      *jiejie_g?*
-g?                        Show help for |jiejie-maps|.
+g?                      Show help for |jiejie-maps|.
 
                                                                      *jiejie_cc*
-cc                        Commit current change and create a new change.
+cc                      Commit currently edited change and create a new
+                        change.
+
+                                                                     *jiejie_cn*
+cn                      Create a new change after the change at cursor
+                        position.
 
                                                                      *jiejie_dd*
-dd                        Edit first line of change description.
+dd                      Edit first line of change description.
 
                                                                     *jiejie_!dd*
-!dd                       Edit first line of an immutable change description.
+!dd                     Edit first line of an immutable change description.
 
                                                                      *jiejie_de*
-de                        Edit change description.
+de                      Edit change description.
 
                                                                     *jiejie_!de*
-!de                       Edit immutable change description.
+!de                     Edit immutable change description.
 
 ABOUT                                                             *jiejie-about*
 

@@ -17,13 +17,17 @@ end
 
 --- Execute jj CLI with arguments
 --- @param ctx Context context
---- @param fargs string[] List of CLI arguments
+--- @param fargs? string[] List of CLI arguments
 --- @param opts? vim.SystemOpts Options to the CLI
 --- @param on_exit? fun(out: vim.SystemCompleted) Options to the CLI
 --- @param errOpts? ErrOpts Error options
 --- @return table
 function M.cli(ctx, fargs, opts, on_exit, errOpts)
-  local command = vim.fn.extend({ "jj" }, fargs)
+  local command = vim.list_extend(vim.list_extend({ "jj" }, fargs or {}), {
+    "--no-pager",
+    "--color",
+    "never",
+  })
   local exec = vim.system(
     command,
     vim.tbl_extend("keep", {
