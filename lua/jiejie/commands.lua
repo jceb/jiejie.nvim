@@ -50,6 +50,7 @@ local function start_dummy_editor(ctx, cmd, args, force)
       if out.code == 0 then
         local buffer_dirty_check = require("jiejie.buffer_dirty_check")
         buffer_dirty_check.dirty_mark_content(ctx.buf)
+        buffer_dirty_check.do_dirty_check()
       else
         vim.schedule(function()
           vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
@@ -161,6 +162,7 @@ function M.change_new()
     jujutsu.cli(ctx, args, nil, function()
       local buffer_dirty_check = require("jiejie.buffer_dirty_check")
       buffer_dirty_check.dirty_mark_everything(ctx.buf)
+      buffer_dirty_check.do_dirty_check()
     end)
   end
 end
@@ -204,6 +206,7 @@ function M.change_edit(force)
     jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force))
     local buffer_dirty_check = require("jiejie.buffer_dirty_check")
     buffer_dirty_check.dirty_mark_everything(ctx.buf)
+    buffer_dirty_check.do_dirty_check()
   end
 end
 
@@ -253,6 +256,7 @@ function M.change_describe(force, firstline)
           )
           local buffer_dirty_check = require("jiejie.buffer_dirty_check")
           buffer_dirty_check.dirty_mark_content(ctx.buf)
+          buffer_dirty_check.do_dirty_check()
         end)
       end)
     end
@@ -296,7 +300,8 @@ function M.cli(fargs, error_on_failure, root)
     --- @param out vim.SystemCompleted Options to the CLI
     function(out)
       local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-      buffer_dirty_check.dirty_mark_content(ctx.buf)
+      buffer_dirty_check.dirty_mark_everything(ctx.buf)
+      buffer_dirty_check.do_dirty_check()
       if out.code ~= 0 and error_on_failure then
         error("Command failed with non-zero exit code: " .. out.code)
       end
@@ -307,7 +312,7 @@ end
 --- Configure commands
 function M.setup()
   local cmd = function(args)
-    if vim.fn.len(args.fargs) == 0 then
+    if #args.fargs == 0 then
       M.show_log(nil, args.smods.vertical)
     else
       M.cli(args.fargs)

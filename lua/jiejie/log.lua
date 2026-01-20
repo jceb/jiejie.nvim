@@ -1,6 +1,7 @@
 local buffer = require("jiejie.buffer")
 local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
+local jujutsu = require("jiejie.jujutsu")
 
 --- Jujutsu log related operations
 local M = {}
@@ -11,8 +12,8 @@ local M = {}
 M.load = function(ctx, callback)
   local template =
     'change_id.shortest() ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", truncate_end(50, description.first_line(), "…")) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ if(git_head, " git_head()") ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id'
-  local command = {
-    "jj",
+  local args = {
+    -- "jj",
     "log",
     "-n",
     "10", -- FIXME: make this configurable
@@ -22,9 +23,10 @@ M.load = function(ctx, callback)
     "-r",
     "::", -- FIMXE: make this configurable
   }
-  vim.system(
-    command,
-    { text = true, cwd = ctx.root },
+  jujutsu.cli(
+    ctx,
+    args,
+    nil,
     vim.schedule_wrap(function(res)
       if res.code ~= 0 then
         error("Error getting log:\n" .. res.stderr)

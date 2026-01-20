@@ -5,36 +5,34 @@ local M = {}
 -- Each repository can have its own log buffer - one repository
 -- Key: Absolute path to the repository
 -- Value:
---   @param {string} bufnr
-local contexts = {
-  --- @class Context
-  --- @field root string repository root
-  --- @field buf? number log buffer id
-  --- @field curpos? table cursor position on current change
-}
+--- @class Context
+--- @field root string repository root
+--- @field buf? number log buffer id
+--- @field curpos? table cursor position on current change
 
 --- Get an existing repository context, or create a empty one one
 --- @param root string Root directory of repository
 --- @return Context
 function M.get_context(root)
-  if root and contexts[root] then
-    return contexts[root]
+  local root_local = root or jujutsu.get_root(root)
+  if root_local and vim.g.jiejie_contexts[root_local] then
+    return vim.g.jiejie_contexts[root_local]
   end
-  local root_updated = jujutsu.get_root(root)
-  contexts[root_updated] = {
-    root = root_updated,
+  -- local root_local = jujutsu.get_root(root_local)
+  vim.g.jiejie_contexts = vim.tbl_extend("force", vim.g.jiejie_contexts, { [root_local] = {
+    root = root_local,
     buf = nil,
     curpos = nil,
-  }
-  return contexts[root_updated]
+  } })
+  return vim.g.jiejie_contexts[root_local]
 end
 
 --- Get an existing repository context, or create a empty one one
 --- @param ctx Context Context do update
 --- @return Context
 function M.set_context(ctx)
-  contexts[ctx.root] = ctx
-  return ctx
+  vim.g.jiejie_contexts = vim.tbl_extend("force", vim.g.jiejie_contexts, { [ctx.root] = ctx })
+  return vim.g.jiejie_contexts[ctx.root]
 end
 
 --- Configure context for current buffer
@@ -43,6 +41,11 @@ end
 function M.setup_buffer(ctx)
   vim.b.jiejie_root = ctx.root
   return ctx
+end
+
+--- Configure context
+function M.setup()
+  vim.g.jiejie_contexts = {}
 end
 
 return M

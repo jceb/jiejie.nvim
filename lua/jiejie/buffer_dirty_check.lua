@@ -22,7 +22,7 @@ M.DIRTY_CONTENT = 2 ^ 0
 M.DIRTY_CURSOR = 2 ^ 1
 
 function M.dirty_check(ev)
-  if not vim.b.jiejie_dirty or not vim.b.jiejie_root then
+  if not vim.b.jiejie_dirty or vim.b.jiejie_dirty == 0 or not vim.b.jiejie_root then
     return
   end
   local bufid = vim.api.nvim_get_current_buf()
@@ -72,10 +72,14 @@ end
 --- @param buf number Buffer ID
 function M.dirty_mark_everything(buf)
   vim.schedule(function()
-    if buffer.is_valid(buf) then
-      set_dirty(buf, bit.bor(M.DIRTY_CONTENT, M.DIRTY_CURSOR))
-      vim.cmd.doau("User JiejieDirtyCheck")
-    end
+    set_dirty(buf, bit.bor(M.DIRTY_CONTENT, M.DIRTY_CURSOR))
+  end)
+end
+
+--- Run the autocommand that triggers a dirty check
+function M.do_dirty_check()
+  vim.schedule(function()
+    vim.cmd.doau("User JiejieDirtyCheck")
   end)
 end
 
@@ -83,10 +87,7 @@ end
 --- @param buf number Buffer ID
 function M.dirty_mark_content(buf)
   vim.schedule(function()
-    if buffer.is_valid(buf) then
-      set_dirty(buf, M.DIRTY_CONTENT)
-      vim.cmd.doau("User JiejieDirtyCheck")
-    end
+    set_dirty(buf, M.DIRTY_CONTENT)
   end)
 end
 
@@ -96,7 +97,6 @@ function M.dirty_mark_cursor(ctx)
   vim.schedule(function()
     if set_dirty(ctx.buf, M.DIRTY_CURSOR) then
       vim.api.nvim_buf_set_var(ctx.buf, "jiejie_dirty_cursor", ctx.curpos)
-      vim.cmd.doau("User JiejieDirtyCheck")
     end
   end)
 end
