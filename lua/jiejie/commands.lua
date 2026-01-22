@@ -306,17 +306,18 @@ function M.change_edit(force)
   --- @param change Change current change
   return function(ctx, change)
     if change.status == CHANGE_STATUS.CURRENT then
-      vim.notify("Already editing change! ID: " .. change.id, vim.log.levels.INFO)
+      vim.notify("Already editing change! ID: " .. change.id_short, vim.log.levels.INFO)
       return
     end
     if notify_immutable(change, force) then
       return
     end
     local args = { "edit", change.id }
-    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force))
-    local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-    buffer_dirty_check.dirty_mark_everything(ctx.buf)
-    buffer_dirty_check.do_dirty_check()
+    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, function(out)
+      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+      buffer_dirty_check.dirty_mark_everything(ctx.buf)
+      buffer_dirty_check.do_dirty_check()
+    end)
   end
 end
 

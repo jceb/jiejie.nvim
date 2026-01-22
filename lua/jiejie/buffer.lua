@@ -164,7 +164,7 @@ function M.setup_buffer(ctx)
   end, { desc = "Edit change or file at cursor position", buffer = true })
   vim.keymap.set("n", "!<CR>", function()
     if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit()), false)() then
-      commands.with_change_at_position(ctx, commands.change_edit(true))
+      commands.with_change_at_position(ctx, commands.change_edit(true))()
     end
   end, { desc = "Edit immutable change or file at cursor position", buffer = true })
   vim.keymap.set("n", "de", commands.with_change_at_position(ctx, commands.change_describe(false)), { desc = "Edit change description", buffer = true })
