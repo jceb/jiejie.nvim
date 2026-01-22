@@ -27,7 +27,7 @@ COMMANDS                                                       *jiejie-commands*
 
 MAPS                                                               *jiejie-maps*
 
-                                                                    *jiejie_<CR>*
+                                                                   *jiejie_<CR>*
 <CR>                    Edit change at cursor position.
 
 
@@ -56,6 +56,19 @@ de                      Edit change description.
 
                                                                     *jiejie_!de*
 !de                     Edit immutable change description.
+
+                                                                     *jiejie_ss*
+ss                      Squash current changes into it's parent.
+
+                                                                    *jiejie_!ss*
+!ss                     Squash current changes into it's immutable parent.
+
+                                                                     *jiejie_st*
+st                      Squash current changes into the selecated change.
+
+                                                                    *jiejie_!st*
+!st                     Squash current changes into the immutuable elecated
+                        change.
 
 ABOUT                                                             *jiejie-about*
 

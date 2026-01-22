@@ -19,7 +19,8 @@ end
 --- @param cmd string JJ command
 --- @param args? string[] List of additional arguments
 --- @param force? boolean Modify immutable change
-local function start_dummy_editor(ctx, cmd, args, force)
+--- @param callback? fun(out: vim.SystemCompleted) Modify immutable change
+local function start_dummy_editor(ctx, cmd, args, force, callback)
   -- Start dummy editor in the background
   local editor = jujutsu.create_dummy_editor()
   local exec = jujutsu.cli(
@@ -51,10 +52,13 @@ local function start_dummy_editor(ctx, cmd, args, force)
         local buffer_dirty_check = require("jiejie.buffer_dirty_check")
         buffer_dirty_check.dirty_mark_content(ctx.buf)
         buffer_dirty_check.do_dirty_check()
-      else
+      elseif not callback then
         vim.schedule(function()
           vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
         end)
+      end
+      if callback then
+        callback(out)
       end
     end
   )
@@ -133,6 +137,28 @@ function M.with_change_at_position(ctx, fn)
   end
 end
 
+--- Request a target change ID
+--- @param fn fun(ctx: Context, src_change: Change, dst_change?: Change) Callback that is called with Context and the extracted change information. The function is only
+---                    called when a change id is found at the cursor position
+--- @return function
+function M.with_target_change_id(fn)
+  --- @param ctx Context context
+  --- @param src_change Change context
+  return function(ctx, src_change)
+    vim.ui.input({ prompt = "Target change (@-): " }, function(input)
+      if input == nil then
+        return
+      end
+      if input == "" then
+        fn(ctx, src_change)
+      else
+        -- TODO: verify existence of id before passing it on + generate a proper Change object
+        fn(ctx, src_change, { id = input, id_short = input })
+      end
+    end)
+  end
+end
+
 -- support fast one line edits
 --- Show help window
 --- @param ctx Context context
@@ -167,7 +193,7 @@ function M.change_new()
   end
 end
 
---- Commit change
+--- Commit changes
 --- @param ctx Context context
 --- @return function
 function M.change_commit(ctx)
@@ -176,15 +202,29 @@ function M.change_commit(ctx)
   end
 end
 
---- Squash chcanges
+--- Squash changes
 --- @return function
 function M.change_squash(force)
   --- @param ctx Context context
-  --- @param change Change current change
-  return function(ctx, change)
-    -- TODO: do I need a target change ID?
-    local args = { "squash", "-r", change.id }
-    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force))
+  --- @param src_change Change Soruce change
+  --- @param dst_change? Change Destination change
+  return function(ctx, src_change, dst_change)
+    -- TODO: do I need a target src_change ID?
+    local args = { dst_change and "-f" or "-r", src_change.id }
+    local dst = "it's parent"
+    if dst_change then
+      args = vim.list_extend(args, { "-t", dst_change.id })
+      dst = dst_change.id_short
+    end
+    start_dummy_editor(
+      ctx,
+      "squash",
+      args,
+      force,
+      vim.schedule_wrap(function(out)
+        vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
+      end)
+    )
   end
 end
 

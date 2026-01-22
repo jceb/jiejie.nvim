@@ -107,17 +107,41 @@ function M.setup_buffer(ctx)
   if ctx.curpos ~= nil then
     vim.api.nvim_win_set_cursor(winid, ctx.curpos)
   end
-  for _, key in ipairs({ "A", "a", "C", "c", "d", "D", "i", "I", "R", "r", "s", "S", "x", "X" }) do
+  for _, key in ipairs({ "a", "A", "c", "C", "d", "D", "i", "I", "r", "R", "s", "S", "x", "X", "p", "P" }) do
     -- disable keys that would cause a modification of the buffer
     vim.keymap.set("", key, "<Nop>", { buffer = true })
   end
   local commands = require("jiejie.commands")
-  vim.keymap.set("n", "cc", commands.change_commit(ctx), { desc = "Commit current change and create a new change", buffer = true })
+  vim.keymap.set("n", "cc", commands.change_commit(ctx), { desc = "Commit currently edited change and create a new change", buffer = true })
   vim.keymap.set(
     "n",
     "cn",
     commands.with_change_at_position(ctx, commands.change_new()),
     { desc = "Create a new change after the change at cursor position", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "ss",
+    commands.with_change_at_position(ctx, commands.change_squash()),
+    { desc = "Squash current changes into it's parent", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "!ss",
+    commands.with_change_at_position(ctx, commands.change_squash(true)),
+    { desc = "Squash current changes into it's parent", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "st",
+    commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash())),
+    { desc = "Squash current changes into it's parent", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "!st",
+    commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash(true))),
+    { desc = "Squash current changes into it's parent", buffer = true }
   )
   vim.keymap.set("n", "<CR>", commands.with_change_at_position(ctx, commands.change_edit()), { desc = "Edit change under the cursor", buffer = true })
   vim.keymap.set(
