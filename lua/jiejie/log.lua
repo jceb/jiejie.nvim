@@ -13,7 +13,6 @@ M.load = function(ctx, callback)
   local template =
     'change_id.shortest() ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", truncate_end(50, description.first_line(), "…")) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ if(git_head, " git_head()") ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id'
   local args = {
-    -- "jj",
     "log",
     "-n",
     "10", -- FIXME: make this configurable
@@ -41,6 +40,35 @@ M.load = function(ctx, callback)
   )
 end
 
+--- Load/reload file contents
+--- @param ctx Context context
+--- @param url JiejieURL File url
+--- @param callback fun(ctx: Context) Asynchronous callback
+M.load_file = function(ctx, url, callback)
+  local args = {
+    "file",
+    "show",
+    "-r",
+    url.version,
+    url.path,
+  }
+  jujutsu.cli(
+    ctx,
+    args,
+    nil,
+    vim.schedule_wrap(function(res)
+      if res.code ~= 0 then
+        error("Error getting file contents:\n" .. res.stderr)
+      end
+      local data = vim.split(res.stdout, "\n")
+      buffer.render_file(ctx, data)
+      if callback then
+        callback(ctx)
+      end
+    end)
+  )
+end
+
 --- Setup log model
 --- @param id number Auto-command group ID
 function M.setup(id)
@@ -51,11 +79,18 @@ function M.setup(id)
       -- Loader function for files of type jiejie
       vim.cmd.doau("BufReadPre")
       local url = parsers.parse_url(ev.file)
-      M.load({ root = url.root, buf = ev.buf, curpos = nil }, function(ctx)
-        context.set_context(ctx)
-        buffer.setup_buffer(ctx)
-        vim.cmd.doau("BufReadPost")
-      end)
+      if url.version == "repo" and url.path == "index" then
+        M.load({ root = url.root, buf = ev.buf, curpos = nil }, function(ctx)
+          context.set_context(ctx)
+          buffer.setup_buffer(ctx)
+          vim.cmd.doau("BufReadPost")
+        end)
+      else
+        vim.bo[ev.buf].buftype = "nofile"
+        M.load_file({ root = url.root, buf = ev.buf, curpos = nil }, url, function(ctx)
+          vim.cmd.doau("BufReadPost")
+        end)
+      end
     end,
   })
 end

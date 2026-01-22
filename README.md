@@ -30,17 +30,33 @@ return {
 
 - [x] Basic feature: Display log in window
 - [x] Basic feature: Make J / Jj a simple wrapper for jj CLI
-- [x] Basic feature: Add help header and help key binding
-- [x] Basic feature: Add keybinding to edit a change
-- [x] Basic feature: Describe a change
-- [x] Basic feature: Make `Jj describe` open the change editor
-- [x] Basic feature: Display changed files in log view
+- [x] Commands: describe
+- [x] Commands: edit
+- [x] Commands: squash
+- [x] Commands: commit
+- [x] Commands: new
+- [x] Log: Display changed files in log view
+- [x] Log: Jump to file from log window
 - [ ] Basic feature: Display file changes as diff inside the log window
-- [ ] Basic feature: Add more convenience keybindings to perform jj operations
-- [ ] Basic feature: Jump to file from log window
+- [ ] Commands: split
+- [ ] Commands: bookmark
+- [ ] Commands: abandon
+- [ ] Commands: absorb
+- [ ] Commands: diff
+- [ ] Commands: duplicate
+- [ ] Commands: diffedit
+- [ ] Commands: worktree
+- [ ] Commands: rebase
+- [ ] Commands: show full change
+- [ ] Commands: undo / redo
+- [ ] Commands: tag
+- [ ] Commands: revert
+- [ ] Commands: parallelize
+- [ ] Commands: metaedit
+- [ ] Commands: interdiff
+- [ ] Commands: evolog
 - [ ] New feature: Operations log support
 - [ ] New Feature: Completion for Jj command
-- [ ] New feature: Worktree support
 - [ ] Configuration: Make mappings configurable
 
 ## References

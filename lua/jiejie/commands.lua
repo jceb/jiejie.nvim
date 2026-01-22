@@ -30,7 +30,6 @@ local function start_dummy_editor(ctx, cmd, args, force, callback)
         vim.list_extend({ cmd }, {
           "--quiet",
           -- "--debug",
-          -- "-r",
         }),
         args or {}
       ),
@@ -93,8 +92,17 @@ end
 --- Commands that manipulate the log
 local M = {}
 
+--- @class ChangeStatus
+local CHANGE_STATUS = {
+  CURRENT = "@",
+  IMMUTABLE = "◆",
+  CONFLICT = "×",
+  MUTUABLE = "◇",
+  HEAD = "○",
+}
+
 --- @class Change
---- @field status string Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
+--- @field status ChangeStatus Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
 --- @field id string change ID
 --- @field id_short string Short change ID
 --- @field empty boolean It's an empty change
@@ -105,20 +113,24 @@ local M = {}
 --- @field conflict boolean Change is in a state of conflict
 --- @field immutable boolean Change is immutable
 
-local CHANGE_STATUS_ICON = {
-  CURRENT = "@",
-  IMMUTABLE = "◆",
-  CONFLICT = "×",
-  MUTUABLE = "◇",
-  HEAD = "○",
+--- @class ModificationType
+M.MODIFICATION_TYPE = {
+  DELETED = "D",
+  MODIFIED = "M",
+  ADDED = "A",
 }
+
+--- @class ModifiedFile
+--- @field modification ModificationType Modification type
+--- @field filename string File name
 
 --- Retrieve data about the change that the cursor is on
 --- @param ctx Context context
 --- @param fn fun(ctx: Context, change: Change) Callback that is called with Context and the extracted change information. The function is only
 ---                    called when a change id is found at the cursor position
+--- @param err_notify? boolean Send notification is change is not found
 --- @return function
-function M.with_change_at_position(ctx, fn)
+function M.with_change_at_position(ctx, fn, err_notify)
   return function()
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
@@ -130,9 +142,38 @@ function M.with_change_at_position(ctx, fn)
     local line = vim.fn.getbufoneline(ctx.buf, pos[1])
     local change = parsers.parse_change(line)
     if change == nil then
-      vim.notify("No change data found.", vim.log.levels.WARN)
+      if err_notify then
+        vim.notify("No change data found.", vim.log.levels.WARN)
+      end
     else
       fn(ctx, change)
+      return true
+    end
+  end
+end
+
+--- Retrieve data about the file name that the cursor is on
+--- @param ctx Context context
+--- @param fn fun(ctx: Context, file: ModifiedFile) Callback that is called with Context and the extracted file name
+--- @param err_notify? boolean Send notification is change is not found
+--- @return function
+function M.with_filename_at_position(ctx, fn, err_notify)
+  return function()
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return nil
+    end
+    local pos = vim.api.nvim_win_get_cursor(winid)
+    local filename = parsers.parse_filename(vim.fn.getbufoneline(ctx.buf, pos[1]))
+    if filename == nil then
+      if err_notify then
+        vim.notify("No file name found.", vim.log.levels.WARN)
+      end
+    else
+      fn(ctx, filename)
+      return true
     end
   end
 end
@@ -156,6 +197,36 @@ function M.with_target_change_id(fn)
         fn(ctx, src_change, { id = input, id_short = input })
       end
     end)
+  end
+end
+
+--- Retrieve data about the change that the cursor is on
+--- @param ctx Context context
+--- @param fn fun(..., change: Change) Callback that is called with Context and the extracted change information. The function is only
+---                    called when a change id is found at the cursor position
+--- @param err_notify? boolean Send notification is change is not found
+--- @return function
+function M.search_change_upwards(ctx, fn, err_notify)
+  return function(ctx, filename)
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return nil
+    end
+    local lnr = vim.api.nvim_win_get_cursor(winid)[1] - 1 -- start search above the current line
+    while lnr > 0 do
+      local change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, lnr))
+      if change then
+        fn(ctx, filename, change)
+        return true
+      else
+        lnr = lnr - 1
+      end
+    end
+    if err_notify then
+      vim.notify("No change data found.", vim.log.levels.WARN)
+    end
   end
 end
 
@@ -209,7 +280,6 @@ function M.change_squash(force)
   --- @param src_change Change Soruce change
   --- @param dst_change? Change Destination change
   return function(ctx, src_change, dst_change)
-    -- TODO: do I need a target src_change ID?
     local args = { dst_change and "-f" or "-r", src_change.id }
     local dst = "it's parent"
     if dst_change then
@@ -235,7 +305,7 @@ function M.change_edit(force)
   --- @param ctx Context context
   --- @param change Change current change
   return function(ctx, change)
-    if change.status == CHANGE_STATUS_ICON.CURRENT then
+    if change.status == CHANGE_STATUS.CURRENT then
       vim.notify("Already editing change! ID: " .. change.id, vim.log.levels.INFO)
       return
     end
@@ -301,6 +371,29 @@ function M.change_describe(force, firstline)
       end)
     end
     start_dummy_editor(ctx, "describe", { "--edit", change.id }, force)
+  end
+end
+
+--- Edit file
+--- @param force? boolean Edit immutable change
+--- @return function
+function M.file_edit(force)
+  --- @param ctx Context context
+  --- @param file ModifiedFile File name
+  --- @param change Change Change to edit file at
+  return function(ctx, file, change)
+    local filename = vim.fs.joinpath(ctx.root, file.filename)
+    if change.status ~= CHANGE_STATUS.CURRENT then
+      filename = "jiejie://" .. ctx.root .. "/.jj/" .. change.id .. "/" .. file.filename
+    end
+    local winid = vim.api.nvim_get_current_win()
+    vim.cmd.wincmd("p")
+    local winid_new = vim.api.nvim_get_current_win()
+    if winid_new == winid then
+      vim.cmd.sp(filename)
+    else
+      vim.cmd.e(filename)
+    end
   end
 end
 

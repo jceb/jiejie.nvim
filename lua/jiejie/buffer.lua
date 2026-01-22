@@ -45,6 +45,20 @@ function M.render(ctx, data, headers)
   return ctx.curpos
 end
 
+--- Render file contents
+--- @param ctx Context context
+--- @param data string[] jj log output to display
+function M.render_file(ctx, data)
+  vim.bo[ctx.buf].modifiable = true
+  vim.bo[ctx.buf].readonly = false
+  if data[#data] == "" then
+    data[#data] = nil
+  end
+  vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, data)
+  vim.bo[ctx.buf].readonly = true
+  vim.bo[ctx.buf].modifiable = false
+end
+
 --- Focus buffer in current tab
 --- @param ctx Context context
 --- @param vertical boolean Split window vertically, instead of horizontally
@@ -129,27 +143,30 @@ function M.setup_buffer(ctx)
     "n",
     "!ss",
     commands.with_change_at_position(ctx, commands.change_squash(true)),
-    { desc = "Squash current changes into it's parent", buffer = true }
+    { desc = "Squash current changes into it's immutable parent", buffer = true }
   )
   vim.keymap.set(
     "n",
     "st",
     commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash())),
-    { desc = "Squash current changes into it's parent", buffer = true }
+    { desc = "Squash current changes into the selecated change", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!st",
     commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash(true))),
-    { desc = "Squash current changes into it's parent", buffer = true }
+    { desc = "Squash current changes into the immutuable selecated change", buffer = true }
   )
-  vim.keymap.set("n", "<CR>", commands.with_change_at_position(ctx, commands.change_edit()), { desc = "Edit change under the cursor", buffer = true })
-  vim.keymap.set(
-    "n",
-    "!<CR>",
-    commands.with_change_at_position(ctx, commands.change_edit(true)),
-    { desc = "Edit immutable change under the cursor", buffer = true }
-  )
+  vim.keymap.set("n", "<CR>", function()
+    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(ctx, commands.file_edit()), false)() then
+      commands.with_change_at_position(ctx, commands.change_edit())()
+    end
+  end, { desc = "Edit change or file at cursor position", buffer = true })
+  vim.keymap.set("n", "!<CR>", function()
+    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit()), false)() then
+      commands.with_change_at_position(ctx, commands.change_edit(true))
+    end
+  end, { desc = "Edit immutable change or file at cursor position", buffer = true })
   vim.keymap.set("n", "de", commands.with_change_at_position(ctx, commands.change_describe(false)), { desc = "Edit change description", buffer = true })
   vim.keymap.set(
     "n",

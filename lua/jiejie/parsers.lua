@@ -4,11 +4,11 @@ local jujutsu = require("jiejie.jujutsu")
 local M = {}
 
 --- Parse change string into structured data
---- @param change string Line containing a change string
+--- @param line string Line containing a change string
 --- @return Change?
-function M.parse_change(change)
+function M.parse_change(line)
   local match = vim.fn.matchlist(
-    change,
+    line,
     [[^[─╯│ ]*\([@×◆◇○]\)  \([a-z]\+\)\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)]]
   )
   local match2 = vim.fn.matchlist(match[10], [[^[^∮]*∮\([^∴]*\)∴\(.\+\)]])
@@ -22,7 +22,7 @@ function M.parse_change(change)
   local conflict = match[9] == " conflict"
   local immutable = match2[2] == " immutable"
   local id = match2[3]
-  if match == nil or status == nil or id_short == nil then
+  if match == nil or match2 == nil or status == nil or id_short == nil or id == nil then
     return nil
   end
   return {
@@ -39,9 +39,26 @@ function M.parse_change(change)
   }
 end
 
+--- Parse change string into structured data
+--- @param line string Line containing a file name string
+--- @return ModifiedFile?
+function M.parse_filename(line)
+  local match = vim.fn.matchlist(line, [[^[╮─╯│├ ]\+  \([MAD]\) \(.\+\)$]])
+  local modification = match[2]
+  local filename = match[3]
+  if match == nil or modification == nil or filename == nil then
+    return nil
+  end
+  return {
+    modification = modification,
+    filename = filename,
+  }
+end
+
 --- @class JiejieURL
 --- @field scheme string URL scheme
 --- @field root string Path to the repository
+--- @field version string Version string
 --- @field path string Path in the repository
 
 --- Parse jiejie:// URL into its componentens
@@ -51,19 +68,20 @@ function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     error("Error: unknown URL scheme: " .. url)
   end
-  local match = vim.regex("/.jj/repo/index$"):match_str(url)
+  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\+\)/.jj/\([^/]\+\)/\(.\+\)$]])
   if match == nil then
     error("Error: unable to determine repository from filename: " .. url)
   end
-  local root = jujutsu.get_root(string.sub(url, 10, match))
+  local root = jujutsu.get_root(match[3])
   local repo_stats = vim.uv.fs_stat(root)
   if repo_stats == nil or repo_stats.type ~= "directory" then
     error("Error: path does not point to a directory: " .. root)
   end
   return {
-    scheme = string.sub(url, 0, 10),
+    scheme = match[2],
     root = root,
-    path = string.sub(url, match),
+    version = match[4],
+    path = match[5],
   }
 end
 
