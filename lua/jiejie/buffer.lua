@@ -163,7 +163,7 @@ function M.setup_buffer(ctx)
     end
   end, { desc = "Edit change or file at cursor position", buffer = true })
   vim.keymap.set("n", "!<CR>", function()
-    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit()), false)() then
+    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit(true)), false)() then
       commands.with_change_at_position(ctx, commands.change_edit(true))()
     end
   end, { desc = "Edit immutable change or file at cursor position", buffer = true })
@@ -186,6 +186,16 @@ function M.setup_buffer(ctx)
     commands.with_change_at_position(ctx, commands.change_describe(true, true)),
     { desc = "Edit first line of an immutable change description", buffer = true }
   )
+  vim.keymap.set("n", "X", function()
+    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore()), false)() then
+      commands.with_change_at_position(ctx, commands.change_abandon())()
+    end
+  end, { desc = "Abandon change or restore file from parent change", buffer = true })
+  vim.keymap.set("n", "!X", function()
+    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore(true)), false)() then
+      commands.with_change_at_position(ctx, commands.change_abandon(true))()
+    end
+  end, { desc = "Abandon immutuable change or restore file from parent change", buffer = true })
   vim.keymap.set("n", "g?", commands.show_help, { desc = "Show help", buffer = true })
   require("jiejie.buffer_dirty_check").setup_buffer(ctx)
   require("jiejie.context").setup_buffer(ctx)

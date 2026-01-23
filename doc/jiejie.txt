@@ -70,6 +70,13 @@ st                      Squash current changes into the selecated change.
 !st                     Squash current changes into the immutuable selecated
                         change.
 
+                                                                     *jiejie_X*
+X                       Abandon change or restore file from parent change.
+
+                                                                    *jiejie_!X*
+!X                      Abandon immutuable change or restore file from parent
+                        change.
+
 ABOUT                                                             *jiejie-about*
 
 Grab the latest version or report a bug on GitHub:

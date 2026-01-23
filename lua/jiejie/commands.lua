@@ -248,6 +248,21 @@ function M.show_log(root, vertical)
   return ctx
 end
 
+--- Abandon change
+--- @return function
+function M.change_abandon()
+  --- @param ctx Context context
+  --- @param change Change Change data
+  return function(ctx, change)
+    local args = { "abandon", change.id }
+    jujutsu.cli(ctx, args, nil, function()
+      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+      buffer_dirty_check.dirty_mark_everything(ctx.buf)
+      buffer_dirty_check.do_dirty_check()
+    end)
+  end
+end
+
 --- Create new change
 --- @return function
 function M.change_new()
@@ -255,7 +270,6 @@ function M.change_new()
   --- @param change Change Change data
   return function(ctx, change)
     local args = { "new", change.id }
-    -- TODO mark tree as dirty
     jujutsu.cli(ctx, args, nil, function()
       local buffer_dirty_check = require("jiejie.buffer_dirty_check")
       buffer_dirty_check.dirty_mark_everything(ctx.buf)
@@ -395,6 +409,27 @@ function M.file_edit(force)
     else
       vim.cmd.e(filename)
     end
+  end
+end
+
+--- Restore file
+--- @param force? boolean Change immutable
+--- @return function
+function M.file_restore(force)
+  --- @param ctx Context context
+  --- @param file ModifiedFile File name
+  --- @param change Change Change to edit file at
+  return function(ctx, file, change)
+    local filename = vim.fs.joinpath(ctx.root, file.filename)
+    if change.status ~= CHANGE_STATUS.CURRENT then
+      vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
+    end
+    local args = { "restore", "-f", "@-", file.filename }
+    jujutsu.cli(ctx, args, nil, function()
+      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+      buffer_dirty_check.dirty_mark_everything(ctx.buf)
+      buffer_dirty_check.do_dirty_check()
+    end)
   end
 end
 

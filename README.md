@@ -37,10 +37,11 @@ return {
 - [x] Commands: new
 - [x] Log: Display changed files in log view
 - [x] Log: Jump to file from log window
+- [x] Commands: abandon / restore
+- [ ] Commands: revert
 - [ ] Basic feature: Display file changes as diff inside the log window
 - [ ] Commands: split
 - [ ] Commands: bookmark
-- [ ] Commands: abandon
 - [ ] Commands: absorb
 - [ ] Commands: diff
 - [ ] Commands: duplicate
@@ -50,7 +51,6 @@ return {
 - [ ] Commands: show full change
 - [ ] Commands: undo / redo
 - [ ] Commands: tag
-- [ ] Commands: revert
 - [ ] Commands: parallelize
 - [ ] Commands: metaedit
 - [ ] Commands: interdiff
