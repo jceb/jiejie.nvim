@@ -336,7 +336,7 @@ function M.log_revisions_adjust(ctx, adjustment)
   ctx.log_revisions = log_revisions > 0 and log_revisions or 1
   context.set_context(ctx)
   local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-  buffer_dirty_check.dirty_mark_everything(ctx.buf)
+  buffer_dirty_check.dirty_mark_content(ctx.buf)
   buffer_dirty_check.do_dirty_check()
 end
 
