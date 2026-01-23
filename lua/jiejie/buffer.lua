@@ -1,5 +1,134 @@
+local context = require("jiejie.context")
+local parsers = require("jiejie.parsers")
+
 --- Opeations that manipulate the buffer / window
 local M = {}
+
+--- Adjust the displayed number of revisions
+--- @param fn fun(ctx: Context, count: number) Callback function
+--- @param negate? boolean Negate count or pass it on as received
+function M.with_count(fn, negate)
+  --- @param ctx Context context
+  return function(ctx)
+    local count = vim.v.count ~= 0 and vim.v.count or 1
+    fn(ctx, (negate and -1 or 1) * count)
+  end
+end
+
+--- Provide repository context
+--- @param root string Root directory of repository
+--- @param fn fun(ctx: Context) Callback that is called with Context
+--- @return function
+function M.with_context(root, fn)
+  return function(x)
+    fn(context.get_context(root))
+  end
+end
+
+--- Retrieve data about the change that the cursor is on
+--- @param fn fun(ctx: Context, change: Change) Callback that is called with Context and the extracted change information. The function is only
+---                    called when a change id is found at the cursor position
+--- @param err_notify? boolean Send notification is change is not found
+--- @return function
+function M.with_change_at_position(fn, err_notify)
+  --- @param ctx Context context
+  return function(ctx)
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return nil
+    end
+    local pos = vim.api.nvim_win_get_cursor(winid)
+    local line = vim.fn.getbufoneline(ctx.buf, pos[1])
+    local change = parsers.parse_change(line)
+    if change == nil then
+      if err_notify then
+        vim.notify("No change data found.", vim.log.levels.WARN)
+      end
+    else
+      fn(ctx, change)
+      return true
+    end
+  end
+end
+
+--- Retrieve data about the file name that the cursor is on
+--- @param ctx Context context
+--- @param fn fun(ctx: Context, file: ModifiedFile) Callback that is called with Context and the extracted file name
+--- @param err_notify? boolean Send notification is change is not found
+--- @return function
+function M.with_filename_at_position(ctx, fn, err_notify)
+  return function()
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return nil
+    end
+    local pos = vim.api.nvim_win_get_cursor(winid)
+    local filename = parsers.parse_filename(vim.fn.getbufoneline(ctx.buf, pos[1]))
+    if filename == nil then
+      if err_notify then
+        vim.notify("No file name found.", vim.log.levels.WARN)
+      end
+    else
+      fn(ctx, filename)
+      return true
+    end
+  end
+end
+
+--- Request a target change ID
+--- @param fn fun(ctx: Context, src_change: Change, dst_change?: Change) Callback that is called with Context and the extracted change information. The function is only
+---                    called when a change id is found at the cursor position
+--- @return function
+function M.with_target_change_id(fn)
+  --- @param ctx Context context
+  --- @param src_change Change context
+  return function(ctx, src_change)
+    vim.ui.input({ prompt = "Target change (@-): " }, function(input)
+      if input == nil then
+        return
+      end
+      if input == "" then
+        fn(ctx, src_change)
+      else
+        -- TODO: verify existence of id before passing it on + generate a proper Change object
+        fn(ctx, src_change, { id = input, id_short = input })
+      end
+    end)
+  end
+end
+
+--- Retrieve data about the change that the cursor is on
+--- @param fn fun(ctx: Context, filname: string, change: Change) Callback that is called with Context and the extracted change information. The function is only
+---                    called when a change id is found at the cursor position
+--- @param err_notify? boolean Send notification is change is not found
+--- @return function
+function M.search_change_upwards(fn, err_notify)
+  return function(ctx, filename)
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return nil
+    end
+    local lnr = vim.api.nvim_win_get_cursor(winid)[1] - 1 -- start search above the current line
+    while lnr > 0 do
+      local change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, lnr))
+      if change then
+        fn(ctx, filename, change)
+        return true
+      else
+        lnr = lnr - 1
+      end
+    end
+    if err_notify then
+      vim.notify("No change data found.", vim.log.levels.WARN)
+    end
+  end
+end
 
 --- Tests validity of buffer, returns nil if buffer is not valid, otherwise the passed in buffer id
 --- @param buf number Buffer ID
@@ -129,63 +258,73 @@ function M.setup_buffer(ctx)
   vim.keymap.set(
     "n",
     "<C-a>",
-    commands.with_context(ctx.root, commands.with_count(commands.log_revisions_adjust())),
+    M.with_context(ctx.root, M.with_count(commands.log_revisions_adjust)),
     { desc = "Increase the number of displayed log revisions", buffer = true }
   )
   vim.keymap.set(
     "n",
     "<C-x>",
-    commands.with_context(ctx.root, commands.with_count(commands.log_revisions_adjust(), true)),
+    M.with_context(ctx.root, M.with_count(commands.log_revisions_adjust, true)),
     { desc = "Decrease the number of displayed log revisions", buffer = true }
   )
   vim.keymap.set(
     "n",
     "cc",
-    commands.with_context(ctx.root, commands.change_commit()),
+    M.with_context(ctx.root, commands.change_commit),
     { desc = "Commit currently edited change and create a new change", buffer = true }
   )
   vim.keymap.set(
     "n",
     "cn",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_new())),
+    M.with_context(ctx.root, M.with_change_at_position(commands.change_new)),
     { desc = "Create a new change after the change at cursor position", buffer = true }
   )
   vim.keymap.set(
     "n",
     "crc",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_revert())),
+    M.with_context(ctx.root, M.with_change_at_position(commands.change_revert)),
     { desc = "Revert the commit under the cursor", buffer = true }
   )
   vim.keymap.set(
     "n",
     "cs",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_squash())),
+    M.with_context(ctx.root, M.with_change_at_position(commands.change_squash)),
     { desc = "Squash current changes into it's parent", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!cs",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_squash(true))),
+    M.with_context(
+      ctx.root,
+      M.with_change_at_position(function(ctx, change)
+        commands.change_squash(ctx, change, true)
+      end)
+    ),
     { desc = "Squash current changes into it's immutable parent", buffer = true }
   )
   vim.keymap.set(
     "n",
     "cS",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.with_target_change_id(commands.change_squash()))),
+    M.with_context(ctx.root, M.with_change_at_position(M.with_target_change_id(commands.change_squash))),
     { desc = "Squash current changes into the selecated change", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!cS",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.with_target_change_id(commands.change_squash(true)))),
+    M.with_context(
+      ctx.root,
+      M.with_change_at_position(M.with_target_change_id(function(ctx, src_change, dst_change)
+        commands.change_squash(ctx, src_change, dst_change, true)
+      end))
+    ),
     { desc = "Squash current changes into the immutuable selecated change", buffer = true }
   )
   vim.keymap.set(
     "n",
     "<CR>",
-    commands.with_context(ctx.root, function(ctx)
-      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(commands.file_edit()), false)() then
-        commands.with_change_at_position(commands.change_edit())(ctx)
+    M.with_context(ctx.root, function(ctx)
+      if not M.with_filename_at_position(ctx, M.search_change_upwards(commands.file_edit), false)() then
+        M.with_change_at_position(commands.change_edit)(ctx)
       end
     end),
     { desc = "Edit change or file under the cursor", buffer = true }
@@ -193,9 +332,19 @@ function M.setup_buffer(ctx)
   vim.keymap.set(
     "n",
     "!<CR>",
-    commands.with_context(ctx.root, function(ctx)
-      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(commands.file_edit(true)), false)() then
-        commands.with_change_at_position(commands.change_edit(true))(ctx)
+    M.with_context(ctx.root, function(ctx)
+      if
+        not M.with_filename_at_position(
+          ctx,
+          M.search_change_upwards(function(ctx, filename, change)
+            commands.file_edit(ctx, filename, change, true)
+          end),
+          false
+        )()
+      then
+        M.with_change_at_position(function(ctx, change)
+          commands.change_edit(ctx, change, true)
+        end)(ctx)
       end
     end),
     { desc = "Edit immutable change or file under the cursor", buffer = true }
@@ -203,33 +352,53 @@ function M.setup_buffer(ctx)
   vim.keymap.set(
     "n",
     "de",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(false))),
+    M.with_context(
+      ctx.root,
+      M.with_change_at_position(function(ctx, change)
+        commands.change_describe(ctx, change, false)
+      end)
+    ),
     { desc = "Edit change description", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!de",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(true))),
+    M.with_context(
+      ctx.root,
+      M.with_change_at_position(function(ctx, change)
+        commands.change_describe(ctx, change, true)
+      end)
+    ),
     { desc = "Edit immutable change description", buffer = true }
   )
   vim.keymap.set(
     "n",
     "dd",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(false, true))),
+    M.with_context(
+      ctx.root,
+      M.with_change_at_position(function(ctx, change)
+        commands.change_describe(ctx, change, false, true)
+      end)
+    ),
     { desc = "Edit first line of change description", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!dd",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(true, true))),
+    M.with_context(
+      ctx.root,
+      M.with_change_at_position(function(ctx, change)
+        commands.change_describe(ctx, change, true, true)
+      end)
+    ),
     { desc = "Edit first line of an immutable change description", buffer = true }
   )
   vim.keymap.set(
     "n",
     "X",
-    commands.with_context(ctx.root, function(ctx)
-      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore()), false)() then
-        commands.with_change_at_position(commands.change_abandon())(ctx)
+    M.with_context(ctx.root, function(ctx)
+      if not M.with_filename_at_position(ctx, M.search_change_upwards(commands.file_restore()), false)() then
+        M.with_change_at_position(commands.change_abandon())(ctx)
       end
     end),
     { desc = "Abandon change or restore file from parent change", buffer = true }
@@ -237,9 +406,9 @@ function M.setup_buffer(ctx)
   vim.keymap.set(
     "n",
     "!X",
-    commands.with_context(ctx.root, function(ctx)
-      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore(true)), false)() then
-        commands.with_change_at_position(commands.change_abandon(true))(ctx)
+    M.with_context(ctx.root, function(ctx)
+      if not M.with_filename_at_position(ctx, M.search_change_upwards(commands.file_restore(true)), false)() then
+        M.with_change_at_position(commands.change_abandon(true))(ctx)
       end
     end),
     { desc = "Abandon immutuable change or restore file from parent change", buffer = true }

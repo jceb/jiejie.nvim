@@ -1,6 +1,5 @@
 local context = require("jiejie.context")
 local jujutsu = require("jiejie.jujutsu")
-local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
 
 --- Reload buffer or error
@@ -140,121 +139,6 @@ M.MODIFICATION_TYPE = {
 --- @field modification ModificationType Modification type
 --- @field filename string File name
 
---- Provide repository context
---- @param root string Root directory of repository
---- @param fn fun(ctx: Context) Callback that is called with Context
---- @return function
-function M.with_context(root, fn)
-  return function(x)
-    fn(context.get_context(root))
-  end
-end
-
---- Retrieve data about the change that the cursor is on
---- @param fn fun(ctx: Context, change: Change) Callback that is called with Context and the extracted change information. The function is only
----                    called when a change id is found at the cursor position
---- @param err_notify? boolean Send notification is change is not found
---- @return function
-function M.with_change_at_position(fn, err_notify)
-  --- @param ctx Context context
-  return function(ctx)
-    local winid = vim.api.nvim_get_current_win()
-    local bufid = vim.api.nvim_win_get_buf(winid)
-    if bufid ~= ctx.buf then
-      -- somehow the incorrect window/buffer is being edited
-      return nil
-    end
-    local pos = vim.api.nvim_win_get_cursor(winid)
-    local line = vim.fn.getbufoneline(ctx.buf, pos[1])
-    local change = parsers.parse_change(line)
-    if change == nil then
-      if err_notify then
-        vim.notify("No change data found.", vim.log.levels.WARN)
-      end
-    else
-      fn(ctx, change)
-      return true
-    end
-  end
-end
-
---- Retrieve data about the file name that the cursor is on
---- @param ctx Context context
---- @param fn fun(ctx: Context, file: ModifiedFile) Callback that is called with Context and the extracted file name
---- @param err_notify? boolean Send notification is change is not found
---- @return function
-function M.with_filename_at_position(ctx, fn, err_notify)
-  return function()
-    local winid = vim.api.nvim_get_current_win()
-    local bufid = vim.api.nvim_win_get_buf(winid)
-    if bufid ~= ctx.buf then
-      -- somehow the incorrect window/buffer is being edited
-      return nil
-    end
-    local pos = vim.api.nvim_win_get_cursor(winid)
-    local filename = parsers.parse_filename(vim.fn.getbufoneline(ctx.buf, pos[1]))
-    if filename == nil then
-      if err_notify then
-        vim.notify("No file name found.", vim.log.levels.WARN)
-      end
-    else
-      fn(ctx, filename)
-      return true
-    end
-  end
-end
-
---- Request a target change ID
---- @param fn fun(ctx: Context, src_change: Change, dst_change?: Change) Callback that is called with Context and the extracted change information. The function is only
----                    called when a change id is found at the cursor position
---- @return function
-function M.with_target_change_id(fn)
-  --- @param ctx Context context
-  --- @param src_change Change context
-  return function(ctx, src_change)
-    vim.ui.input({ prompt = "Target change (@-): " }, function(input)
-      if input == nil then
-        return
-      end
-      if input == "" then
-        fn(ctx, src_change)
-      else
-        -- TODO: verify existence of id before passing it on + generate a proper Change object
-        fn(ctx, src_change, { id = input, id_short = input })
-      end
-    end)
-  end
-end
-
---- Retrieve data about the change that the cursor is on
---- @param fn fun(ctx: Context, filname: string, change: Change) Callback that is called with Context and the extracted change information. The function is only
----                    called when a change id is found at the cursor position
---- @param err_notify? boolean Send notification is change is not found
---- @return function
-function M.search_change_upwards(fn, err_notify)
-  return function(ctx, filename)
-    local winid = vim.api.nvim_get_current_win()
-    local bufid = vim.api.nvim_win_get_buf(winid)
-    if bufid ~= ctx.buf then
-      -- somehow the incorrect window/buffer is being edited
-      return nil
-    end
-    local lnr = vim.api.nvim_win_get_cursor(winid)[1] - 1 -- start search above the current line
-    while lnr > 0 do
-      local change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, lnr))
-      if change then
-        fn(ctx, filename, change)
-        return true
-      else
-        lnr = lnr - 1
-      end
-    end
-    if err_notify then
-      vim.notify("No change data found.", vim.log.levels.WARN)
-    end
-  end
-end
-
 -- support fast one line edits
 --- Show help window
 --- @param ctx Context context
@@ -285,153 +169,135 @@ function M.change_abandon()
 end
 
 --- Create new change
---- @return function
-function M.change_new()
-  --- @param ctx Context context
-  --- @param change Change Change data
-  return function(ctx, change)
-    local args = { "new", change.id }
-    jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
-  end
+--- @param ctx Context context
+--- @param change Change Change data
+function M.change_new(ctx, change)
+  local args = { "new", change.id }
+  jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
 end
 
 --- Commit changes
---- @return function
-function M.change_commit()
-  --- @param ctx Context context
-  return function(ctx)
-    start_dummy_editor(ctx, "commit")
-  end
+--- @param ctx Context context
+function M.change_commit(ctx)
+  start_dummy_editor(ctx, "commit")
 end
 
 --- Squash changes
 --- @return function
-function M.change_squash(force)
-  --- @param ctx Context context
-  --- @param src_change Change Soruce change
-  --- @param dst_change? Change Destination change
-  return function(ctx, src_change, dst_change)
-    local args = { dst_change and "-f" or "-r", src_change.id }
-    local dst = "it's parent"
-    if dst_change then
-      args = vim.list_extend(args, { "-t", dst_change.id })
-      dst = dst_change.id_short
-    end
-    start_dummy_editor(
-      ctx,
-      "squash",
-      args,
-      force,
-      vim.schedule_wrap(function(out)
-        vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
-      end)
-    )
+--- @param ctx Context context
+--- @param src_change Change Soruce change
+--- @param dst_change? Change Destination change
+function M.change_squash(ctx, src_change, dst_change, force)
+  local args = { dst_change and "-f" or "-r", src_change.id }
+  local dst = "it's parent"
+  if dst_change then
+    args = vim.list_extend(args, { "-t", dst_change.id })
+    dst = dst_change.id_short
   end
+  start_dummy_editor(
+    ctx,
+    "squash",
+    args,
+    force,
+    vim.schedule_wrap(function(out)
+      vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
+    end)
+  )
 end
 
 --- Edit change
+--- @param ctx Context context
+--- @param change Change current change
 --- @param force? boolean Edit immutable change
 --- @return function
-function M.change_edit(force)
-  --- @param ctx Context context
-  --- @param change Change current change
-  return function(ctx, change)
-    if change.status == CHANGE_STATUS.CURRENT then
-      vim.notify("Already editing change! ID: " .. change.id_short, vim.log.levels.INFO)
-      return
-    end
-    if notify_immutable(change, force) then
-      return
-    end
-    local args = { "edit", change.id }
-    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
+function M.change_edit(ctx, change, force)
+  if change.status == CHANGE_STATUS.CURRENT then
+    vim.notify("Already editing change! ID: " .. change.id_short, vim.log.levels.INFO)
+    return
   end
+  if notify_immutable(change, force) then
+    return
+  end
+  local args = { "edit", change.id }
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
 end
 
 --- Describe change
+--- @param ctx Context context
+--- @param change Change Change data
 --- @param force? boolean Edit immutable change
 --- @param firstline? boolean Edit just the first line
---- @return function
-function M.change_describe(force, firstline)
-  --- @param ctx Context context
-  --- @param change Change Change data
-  return function(ctx, change)
-    if notify_immutable(change, force) then
-      return
-    end
-    -- get current description
-    local res = jujutsu.cli(ctx, {
-      "log",
-      "--no-graph",
-      "-r",
-      change.id,
-      "-T",
-      "description",
-    })
-    local data = vim.trim(res.stdout)
-    local current_description = vim.split(data, "\n")
-    -- edit description
-    if firstline then
-      return vim.schedule(function()
-        vim.ui.input({ prompt = "Describe change (" .. change.id_short .. "): ", default = current_description[1] }, function(input)
-          if input == nil then
-            return
-          end
-          local new_description = vim.list_extend({ vim.trim(input) }, vim.list_slice(current_description, 2, #current_description))
-          jujutsu.cli(
-            ctx,
-            jujutsu.ignore_immtuable({
-              "describe",
-              "-r",
-              change.id,
-              "--stdin",
-              "--no-edit",
-              "--quiet",
-            }, force),
-            {
-              stdin = new_description,
-            },
-            reload_or_error(ctx, "describe")
-          )
-        end)
-      end)
-    end
-    start_dummy_editor(ctx, "describe", { "--edit", change.id }, force)
+function M.change_describe(ctx, change, force, firstline)
+  if notify_immutable(change, force) then
+    return
   end
+  -- get current description
+  local res = jujutsu.cli(ctx, {
+    "log",
+    "--no-graph",
+    "-r",
+    change.id,
+    "-T",
+    "description",
+  })
+  local data = vim.trim(res.stdout)
+  local current_description = vim.split(data, "\n")
+  -- edit description
+  if firstline then
+    return vim.schedule(function()
+      vim.ui.input({ prompt = "Describe change (" .. change.id_short .. "): ", default = current_description[1] }, function(input)
+        if input == nil then
+          return
+        end
+        local new_description = vim.list_extend({ vim.trim(input) }, vim.list_slice(current_description, 2, #current_description))
+        jujutsu.cli(
+          ctx,
+          jujutsu.ignore_immtuable({
+            "describe",
+            "-r",
+            change.id,
+            "--stdin",
+            "--no-edit",
+            "--quiet",
+          }, force),
+          {
+            stdin = new_description,
+          },
+          reload_or_error(ctx, "describe")
+        )
+      end)
+    end)
+  end
+  start_dummy_editor(ctx, "describe", { "--edit", change.id }, force)
 end
 
 --- Revert change
+--- @param ctx Context context
+--- @param change Change current change
 --- @param force? boolean Edit immutable change
---- @return function
-function M.change_revert(force)
-  --- @param ctx Context context
-  --- @param change Change current change
-  return function(ctx, change)
-    local args = { "revert", "-r", change.id, "-d", "@" }
-    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
-  end
+function M.change_revert(ctx, change, force)
+  local args = { "revert", "-r", change.id, "-d", "@" }
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
 end
 
 --- Edit file
+--- @param ctx Context context
+--- @param file ModifiedFile File name
+--- @param change Change Change to edit file at
 --- @param force? boolean Edit immutable change
 --- @return function
-function M.file_edit(force)
-  --- @param ctx Context context
-  --- @param file ModifiedFile File name
-  --- @param change Change Change to edit file at
-  return function(ctx, file, change)
-    local filename = vim.fs.joinpath(ctx.root, file.filename)
-    if change.status ~= CHANGE_STATUS.CURRENT then
-      filename = "jiejie://" .. ctx.root .. "/.jj/" .. change.id .. "/" .. file.filename
-    end
-    local winid = vim.api.nvim_get_current_win()
-    vim.cmd.wincmd("p")
-    local winid_new = vim.api.nvim_get_current_win()
-    if winid_new == winid then
-      vim.cmd.sp(filename)
-    else
-      vim.cmd.e(filename)
-    end
+function M.file_edit(ctx, file, change, force)
+  local filename = vim.fs.joinpath(ctx.root, file.filename)
+  if change.status ~= CHANGE_STATUS.CURRENT then
+    filename = "jiejie://" .. ctx.root .. "/.jj/" .. change.id .. "/" .. file.filename
+  end
+  local winid = vim.api.nvim_get_current_win()
+  vim.cmd.wincmd("p")
+  local winid_new = vim.api.nvim_get_current_win()
+  if winid_new == winid then
+    vim.cmd.sp(filename)
+  else
+    vim.cmd.e(filename)
   end
 end
 
@@ -463,28 +329,15 @@ function M.reload_log(ctx, callback)
 end
 
 --- Adjust the displayed number of revisions
---- @param fn fun(ctx: Context, count: number) Callback function
---- @param negate boolean Negate count or pass it on as received
-function M.with_count(fn, negate)
-  --- @param ctx Context context
-  return function(ctx)
-    local count = vim.v.count ~= 0 and vim.v.count or 1
-    fn(ctx, (negate and -1 or 1) * count)
-  end
-end
-
---- Adjust the displayed number of revisions
-function M.log_revisions_adjust()
-  --- @param ctx Context context
-  --- @param adjustment? integer Adjust the number of displayed log revisions by this amount
-  return function(ctx, adjustment)
-    local log_revisions = (ctx.log_revisions or 10) + adjustment
-    ctx.log_revisions = log_revisions > 0 and log_revisions or 1
-    context.set_context(ctx)
-    local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-    buffer_dirty_check.dirty_mark_everything(ctx.buf)
-    buffer_dirty_check.do_dirty_check()
-  end
+--- @param ctx Context context
+--- @param adjustment? integer Adjust the number of displayed log revisions by this amount
+function M.log_revisions_adjust(ctx, adjustment)
+  local log_revisions = (ctx.log_revisions or 10) + adjustment
+  ctx.log_revisions = log_revisions > 0 and log_revisions or 1
+  context.set_context(ctx)
+  local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+  buffer_dirty_check.dirty_mark_everything(ctx.buf)
+  buffer_dirty_check.do_dirty_check()
 end
 
 --- Command executes jj commands, returns exit code
