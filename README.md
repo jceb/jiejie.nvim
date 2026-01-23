@@ -38,7 +38,7 @@ return {
 - [x] Log: Display changed files in log view
 - [x] Log: Jump to file from log window
 - [x] Commands: abandon / restore
-- [ ] Commands: revert
+- [x] Commands: revert
 - [ ] Basic feature: Display file changes as diff inside the log window
 - [ ] Commands: split
 - [ ] Commands: bookmark

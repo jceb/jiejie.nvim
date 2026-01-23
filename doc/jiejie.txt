@@ -28,11 +28,11 @@ COMMANDS                                                       *jiejie-commands*
 MAPS                                                               *jiejie-maps*
 
                                                                    *jiejie_<CR>*
-<CR>                    Edit change or file at cursor position.
+<CR>                    Edit change or file under the cursor.
 
 
                                                                   *jiejie_!<CR>*
-!<CR>                   Edit immutable change or file at cursor position.
+!<CR>                   Edit immutable change or file under the cursor.
 
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.
@@ -42,8 +42,10 @@ cc                      Commit currently edited change and create a new
                         change.
 
                                                                      *jiejie_cn*
-cn                      Create a new change after the change at cursor
-                        position.
+cn                      Create a new change after the change under the cursor.
+
+                                                                    *jiejie_crc*
+crc                     Revert the commit under the cursor.
 
                                                                      *jiejie_cs*
 cs                      Squash current changes into it's parent.

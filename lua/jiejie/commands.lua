@@ -3,6 +3,22 @@ local jujutsu = require("jiejie.jujutsu")
 local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
 
+--- Reload buffer or error
+--- @param ctx Context context
+--- @param cmd string Command name that failed
+--- @return fun(out: vim.SystemCompleted)
+local function reload_or_error(ctx, cmd)
+  --- @param out vim.SystemCompleted
+  return function(out)
+    if out and out.code ~= 0 then
+      error("jj " .. cmd .. " failed with non-zero exit code: " .. out.code)
+    end
+    local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+    buffer_dirty_check.dirty_mark_everything(ctx.buf)
+    buffer_dirty_check.do_dirty_check()
+  end
+end
+
 --- Notifu use if change is immutable and no force is applied
 --- @param change Change current change
 --- @param force? boolean Edit immutable change
@@ -255,11 +271,7 @@ function M.change_abandon()
   --- @param change Change Change data
   return function(ctx, change)
     local args = { "abandon", change.id }
-    jujutsu.cli(ctx, args, nil, function()
-      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-      buffer_dirty_check.dirty_mark_everything(ctx.buf)
-      buffer_dirty_check.do_dirty_check()
-    end)
+    jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
   end
 end
 
@@ -270,11 +282,7 @@ function M.change_new()
   --- @param change Change Change data
   return function(ctx, change)
     local args = { "new", change.id }
-    jujutsu.cli(ctx, args, nil, function()
-      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-      buffer_dirty_check.dirty_mark_everything(ctx.buf)
-      buffer_dirty_check.do_dirty_check()
-    end)
+    jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
   end
 end
 
@@ -327,11 +335,7 @@ function M.change_edit(force)
       return
     end
     local args = { "edit", change.id }
-    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, function(out)
-      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-      buffer_dirty_check.dirty_mark_everything(ctx.buf)
-      buffer_dirty_check.do_dirty_check()
-    end)
+    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
   end
 end
 
@@ -377,15 +381,25 @@ function M.change_describe(force, firstline)
             }, force),
             {
               stdin = new_description,
-            }
+            },
+            reload_or_error(ctx, "describe")
           )
-          local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-          buffer_dirty_check.dirty_mark_content(ctx.buf)
-          buffer_dirty_check.do_dirty_check()
         end)
       end)
     end
     start_dummy_editor(ctx, "describe", { "--edit", change.id }, force)
+  end
+end
+
+--- Revert change
+--- @param force? boolean Edit immutable change
+--- @return function
+function M.change_revert(force)
+  --- @param ctx Context context
+  --- @param change Change current change
+  return function(ctx, change)
+    local args = { "revert", "-r", change.id, "-d", "@" }
+    jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
   end
 end
 
@@ -425,11 +439,7 @@ function M.file_restore(force)
       vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
     end
     local args = { "restore", "-f", "@-", file.filename }
-    jujutsu.cli(ctx, args, nil, function()
-      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-      buffer_dirty_check.dirty_mark_everything(ctx.buf)
-      buffer_dirty_check.do_dirty_check()
-    end)
+    jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
   end
 end
 
@@ -459,23 +469,10 @@ function M.cli(fargs, error_on_failure, root)
       end
     end
   end
-  jujutsu.cli(
-    ctx,
-    fargs,
-    {
-      stdout = vim.schedule_wrap(printer),
-      stderr = vim.schedule_wrap(printer),
-    },
-    --- @param out vim.SystemCompleted Options to the CLI
-    function(out)
-      local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-      buffer_dirty_check.dirty_mark_everything(ctx.buf)
-      buffer_dirty_check.do_dirty_check()
-      if out.code ~= 0 and error_on_failure then
-        error("Command failed with non-zero exit code: " .. out.code)
-      end
-    end
-  )
+  jujutsu.cli(ctx, fargs, {
+    stdout = vim.schedule_wrap(printer),
+    stderr = vim.schedule_wrap(printer),
+  }, reload_or_error(ctx, fargs[1]))
 end
 
 --- Configure commands

@@ -133,6 +133,7 @@ function M.setup_buffer(ctx)
     commands.with_change_at_position(ctx, commands.change_new()),
     { desc = "Create a new change after the change at cursor position", buffer = true }
   )
+  vim.keymap.set("n", "crc", commands.with_change_at_position(ctx, commands.change_revert()), { desc = "Revert the commit under the cursor", buffer = true })
   vim.keymap.set(
     "n",
     "cs",
@@ -161,12 +162,12 @@ function M.setup_buffer(ctx)
     if not commands.with_filename_at_position(ctx, commands.search_change_upwards(ctx, commands.file_edit()), false)() then
       commands.with_change_at_position(ctx, commands.change_edit())()
     end
-  end, { desc = "Edit change or file at cursor position", buffer = true })
+  end, { desc = "Edit change or file under the cursor", buffer = true })
   vim.keymap.set("n", "!<CR>", function()
     if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit(true)), false)() then
       commands.with_change_at_position(ctx, commands.change_edit(true))()
     end
-  end, { desc = "Edit immutable change or file at cursor position", buffer = true })
+  end, { desc = "Edit immutable change or file under the cursor", buffer = true })
   vim.keymap.set("n", "de", commands.with_change_at_position(ctx, commands.change_describe(false)), { desc = "Edit change description", buffer = true })
   vim.keymap.set(
     "n",

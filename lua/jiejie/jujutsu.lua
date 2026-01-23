@@ -39,18 +39,16 @@ function M.cli(ctx, fargs, opts, on_exit, errOpts)
   if on_exit ~= nil then
     return exec
   end
-  local res = exec:wait()
-  -- TODO: is there a better way to diplay joined stderr/stdout output? E.g. by spawing a shell? - actually, pass in
-  -- the same receiver function for stderr and stdout
-  if res and res.code ~= 0 then
+  local out = exec:wait()
+  if out and out.code ~= 0 then
     if errOpts and errOpts.notify_on_failure then
-      vim.notify((res.stdout or "") .. "\n" .. (res.stderr or ""), vim.log.levels.ERROR)
+      vim.notify((out.stdout or "") .. "\n" .. (out.stderr or ""), vim.log.levels.ERROR)
     end
     if not errOpts or errOpts.error_on_failure == nil or errOpts.error_on_failure then
-      error("Command failed with non-zero exit code: " .. res.code)
+      error("Command failed with non-zero exit code: " .. out.code)
     end
   end
-  return res
+  return out
 end
 
 --- @class Editor
