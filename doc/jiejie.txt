@@ -45,6 +45,19 @@ cc                      Commit currently edited change and create a new
 cn                      Create a new change after the change at cursor
                         position.
 
+                                                                     *jiejie_cs*
+cs                      Squash current changes into it's parent.
+
+                                                                    *jiejie_!cs*
+!cs                     Squash current changes into it's immutable parent.
+
+                                                                     *jiejie_cS*
+cS                      Squash current changes into the selecated change.
+
+                                                                    *jiejie_!cS*
+!cS                     Squash current changes into the immutuable selecated
+                        change.
+
                                                                      *jiejie_dd*
 dd                      Edit first line of change description.
 
@@ -56,19 +69,6 @@ de                      Edit change description.
 
                                                                     *jiejie_!de*
 !de                     Edit immutable change description.
-
-                                                                     *jiejie_ss*
-ss                      Squash current changes into it's parent.
-
-                                                                    *jiejie_!ss*
-!ss                     Squash current changes into it's immutable parent.
-
-                                                                     *jiejie_st*
-st                      Squash current changes into the selecated change.
-
-                                                                    *jiejie_!st*
-!st                     Squash current changes into the immutuable selecated
-                        change.
 
                                                                      *jiejie_X*
 X                       Abandon change or restore file from parent change.

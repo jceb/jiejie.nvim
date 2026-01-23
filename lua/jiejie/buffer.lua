@@ -135,25 +135,25 @@ function M.setup_buffer(ctx)
   )
   vim.keymap.set(
     "n",
-    "ss",
+    "cs",
     commands.with_change_at_position(ctx, commands.change_squash()),
     { desc = "Squash current changes into it's parent", buffer = true }
   )
   vim.keymap.set(
     "n",
-    "!ss",
+    "!cs",
     commands.with_change_at_position(ctx, commands.change_squash(true)),
     { desc = "Squash current changes into it's immutable parent", buffer = true }
   )
   vim.keymap.set(
     "n",
-    "st",
+    "cS",
     commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash())),
     { desc = "Squash current changes into the selecated change", buffer = true }
   )
   vim.keymap.set(
     "n",
-    "!st",
+    "!cS",
     commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash(true))),
     { desc = "Squash current changes into the immutuable selecated change", buffer = true }
   )
