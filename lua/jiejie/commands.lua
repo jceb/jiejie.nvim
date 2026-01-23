@@ -140,14 +140,24 @@ M.MODIFICATION_TYPE = {
 --- @field modification ModificationType Modification type
 --- @field filename string File name
 
+--- Provide repository context
+--- @param root string Root directory of repository
+--- @param fn fun(ctx: Context) Callback that is called with Context
+--- @return function
+function M.with_context(root, fn)
+  return function(x)
+    fn(context.get_context(root))
+  end
+end
+
 --- Retrieve data about the change that the cursor is on
---- @param ctx Context context
 --- @param fn fun(ctx: Context, change: Change) Callback that is called with Context and the extracted change information. The function is only
 ---                    called when a change id is found at the cursor position
 --- @param err_notify? boolean Send notification is change is not found
 --- @return function
-function M.with_change_at_position(ctx, fn, err_notify)
-  return function()
+function M.with_change_at_position(fn, err_notify)
+  --- @param ctx Context context
+  return function(ctx)
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= ctx.buf then
@@ -451,6 +461,21 @@ function M.reload_log(ctx, callback)
     callback(nil)
   end
   require("jiejie.log").load(ctx, callback)
+end
+
+--- Adjust the displayed number of revisions
+--- @param count? integer Adjust the number of displayed log revisions by this amount
+function M.log_revisions_adjust(count)
+  --- @param ctx Context context
+  return function(ctx)
+    local modification = count or vim.v.count
+    local log_revisions = (ctx.log_revisions or 10) + (modification ~= 0 and modification or 1)
+    ctx.log_revisions = log_revisions > 0 and log_revisions or 1
+    context.set_context(ctx)
+    local buffer_dirty_check = require("jiejie.buffer_dirty_check")
+    buffer_dirty_check.dirty_mark_everything(ctx.buf)
+    buffer_dirty_check.do_dirty_check()
+  end
 end
 
 --- Command executes jj commands, returns exit code

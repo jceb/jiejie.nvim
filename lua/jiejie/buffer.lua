@@ -126,77 +126,114 @@ function M.setup_buffer(ctx)
     vim.keymap.set("", key, "<Nop>", { buffer = true })
   end
   local commands = require("jiejie.commands")
+  vim.keymap.set(
+    "n",
+    "<C-a>",
+    commands.with_context(ctx.root, commands.log_revisions_adjust()),
+    { desc = "Increase the number of displayed log revisions", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "<C-x>",
+    commands.with_context(ctx.root, commands.log_revisions_adjust()),
+    { desc = "Decrease the number of displayed log revisions", buffer = true }
+  )
   vim.keymap.set("n", "cc", commands.change_commit(ctx), { desc = "Commit currently edited change and create a new change", buffer = true })
   vim.keymap.set(
     "n",
     "cn",
-    commands.with_change_at_position(ctx, commands.change_new()),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_new())),
     { desc = "Create a new change after the change at cursor position", buffer = true }
   )
-  vim.keymap.set("n", "crc", commands.with_change_at_position(ctx, commands.change_revert()), { desc = "Revert the commit under the cursor", buffer = true })
+  vim.keymap.set("n", "crc", commands.with_change_at_position(commands.change_revert()), { desc = "Revert the commit under the cursor", buffer = true })
   vim.keymap.set(
     "n",
     "cs",
-    commands.with_change_at_position(ctx, commands.change_squash()),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_squash())),
     { desc = "Squash current changes into it's parent", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!cs",
-    commands.with_change_at_position(ctx, commands.change_squash(true)),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_squash(true))),
     { desc = "Squash current changes into it's immutable parent", buffer = true }
   )
   vim.keymap.set(
     "n",
     "cS",
-    commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash())),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.with_target_change_id(commands.change_squash()))),
     { desc = "Squash current changes into the selecated change", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!cS",
-    commands.with_change_at_position(ctx, commands.with_target_change_id(commands.change_squash(true))),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.with_target_change_id(commands.change_squash(true)))),
     { desc = "Squash current changes into the immutuable selecated change", buffer = true }
   )
-  vim.keymap.set("n", "<CR>", function()
-    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(ctx, commands.file_edit()), false)() then
-      commands.with_change_at_position(ctx, commands.change_edit())()
-    end
-  end, { desc = "Edit change or file under the cursor", buffer = true })
-  vim.keymap.set("n", "!<CR>", function()
-    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit(true)), false)() then
-      commands.with_change_at_position(ctx, commands.change_edit(true))()
-    end
-  end, { desc = "Edit immutable change or file under the cursor", buffer = true })
-  vim.keymap.set("n", "de", commands.with_change_at_position(ctx, commands.change_describe(false)), { desc = "Edit change description", buffer = true })
+  vim.keymap.set(
+    "n",
+    "<CR>",
+    commands.with_context(ctx.root, function(ctx)
+      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(ctx, commands.file_edit()), false)() then
+        commands.with_change_at_position(ctx, commands.change_edit())()
+      end
+    end),
+    { desc = "Edit change or file under the cursor", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "!<CR>",
+    commands.with_context(ctx.root, function(ctx)
+      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit(true)), false)() then
+        commands.with_change_at_position(ctx, commands.change_edit(true))()
+      end
+    end),
+    { desc = "Edit immutable change or file under the cursor", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "de",
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(false))),
+    { desc = "Edit change description", buffer = true }
+  )
   vim.keymap.set(
     "n",
     "!de",
-    commands.with_change_at_position(ctx, commands.change_describe(true)),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(true))),
     { desc = "Edit immutable change description", buffer = true }
   )
   vim.keymap.set(
     "n",
     "dd",
-    commands.with_change_at_position(ctx, commands.change_describe(false, true)),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(false, true))),
     { desc = "Edit first line of change description", buffer = true }
   )
   vim.keymap.set(
     "n",
     "!dd",
-    commands.with_change_at_position(ctx, commands.change_describe(true, true)),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_describe(true, true))),
     { desc = "Edit first line of an immutable change description", buffer = true }
   )
-  vim.keymap.set("n", "X", function()
-    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore()), false)() then
-      commands.with_change_at_position(ctx, commands.change_abandon())()
-    end
-  end, { desc = "Abandon change or restore file from parent change", buffer = true })
-  vim.keymap.set("n", "!X", function()
-    if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore(true)), false)() then
-      commands.with_change_at_position(ctx, commands.change_abandon(true))()
-    end
-  end, { desc = "Abandon immutuable change or restore file from parent change", buffer = true })
+  vim.keymap.set(
+    "n",
+    "X",
+    commands.with_context(ctx.root, function(ctx)
+      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore()), false)() then
+        commands.with_change_at_position(ctx, commands.change_abandon())()
+      end
+    end),
+    { desc = "Abandon change or restore file from parent change", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "!X",
+    commands.with_context(ctx.root, function(ctx)
+      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore(true)), false)() then
+        commands.with_change_at_position(ctx, commands.change_abandon(true))()
+      end
+    end),
+    { desc = "Abandon immutuable change or restore file from parent change", buffer = true }
+  )
   vim.keymap.set("n", "g?", commands.show_help, { desc = "Show help", buffer = true })
   require("jiejie.buffer_dirty_check").setup_buffer(ctx)
   require("jiejie.context").setup_buffer(ctx)

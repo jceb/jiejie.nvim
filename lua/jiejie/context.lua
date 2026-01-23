@@ -6,9 +6,10 @@ local M = {}
 -- Key: Absolute path to the repository
 -- Value:
 --- @class Context
---- @field root string repository root
---- @field buf? number log buffer id
---- @field curpos? table cursor position on current change
+--- @field root string Repository root
+--- @field buf? number Log buffer id
+--- @field curpos? table Cursor position on current change
+--- @field log_revisions? number Number of log revisions to display
 
 --- Get an existing repository context, or create a empty one one
 --- @param root string Root directory of repository

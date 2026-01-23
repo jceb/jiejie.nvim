@@ -15,7 +15,7 @@ M.load = function(ctx, callback)
   local args = {
     "log",
     "-n",
-    "10", -- FIXME: make this configurable
+    tostring(ctx.log_revisions or 10), -- TODO: make default number of revisions configurable
     "-s",
     "-T",
     template,
@@ -80,7 +80,9 @@ function M.setup(id)
       vim.cmd.doau("BufReadPre")
       local url = parsers.parse_url(ev.file)
       if url.version == "repo" and url.path == "index" then
-        M.load({ root = url.root, buf = ev.buf, curpos = nil }, function(ctx)
+        local ctx = context.get_context(url.root)
+        ctx.buf = ctx.buf or ev.buf
+        M.load(ctx, function(ctx)
           context.set_context(ctx)
           buffer.setup_buffer(ctx)
           vim.cmd.doau("BufReadPost")

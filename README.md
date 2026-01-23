@@ -39,6 +39,7 @@ return {
 - [x] Log: Jump to file from log window
 - [x] Commands: abandon / restore
 - [x] Commands: revert
+- [x] Log: Increase / decrease the number of displayed revisions
 - [ ] Basic feature: Display file changes as diff inside the log window
 - [ ] Commands: split
 - [ ] Commands: bookmark
