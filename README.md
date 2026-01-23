@@ -57,6 +57,8 @@ return {
 - [ ] Commands: evolog
 - [ ] New feature: Operations log support
 - [ ] New Feature: Completion for Jj command
+- [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
+      reloads when they change
 - [ ] Configuration: Make mappings configurable
 
 ## References

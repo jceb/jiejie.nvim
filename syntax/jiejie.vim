@@ -12,14 +12,15 @@ syn region jiejieHead start=/^[A-Za-z]\+:/ end=/^$/ fold
 syn match jiejieHeader /^[A-Za-z]\+:/ contained containedin=jiejieHead nextgroup=jiejieHeaderValue skipwhite
 syn match jiejieHeaderValue /.\+/ contained
 
-syn region jiejieChange start=/^[╮─╯│ ]*\zs[@×◆◇○]  / end=/$/ fold
-syn match jiejieChangeStatusHead /○/ contained containedin=jiejieChange nextgroup=jiejieChangeIdShort skipwhite
-syn match jiejieChangeStatusMutable /◇/ contained containedin=jiejieChange nextgroup=jiejieChangeIdShort skipwhite
-syn match jiejieChangeStatusCurrent /@/ contained containedin=jiejieChange nextgroup=jiejieChangeIdShort skipwhite
-syn match jiejieChangeStatusConflict /×/ contained containedin=jiejieChange nextgroup=jiejieChangeIdShort skipwhite
-syn match jiejieChangeStatusImmutable /◆/ contained containedin=jiejieChange nextgroup=jiejieChangeIdShort skipwhite
+syn region jiejieChange start=/^[╮├─╯│ ]*\zs[@×◆◇○][╮├─╯│ ]*  / end=/$/ fold
+syn match jiejieChangeGraph /[├╮─╯│ ]*  / contained nextgroup=jiejieChangeIdShort skipwhite
+syn match jiejieChangeStatusHead /○/ contained containedin=jiejieChange nextgroup=jiejieChangeGraph skipwhite
+syn match jiejieChangeStatusMutable /◇/ contained containedin=jiejieChange nextgroup=jiejieChangeGraph skipwhite
+syn match jiejieChangeStatusCurrent /@/ contained containedin=jiejieChange nextgroup=jiejieChangeGraph skipwhite
+syn match jiejieChangeStatusConflict /×/ contained containedin=jiejieChange nextgroup=jiejieChangeGraph skipwhite
+syn match jiejieChangeStatusImmutable /◆/ contained containedin=jiejieChange nextgroup=jiejieChangeGraph skipwhite
 
-syn region jiejieFiles start=/^[╮─╯│├ ]\+  \zs[MAD]/ end=/$/
+syn region jiejieFiles start=/^[╮├─╯│ ]\+  \zs[MAD]/ end=/$/
 syn match jiejieFileModified /M\ze / contained containedin=jiejieFiles nextgroup=jiejieFilename
 syn match jiejieFileDeleted /D\ze / contained containedin=jiejieFiles nextgroup=jiejieFilename
 syn match jiejieFileAdded /A\ze / contained containedin=jiejieFiles nextgroup=jiejieFilename

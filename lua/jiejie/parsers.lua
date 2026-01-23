@@ -9,7 +9,7 @@ local M = {}
 function M.parse_change(line)
   local match = vim.fn.matchlist(
     line,
-    [[^[─╯│ ]*\([@×◆◇○]\)  \([a-z]\+\)\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)]]
+    [[^[╮├─╯│ ]*\([@×◆◇○]\)[╮├─╯│ ]*  \([a-z]\+\)\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)]]
   )
   local match2 = vim.fn.matchlist(match[10], [[^[^∮]*∮\([^∴]*\)∴\(.\+\)]])
   local status = match[2]
@@ -43,7 +43,7 @@ end
 --- @param line string Line containing a file name string
 --- @return ModifiedFile?
 function M.parse_filename(line)
-  local match = vim.fn.matchlist(line, [[^[╮─╯│├ ]\+  \([MAD]\) \(.\+\)$]])
+  local match = vim.fn.matchlist(line, [[^[╮├─╯│ ]\+  \([MAD]\) \(.\+\)$]])
   local modification = match[2]
   local filename = match[3]
   if match == nil or modification == nil or filename == nil then
