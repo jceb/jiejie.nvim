@@ -227,12 +227,11 @@ function M.with_target_change_id(fn)
 end
 
 --- Retrieve data about the change that the cursor is on
---- @param ctx Context context
---- @param fn fun(..., change: Change) Callback that is called with Context and the extracted change information. The function is only
+--- @param fn fun(ctx: Context, filname: string, change: Change) Callback that is called with Context and the extracted change information. The function is only
 ---                    called when a change id is found at the cursor position
 --- @param err_notify? boolean Send notification is change is not found
 --- @return function
-function M.search_change_upwards(ctx, fn, err_notify)
+function M.search_change_upwards(fn, err_notify)
   return function(ctx, filename)
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
@@ -297,10 +296,10 @@ function M.change_new()
 end
 
 --- Commit changes
---- @param ctx Context context
 --- @return function
-function M.change_commit(ctx)
-  return function()
+function M.change_commit()
+  --- @param ctx Context context
+  return function(ctx)
     start_dummy_editor(ctx, "commit")
   end
 end

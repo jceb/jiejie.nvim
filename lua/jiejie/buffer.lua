@@ -138,14 +138,24 @@ function M.setup_buffer(ctx)
     commands.with_context(ctx.root, commands.log_revisions_adjust()),
     { desc = "Decrease the number of displayed log revisions", buffer = true }
   )
-  vim.keymap.set("n", "cc", commands.change_commit(ctx), { desc = "Commit currently edited change and create a new change", buffer = true })
+  vim.keymap.set(
+    "n",
+    "cc",
+    commands.with_context(ctx.root, commands.change_commit()),
+    { desc = "Commit currently edited change and create a new change", buffer = true }
+  )
   vim.keymap.set(
     "n",
     "cn",
-    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_new())),
+    commands.with_context(ctx.root, commands.with_context(ctx.root, commands.with_change_at_position(commands.change_new()))),
     { desc = "Create a new change after the change at cursor position", buffer = true }
   )
-  vim.keymap.set("n", "crc", commands.with_change_at_position(commands.change_revert()), { desc = "Revert the commit under the cursor", buffer = true })
+  vim.keymap.set(
+    "n",
+    "crc",
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_revert())),
+    { desc = "Revert the commit under the cursor", buffer = true }
+  )
   vim.keymap.set(
     "n",
     "cs",
@@ -174,8 +184,8 @@ function M.setup_buffer(ctx)
     "n",
     "<CR>",
     commands.with_context(ctx.root, function(ctx)
-      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(ctx, commands.file_edit()), false)() then
-        commands.with_change_at_position(ctx, commands.change_edit())()
+      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(commands.file_edit()), false)() then
+        commands.with_change_at_position(commands.change_edit())(ctx)
       end
     end),
     { desc = "Edit change or file under the cursor", buffer = true }
@@ -184,8 +194,8 @@ function M.setup_buffer(ctx)
     "n",
     "!<CR>",
     commands.with_context(ctx.root, function(ctx)
-      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_edit(true)), false)() then
-        commands.with_change_at_position(ctx, commands.change_edit(true))()
+      if not commands.with_filename_at_position(ctx, commands.search_change_upwards(commands.file_edit(true)), false)() then
+        commands.with_change_at_position(commands.change_edit(true))(ctx)
       end
     end),
     { desc = "Edit immutable change or file under the cursor", buffer = true }
@@ -219,7 +229,7 @@ function M.setup_buffer(ctx)
     "X",
     commands.with_context(ctx.root, function(ctx)
       if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore()), false)() then
-        commands.with_change_at_position(ctx, commands.change_abandon())()
+        commands.with_change_at_position(commands.change_abandon())(ctx)
       end
     end),
     { desc = "Abandon change or restore file from parent change", buffer = true }
@@ -229,7 +239,7 @@ function M.setup_buffer(ctx)
     "!X",
     commands.with_context(ctx.root, function(ctx)
       if not commands.with_filename_at_position(ctx, commands.search_change_upwards(nil, commands.file_restore(true)), false)() then
-        commands.with_change_at_position(ctx, commands.change_abandon(true))()
+        commands.with_change_at_position(commands.change_abandon(true))(ctx)
       end
     end),
     { desc = "Abandon immutuable change or restore file from parent change", buffer = true }
