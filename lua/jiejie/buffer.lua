@@ -129,13 +129,13 @@ function M.setup_buffer(ctx)
   vim.keymap.set(
     "n",
     "<C-a>",
-    commands.with_context(ctx.root, commands.log_revisions_adjust()),
+    commands.with_context(ctx.root, commands.with_count(commands.log_revisions_adjust())),
     { desc = "Increase the number of displayed log revisions", buffer = true }
   )
   vim.keymap.set(
     "n",
     "<C-x>",
-    commands.with_context(ctx.root, commands.log_revisions_adjust()),
+    commands.with_context(ctx.root, commands.with_count(commands.log_revisions_adjust(), true)),
     { desc = "Decrease the number of displayed log revisions", buffer = true }
   )
   vim.keymap.set(
@@ -147,7 +147,7 @@ function M.setup_buffer(ctx)
   vim.keymap.set(
     "n",
     "cn",
-    commands.with_context(ctx.root, commands.with_context(ctx.root, commands.with_change_at_position(commands.change_new()))),
+    commands.with_context(ctx.root, commands.with_change_at_position(commands.change_new())),
     { desc = "Create a new change after the change at cursor position", buffer = true }
   )
   vim.keymap.set(

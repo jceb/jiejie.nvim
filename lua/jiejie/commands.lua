@@ -463,12 +463,22 @@ function M.reload_log(ctx, callback)
 end
 
 --- Adjust the displayed number of revisions
---- @param count? integer Adjust the number of displayed log revisions by this amount
-function M.log_revisions_adjust(count)
+--- @param fn fun(ctx: Context, count: number) Callback function
+--- @param negate boolean Negate count or pass it on as received
+function M.with_count(fn, negate)
   --- @param ctx Context context
   return function(ctx)
-    local modification = count or vim.v.count
-    local log_revisions = (ctx.log_revisions or 10) + (modification ~= 0 and modification or 1)
+    local count = vim.v.count ~= 0 and vim.v.count or 1
+    fn(ctx, (negate and -1 or 1) * count)
+  end
+end
+
+--- Adjust the displayed number of revisions
+function M.log_revisions_adjust()
+  --- @param ctx Context context
+  --- @param adjustment? integer Adjust the number of displayed log revisions by this amount
+  return function(ctx, adjustment)
+    local log_revisions = (ctx.log_revisions or 10) + adjustment
     ctx.log_revisions = log_revisions > 0 and log_revisions or 1
     context.set_context(ctx)
     local buffer_dirty_check = require("jiejie.buffer_dirty_check")
