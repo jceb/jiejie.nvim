@@ -1,6 +1,17 @@
 local context = require("jiejie.context")
 local jujutsu = require("jiejie.jujutsu")
+local log_diff = require("jiejie.log_diff")
+local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
+
+--- @class ChangeStatus
+local CHANGE_STATUS = {
+  CURRENT = "@",
+  IMMUTABLE = "◆",
+  CONFLICT = "×",
+  MUTUABLE = "◇",
+  HEAD = "○",
+}
 
 --- Reload buffer or error
 --- @param ctx Context context
@@ -12,9 +23,9 @@ local function reload_or_error(ctx, cmd)
     if out and out.code ~= 0 then
       error("jj " .. cmd .. " failed with non-zero exit code: " .. out.code)
     end
-    local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-    buffer_dirty_check.dirty_mark_everything(ctx.buf)
-    buffer_dirty_check.do_dirty_check()
+    local log_dirty_check = require("jiejie.log_dirty_check")
+    log_dirty_check.dirty_mark_everything(ctx.buf)
+    log_dirty_check.do_dirty_check()
   end
 end
 
@@ -23,7 +34,7 @@ end
 --- @param force? boolean Edit immutable change
 --- @return boolean
 local function notify_immutable(change, force)
-  if change.immutable and not force then
+  if change.status ~= CHANGE_STATUS.CURRENT and change.immutable and not force then
     vim.notify("Change is immutable, use force to modify it! ID: " .. change.id_short, vim.log.levels.ERROR)
     return true
   end
@@ -51,7 +62,6 @@ local function start_dummy_editor(ctx, cmd, args, force, callback)
       force
     ),
     {
-      stdin = false,
       stdout = false,
       stderr = false,
       env = {
@@ -63,9 +73,9 @@ local function start_dummy_editor(ctx, cmd, args, force, callback)
       -- cleanup remaining files
       editor.delete()
       if out.code == 0 then
-        local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-        buffer_dirty_check.dirty_mark_content(ctx.buf)
-        buffer_dirty_check.do_dirty_check()
+        local log_dirty_check = require("jiejie.log_dirty_check")
+        log_dirty_check.dirty_mark_content(ctx.buf)
+        log_dirty_check.do_dirty_check()
       elseif not callback then
         vim.schedule(function()
           vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
@@ -95,7 +105,7 @@ local function start_dummy_editor(ctx, cmd, args, force, callback)
         vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = bufId })
         vim.api.nvim_create_autocmd({ "BufWipeout", "VimLeave" }, {
           buffer = bufId,
-          callback = function(ev)
+          callback = function()
             editor.exit()
           end,
         })
@@ -106,15 +116,6 @@ end
 
 --- Commands that manipulate the log
 local M = {}
-
---- @class ChangeStatus
-local CHANGE_STATUS = {
-  CURRENT = "@",
-  IMMUTABLE = "◆",
-  CONFLICT = "×",
-  MUTUABLE = "◇",
-  HEAD = "○",
-}
 
 --- @class Change
 --- @field status ChangeStatus Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
@@ -127,6 +128,7 @@ local CHANGE_STATUS = {
 --- @field git_head boolean Git head is on this change
 --- @field conflict boolean Change is in a state of conflict
 --- @field immutable boolean Change is immutable
+--- @field linenr number Line number in log buffer that contains change
 
 --- @class ModificationType
 M.MODIFICATION_TYPE = {
@@ -145,6 +147,53 @@ M.MODIFICATION_TYPE = {
 --- @param ctx Context context
 function M.show_help(ctx)
   vim.cmd.h("jiejie-maps")
+end
+
+--- Adjust the displayed number of revisions
+--- @param ctx Context context
+--- @param file ModifiedFile File name
+--- @param change Change Change data
+function M.toggle_diff(ctx, file, change)
+  -- TODO: toggle diffs for all files in a change
+  -- TODO: reload diffs when buffer is marked dirty
+  local files = {}
+  if file then
+    files = vim.list_extend(files, { file })
+  else
+    for linenr, line in ipairs(vim.fn.getbufline(ctx.buf, change.linenr + 1, "$")) do
+      local f = parsers.parse_filename(line, change.linenr + linenr)
+      if f then
+        files = vim.list_extend(files, { f })
+      end
+      local ch = parsers.parse_change(line, change.linenr + linenr)
+      if ch then
+        -- print("found change", linenr, change.linenr + linenr, vim.inspect(ch))
+        break
+      end
+      linenr = linenr + 1
+    end
+  end
+  -- walk backwards through the list of files to hide / show them
+  local idx = #files
+  while idx > 0 do
+    local f = files[idx]
+    if log_diff.diff_shown(f, change) then
+      log_diff.diff_hide(ctx, f, change)
+    else
+      log_diff.diff_show(ctx, f, change)
+    end
+    idx = idx - 1
+  end
+  local winid = vim.api.nvim_get_current_win()
+  local bufid = vim.api.nvim_win_get_buf(winid)
+  if bufid == ctx.buf then
+    if file then
+      vim.api.nvim_win_set_cursor(winid, { file.linenr, 0 })
+    else
+      vim.api.nvim_win_set_cursor(winid, { change.linenr, 0 })
+    end
+  end
+  return
 end
 
 --- Open or focus log window
@@ -329,9 +378,9 @@ function M.log_revisions_adjust(ctx, adjustment)
   local log_revisions = (ctx.log_revisions or 10) + adjustment
   ctx.log_revisions = log_revisions > 0 and log_revisions or 1
   context.set_context(ctx)
-  local buffer_dirty_check = require("jiejie.buffer_dirty_check")
-  buffer_dirty_check.dirty_mark_content(ctx.buf)
-  buffer_dirty_check.do_dirty_check()
+  local log_dirty_check = require("jiejie.log_dirty_check")
+  log_dirty_check.dirty_mark_content(ctx.buf)
+  log_dirty_check.do_dirty_check()
 end
 
 --- Command executes jj commands, returns exit code
@@ -349,7 +398,7 @@ function M.cli(ctx, fargs)
       end
     end
   end
-  jujutsu.cli(ctx, fargs, {
+  return jujutsu.cli(ctx, fargs, {
     stdout = vim.schedule_wrap(printer),
     stderr = vim.schedule_wrap(printer),
   }, reload_or_error(ctx, fargs[1]))
@@ -371,7 +420,7 @@ function M.setup()
   vim.api.nvim_create_user_command("Jj", cmd, cmdOpts)
   local id = vim.api.nvim_create_augroup("Jiejie", {})
   require("jiejie.log").setup(id)
-  require("jiejie.buffer_dirty_check").setup()
+  require("jiejie.log_dirty_check").setup()
 end
 
 return M

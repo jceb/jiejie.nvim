@@ -5,8 +5,9 @@ local M = {}
 
 --- Parse change string into structured data
 --- @param line string Line containing a change string
+--- @param linenr number Line number in log buffer that contains filename
 --- @return Change?
-function M.parse_change(line)
+function M.parse_change(line, linenr)
   local match = vim.fn.matchlist(
     line,
     [[^[╮├─╯│ ]*\([@×◆◇○]\)[╮├─╯│ ]*  \([a-z]\+\)\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)]]
@@ -36,6 +37,7 @@ function M.parse_change(line)
     git_head = git_head,
     conflict = conflict,
     immutable = immutable,
+    linenr = linenr,
   }
 end
 

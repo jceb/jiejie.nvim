@@ -33,6 +33,10 @@ MAPS                                                               *jiejie-maps*
                                                                   *jiejie_<C-x>*
 <C-x>                   Decrease the number of displayed log revisions.
 
+                                                                      *jiejie_=*
+=                       Toggle an inline diff of the change or file under the
+                        cursor.
+
                                                                    *jiejie_<CR>*
 <CR>                    Edit change or file under the cursor.
 

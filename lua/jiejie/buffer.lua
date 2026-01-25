@@ -39,9 +39,9 @@ function M.with_change_at_position(fn, err_notify)
       -- somehow the incorrect window/buffer is being edited
       return nil
     end
-    local pos = vim.api.nvim_win_get_cursor(winid)
-    local line = vim.fn.getbufoneline(ctx.buf, pos[1])
-    local change = parsers.parse_change(line)
+    local linenr = vim.api.nvim_win_get_cursor(winid)[1]
+    local line = vim.fn.getbufoneline(ctx.buf, linenr)
+    local change = parsers.parse_change(line, linenr)
     if change == nil then
       if err_notify then
         vim.notify("No change data found.", vim.log.levels.WARN)
@@ -58,7 +58,7 @@ end
 --- @param err_notify? boolean Send notification is change is not found
 --- @param err_continue? boolean Continue execution callback execution on error
 --- @return function
-function M.with_filename_at_position(fn, err_notify, err_continue)
+function M.with_file_at_position(fn, err_notify, err_continue)
   --- @param ctx Context context
   return function(ctx)
     local winid = vim.api.nvim_get_current_win()
@@ -104,30 +104,77 @@ function M.with_target_change_id(fn)
 end
 
 --- Retrieve data about the change that the cursor is on
---- @param fn fun(ctx: Context, filname: string, change: Change) Callback that is called with Context and the extracted change information. The function is only
+--- @param fn fun(ctx: Context, file?: ModifiedFile, change?: Change) Callback that is called with Context and the extracted change information. The function is only
 ---                    called when a change id is found at the cursor position
 --- @param err_notify? boolean Send notification is change is not found
+--- @param err_continue? boolean Continue execution callback execution on error
 --- @return function
-function M.search_change_upwards(fn, err_notify)
-  return function(ctx, filename)
+function M.search_change_upwards(fn, err_notify, err_continue)
+  return function(ctx, file)
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= ctx.buf then
       -- somehow the incorrect window/buffer is being edited
       return nil
     end
-    local lnr = vim.api.nvim_win_get_cursor(winid)[1] -- start search at the current line
-    while lnr > 0 do
-      local change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, lnr))
+    local linenr = vim.api.nvim_win_get_cursor(winid)[1] -- start search at the current line
+    local change
+    while linenr > 0 do
+      change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, linenr), linenr)
       if change then
-        fn(ctx, filename, change)
+        fn(ctx, file, change)
         return true
       else
-        lnr = lnr - 1
+        linenr = linenr - 1
       end
     end
-    if err_notify then
-      vim.notify("No change data found.", vim.log.levels.WARN)
+    if change == nil and not err_continue then
+      if err_notify then
+        vim.notify("No change data found.", vim.log.levels.WARN)
+      end
+    else
+      fn(ctx, file, change)
+      return true
+    end
+  end
+end
+
+--- Retrieve data about the filename that the cursor is on
+--- @param fn fun(ctx: Context, file?: ModifiedFile) Callback that is called with Context and the extracted change information. The function is only
+---                    called when a filename is found at the cursor position
+--- @param err_notify? boolean Send notification is change is not found
+--- @param err_continue? boolean Continue execution callback execution on error
+--- @return function
+function M.search_file_upwards(fn, err_notify, err_continue)
+  return function(ctx)
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return nil
+    end
+    local linenr = vim.api.nvim_win_get_cursor(winid)[1] -- start search at the current line
+    local file
+    while linenr > 0 do
+      file = parsers.parse_filename(vim.fn.getbufoneline(ctx.buf, linenr), linenr)
+      if file then
+        fn(ctx, file)
+        return true
+      end
+      local change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, linenr), linenr)
+      if change then
+        break
+      else
+        linenr = linenr - 1
+      end
+    end
+    if file == nil and not err_continue then
+      if err_notify then
+        vim.notify("No file data found.", vim.log.levels.WARN)
+      end
+    else
+      fn(ctx, file)
+      return true
     end
   end
 end
@@ -154,18 +201,14 @@ end
 --- @param headers? string[] headers added before the data
 --- @return table
 function M.render(ctx, data, headers)
-  vim.bo[ctx.buf].modifiable = true
-  vim.bo[ctx.buf].readonly = false
+  if headers ~= nil and #headers > 0 then
+    M.buf_set_lines(ctx, vim.list_extend(headers, { "" }), 0, -1)
+  end
+  local headers_offset = headers and #headers or 0
   if data[#data] == "" then
     data[#data] = nil
   end
-  if headers ~= nil and #headers > 0 then
-    vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, vim.list_extend(headers, { "" }))
-  end
-  local headers_offset = headers and #headers or 0
-  vim.api.nvim_buf_set_lines(ctx.buf, -1, -1, false, data)
-  vim.bo[ctx.buf].readonly = true
-  vim.bo[ctx.buf].modifiable = false
+  M.buf_set_lines(ctx, data, -1, -1)
   for i = 1, #data do
     local match = vim.regex("^[─╯│ ]*@  \\zs"):match_str(data[i])
     if match then
@@ -174,6 +217,21 @@ function M.render(ctx, data, headers)
     end
   end
   return ctx.curpos
+end
+
+--- Set lines in current buffer
+--- @param ctx Context context
+--- @param data string[] jj log output to display
+--- @param start number jj log output to display
+--- @param end_ number jj log output to display
+function M.buf_set_lines(ctx, data, start, end_)
+  local modifiable = vim.bo[ctx.buf].modifiable
+  local readonly = vim.bo[ctx.buf].readonly
+  vim.bo[ctx.buf].modifiable = true
+  vim.bo[ctx.buf].readonly = false
+  vim.api.nvim_buf_set_lines(ctx.buf, start ~= nil and start or 0, end_ ~= nil and end_ or -1, false, data)
+  vim.bo[ctx.buf].readonly = modifiable
+  vim.bo[ctx.buf].modifiable = readonly
 end
 
 --- Render file contents
@@ -244,6 +302,8 @@ function M.setup_buffer(ctx)
   vim.bo[ctx.buf].swapfile = false
   local winid = vim.api.nvim_get_current_win()
   vim.wo[winid][0].number = false
+  vim.wo[winid][0].foldmethod = "syntax"
+  vim.wo[winid][0].foldtext = "v:folddashes.substitute(substitute(getline(v:foldstart),'⌠.*','','g'), '[†‡]', '', 'g')"
   vim.wo[winid][0].relativenumber = false
   vim.wo[winid][0].conceallevel = 2
   vim.wo[winid][0].concealcursor = "nvic"
@@ -273,8 +333,13 @@ function M.setup_buffer(ctx)
       desc = "Decrease the number of displayed log revisions",
     },
     {
+      key = "=",
+      fn = with_root_context(M.search_file_upwards(M.search_change_upwards(commands.toggle_diff), true, true)),
+      desc = "Toggle an inline diff of the change or file under the cursor",
+    },
+    {
       key = "cc",
-      fn = with_root_context(commands.show_diff),
+      fn = with_root_context(commands.change_commit),
       desc = "Commit currently edited change and create a new change",
     },
     {
@@ -314,7 +379,7 @@ function M.setup_buffer(ctx)
     {
       key = "<CR>",
       fn = with_root_context(function(ctx)
-        if not M.with_filename_at_position(M.search_change_upwards(commands.file_edit), false)(ctx) then
+        if not M.with_file_at_position(M.search_change_upwards(commands.file_edit), false)(ctx) then
           M.with_change_at_position(commands.change_edit)(ctx)
         end
       end),
@@ -324,7 +389,7 @@ function M.setup_buffer(ctx)
       key = "!<CR>",
       fn = with_root_context(function(ctx)
         if
-          not M.with_filename_at_position(
+          not M.with_file_at_position(
             M.search_change_upwards(function(ctx, filename, change)
               commands.file_edit(ctx, filename, change, true)
             end),
@@ -383,7 +448,7 @@ function M.setup_buffer(ctx)
     {
       key = "X",
       fn = with_root_context(function(ctx)
-        if not M.with_filename_at_position(M.search_change_upwards(commands.file_restore), false)(ctx) then
+        if not M.with_file_at_position(M.search_change_upwards(commands.file_restore), false)(ctx) then
           M.with_change_at_position(commands.change_abandon)(ctx)
         end
       end),
@@ -393,7 +458,7 @@ function M.setup_buffer(ctx)
       key = "!X",
       fn = with_root_context(function(ctx)
         if
-          not M.with_filename_at_position(
+          not M.with_file_at_position(
             M.search_change_upwards(function(ctx, file, change)
               commands.file_restore(ctx, file, change, true)
             end),
@@ -416,7 +481,8 @@ function M.setup_buffer(ctx)
   for index, value in ipairs(mappings) do
     vim.keymap.set("n", value.key, value.fn, { desc = value.desc, buffer = true })
   end
-  require("jiejie.buffer_dirty_check").setup_buffer(ctx)
+  require("jiejie.log_diff").setup_buffer(ctx)
+  require("jiejie.log_dirty_check").setup_buffer(ctx)
   require("jiejie.context").setup_buffer(ctx)
   return ctx
 end

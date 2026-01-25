@@ -15,7 +15,7 @@ local function set_dirty(buf, key)
   end
 end
 
---- Opeations that help with invalidating buffer data
+--- Opeations that help with invalidating log data
 local M = {}
 
 M.DIRTY_CONTENT = 2 ^ 0
