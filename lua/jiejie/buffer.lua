@@ -54,12 +54,12 @@ function M.with_change_at_position(fn, err_notify)
 end
 
 --- Retrieve data about the file name that the cursor is on
---- @param ctx Context context
 --- @param fn fun(ctx: Context, file: ModifiedFile) Callback that is called with Context and the extracted file name
 --- @param err_notify? boolean Send notification is change is not found
 --- @return function
-function M.with_filename_at_position(ctx, fn, err_notify)
-  return function()
+function M.with_filename_at_position(fn, err_notify)
+  --- @param ctx Context context
+  return function(ctx)
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= ctx.buf then
@@ -323,7 +323,7 @@ function M.setup_buffer(ctx)
     "n",
     "<CR>",
     M.with_context(ctx.root, function(ctx)
-      if not M.with_filename_at_position(ctx, M.search_change_upwards(commands.file_edit), false)() then
+      if not M.with_filename_at_position(M.search_change_upwards(commands.file_edit), false)(ctx) then
         M.with_change_at_position(commands.change_edit)(ctx)
       end
     end),
@@ -335,12 +335,11 @@ function M.setup_buffer(ctx)
     M.with_context(ctx.root, function(ctx)
       if
         not M.with_filename_at_position(
-          ctx,
           M.search_change_upwards(function(ctx, filename, change)
             commands.file_edit(ctx, filename, change, true)
           end),
           false
-        )()
+        )(ctx)
       then
         M.with_change_at_position(function(ctx, change)
           commands.change_edit(ctx, change, true)
@@ -397,8 +396,8 @@ function M.setup_buffer(ctx)
     "n",
     "X",
     M.with_context(ctx.root, function(ctx)
-      if not M.with_filename_at_position(ctx, M.search_change_upwards(commands.file_restore()), false)() then
-        M.with_change_at_position(commands.change_abandon())(ctx)
+      if not M.with_filename_at_position(M.search_change_upwards(commands.file_restore), false)(ctx) then
+        M.with_change_at_position(commands.change_abandon)(ctx)
       end
     end),
     { desc = "Abandon change or restore file from parent change", buffer = true }
@@ -407,8 +406,17 @@ function M.setup_buffer(ctx)
     "n",
     "!X",
     M.with_context(ctx.root, function(ctx)
-      if not M.with_filename_at_position(ctx, M.search_change_upwards(commands.file_restore(true)), false)() then
-        M.with_change_at_position(commands.change_abandon(true))(ctx)
+      if
+        not M.with_filename_at_position(
+          M.search_change_upwards(function(ctx, file, change)
+            commands.file_restore(ctx, file, change, true)
+          end),
+          false
+        )(ctx)
+      then
+        M.with_change_at_position(function(ctx, change)
+          commands.change_abandon(ctx, change, true)
+        end)(ctx)
       end
     end),
     { desc = "Abandon immutuable change or restore file from parent change", buffer = true }

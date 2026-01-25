@@ -12,7 +12,7 @@ local M = {}
 --- @field log_revisions? number Number of log revisions to display
 
 --- Get an existing repository context, or create a empty one one
---- @param root string Root directory of repository
+--- @param root? string Root directory of repository
 --- @return Context
 function M.get_context(root)
   local root_local = root or jujutsu.get_root(root)

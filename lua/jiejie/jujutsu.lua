@@ -2,7 +2,7 @@ local M = {}
 
 --- Add --ignore-immutable flag to the list of arguments when force is true.
 --- @param args string[] List of arguments
---- @param force boolean If true, --ignore-immutable flag is added
+--- @param force? boolean If true, --ignore-immutable flag is added
 --- @return string[]
 function M.ignore_immtuable(args, force)
   if force then

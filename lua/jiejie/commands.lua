@@ -147,25 +147,22 @@ function M.show_help(ctx)
 end
 
 --- Open or focus log window
---- @param root? string Root directory of repository
+--- @param ctx Context context
 --- @param vertical? boolean If a new window needs to be created, split it vertically?
 --- @return Context
-function M.show_log(root, vertical)
+function M.show_log(ctx, vertical)
   local buffer = require("jiejie.buffer")
-  local ctx = context.get_context(root)
   buffer.focus(ctx, vertical or false)
   return ctx
 end
 
 --- Abandon change
---- @return function
-function M.change_abandon()
-  --- @param ctx Context context
-  --- @param change Change Change data
-  return function(ctx, change)
-    local args = { "abandon", change.id }
-    jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
-  end
+--- @param ctx Context context
+--- @param change Change Change data
+--- @param force? boolean Edit immutable change
+function M.change_abandon(ctx, change, force)
+  local args = { "abandon", change.id }
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
 end
 
 --- Create new change
@@ -187,6 +184,7 @@ end
 --- @param ctx Context context
 --- @param src_change Change Soruce change
 --- @param dst_change? Change Destination change
+--- @param force? boolean Edit immutable change
 function M.change_squash(ctx, src_change, dst_change, force)
   local args = { dst_change and "-f" or "-r", src_change.id }
   local dst = "it's parent"
@@ -209,7 +207,6 @@ end
 --- @param ctx Context context
 --- @param change Change current change
 --- @param force? boolean Edit immutable change
---- @return function
 function M.change_edit(ctx, change, force)
   if change.status == CHANGE_STATUS.CURRENT then
     vim.notify("Already editing change! ID: " .. change.id_short, vim.log.levels.INFO)
@@ -302,20 +299,16 @@ function M.file_edit(ctx, file, change, force)
 end
 
 --- Restore file
+--- @param ctx Context context
+--- @param file ModifiedFile File name
+--- @param change Change Change to edit file at
 --- @param force? boolean Change immutable
---- @return function
-function M.file_restore(force)
-  --- @param ctx Context context
-  --- @param file ModifiedFile File name
-  --- @param change Change Change to edit file at
-  return function(ctx, file, change)
-    local filename = vim.fs.joinpath(ctx.root, file.filename)
-    if change.status ~= CHANGE_STATUS.CURRENT then
-      vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
-    end
-    local args = { "restore", "-f", "@-", file.filename }
-    jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
+function M.file_restore(ctx, file, change, force)
+  if change.status ~= CHANGE_STATUS.CURRENT then
+    vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
   end
+  local args = { "restore", "-f", "@-", file.filename }
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
 end
 
 --- Open or focus log window
@@ -341,18 +334,17 @@ function M.log_revisions_adjust(ctx, adjustment)
 end
 
 --- Command executes jj commands, returns exit code
+--- @param ctx Context context
 --- @param fargs string[] List of CLI arguments
---- @param error_on_failure? boolean Throws an error if command fails, default false
---- @param root? string Root directory of repository, determined automatically by the current buffer if not provided
 --- @return table
-function M.cli(fargs, error_on_failure, root)
-  local ctx = context.get_context(root)
+function M.cli(ctx, fargs)
   local printer = function(err, data)
     if data then
       if err then
         vim.notify(data, vim.log.levels.ERROR)
       else
-        vim.notify(data, vim.log.levels.INFO)
+        -- vim.notify(data, vim.log.levels.INFO)
+        print(data)
       end
     end
   end
@@ -366,9 +358,9 @@ end
 function M.setup()
   local cmd = function(args)
     if #args.fargs == 0 then
-      M.show_log(nil, args.smods.vertical)
+      M.show_log(context.get_context(), args.smods.vertical)
     else
-      M.cli(args.fargs)
+      M.cli(context.get_context(), args.fargs)
     end
   end
   local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*", range = 2 }
