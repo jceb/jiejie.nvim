@@ -78,10 +78,16 @@ de                      Edit change description.
                                                                     *jiejie_!de*
 !de                     Edit immutable change description.
 
-                                                                     *jiejie_X*
+                                                                      *jiejie_p*
+p                       Fetch changes from remote.
+
+                                                                      *jiejie_P*
+P                       Push changes to remote.
+
+                                                                      *jiejie_X*
 X                       Abandon change or restore file from parent change.
 
-                                                                    *jiejie_!X*
+                                                                     *jiejie_!X*
 !X                      Abandon immutuable change or restore file from parent
                         change.
 

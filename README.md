@@ -40,6 +40,7 @@ return {
 - [x] Commands: abandon / restore
 - [x] Commands: revert
 - [x] Log: Increase / decrease the number of displayed revisions
+- [x] Commands: git push & pull
 - [ ] Basic feature: Display file changes as diff inside the log window
 - [ ] Commands: split
 - [ ] Commands: bookmark

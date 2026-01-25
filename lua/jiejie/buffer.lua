@@ -20,7 +20,7 @@ end
 --- @param fn fun(ctx: Context) Callback that is called with Context
 --- @return function
 function M.with_context(root, fn)
-  return function(x)
+  return function()
     fn(context.get_context(root))
   end
 end
@@ -391,6 +391,22 @@ function M.setup_buffer(ctx)
       end)
     ),
     { desc = "Edit first line of an immutable change description", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "p",
+    M.with_context(ctx.root, function(ctx)
+      commands.cli(ctx, {"git", "fetch"})
+    end),
+    { desc = "Fetch changes from remote", buffer = true }
+  )
+  vim.keymap.set(
+    "n",
+    "P",
+    M.with_context(ctx.root, function(ctx)
+      commands.cli(ctx, {"git", "push"})
+    end),
+    { desc = "Push changes to remote", buffer = true }
   )
   vim.keymap.set(
     "n",
