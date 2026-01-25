@@ -138,6 +138,7 @@ M.MODIFICATION_TYPE = {
 --- @class ModifiedFile
 --- @field modification ModificationType Modification type
 --- @field filename string File name
+--- @field linenr number Line number in log buffer that contains filename
 
 -- support fast one line edits
 --- Show help window

@@ -41,8 +41,9 @@ end
 
 --- Parse change string into structured data
 --- @param line string Line containing a file name string
+--- @param linenr number Line number in log buffer that contains filename
 --- @return ModifiedFile?
-function M.parse_filename(line)
+function M.parse_filename(line, linenr)
   local match = vim.fn.matchlist(line, [[^[╮├─╯│ ]\+  \([MAD]\) \(.\+\)$]])
   local modification = match[2]
   local filename = match[3]
@@ -52,6 +53,7 @@ function M.parse_filename(line)
   return {
     modification = modification,
     filename = filename,
+    linenr = linenr,
   }
 end
 
