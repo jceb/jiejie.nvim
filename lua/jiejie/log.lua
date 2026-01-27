@@ -10,6 +10,8 @@ local M = {}
 --- @param ctx Context context
 --- @param callback fun(ctx: Context) Asynchronous callback
 M.load = function(ctx, callback)
+  local log_diff = require("jiejie.log_diff")
+  log_diff.setup_buffer(ctx) -- clear diffs as a workaround until reloading of diffs is implemented
   local template =
     'change_id.shortest() ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", description.first_line()) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ if(git_head, " git_head()") ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id'
   local args = {
