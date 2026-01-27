@@ -43,28 +43,40 @@ return {
 - [x] Log: Increase / decrease the number of displayed revisions
 - [x] Commands: git push & pull
 - [x] Basic feature: Display file changes as diff inside the log window
-- [x] Commands: op revert last operation
+- [x] Commands: op revert (undo) last operation
 - [x] Commands: Jedit
+
+Priority 1
+
+- [ ] Commands: squash and commit for individual files
+- [ ] Commands: tag
+- [ ] Commands: keep diff expansion when reloading the log
 - [ ] Commands: split
 - [ ] Commands: bookmark
-- [ ] Commands: absorb
-- [ ] Commands: diff
-- [ ] Commands: duplicate
-- [ ] Commands: diffedit
+- [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
+      reloads when they change
+- [ ] Navigation: movement mappings for commits, files and hunks
+
+Priority 2
+
 - [ ] Commands: worktree
 - [ ] Commands: rebase
+- [ ] Commands: diff
+- [ ] Configuration: Make mappings configurable
+
+Priority 3
+
+- [ ] Commands: absorb
+- [ ] Commands: duplicate
+- [ ] Commands: diffedit
 - [ ] Commands: show full change
 - [ ] Commands: undo / redo
-- [ ] Commands: tag
 - [ ] Commands: parallelize
 - [ ] Commands: metaedit
 - [ ] Commands: interdiff
 - [ ] Commands: evolog
 - [ ] New feature: Operations log support
 - [ ] New Feature: Completion for Jj command
-- [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
-      reloads when they change
-- [ ] Configuration: Make mappings configurable
 
 ## References
 
