@@ -4,15 +4,6 @@ local log_diff = require("jiejie.log_diff")
 local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
 
---- @class ChangeStatus
-local CHANGE_STATUS = {
-  CURRENT = "@",
-  IMMUTABLE = "◆",
-  CONFLICT = "×",
-  MUTUABLE = "◇",
-  HEAD = "○",
-}
-
 --- Reload buffer or error
 --- @param ctx Context context
 --- @param cmd string Command name that failed
@@ -27,18 +18,6 @@ local function reload_or_error(ctx, cmd)
     log_dirty_check.dirty_mark_everything(ctx.buf)
     log_dirty_check.do_dirty_check()
   end
-end
-
---- Notifu use if change is immutable and no force is applied
---- @param change Change current change
---- @param force? boolean Edit immutable change
---- @return boolean
-local function notify_immutable(change, force)
-  if change.status ~= CHANGE_STATUS.CURRENT and change.immutable and not force then
-    vim.notify("Change is immutable, use force to modify it! ID: " .. change.id_short, vim.log.levels.ERROR)
-    return true
-  end
-  return false
 end
 
 --- @param ctx Context context
@@ -117,6 +96,27 @@ end
 --- Commands that manipulate the log
 local M = {}
 
+--- @class ChangeStatus
+M.CHANGE_STATUS = {
+  CURRENT = "@",
+  IMMUTABLE = "◆",
+  CONFLICT = "×",
+  MUTUABLE = "◇",
+  HEAD = "○",
+}
+
+--- Notifu use if change is immutable and no force is applied
+--- @param change Change current change
+--- @param force? boolean Edit immutable change
+--- @return boolean
+local function notify_immutable(change, force)
+  if change.status ~= M.CHANGE_STATUS.CURRENT and change.immutable and not force then
+    vim.notify("Change is immutable, use force to modify it! ID: " .. change.id_short, vim.log.levels.ERROR)
+    return true
+  end
+  return false
+end
+
 --- @class Change
 --- @field status ChangeStatus Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
 --- @field id string change ID
@@ -154,7 +154,6 @@ end
 --- @param file ModifiedFile File name
 --- @param change Change Change data
 function M.toggle_diff(ctx, file, change)
-  -- TODO: toggle diffs for all files in a change
   -- TODO: reload diffs when buffer is marked dirty
   local files = {}
   if file then
@@ -167,7 +166,6 @@ function M.toggle_diff(ctx, file, change)
       end
       local ch = parsers.parse_change(line, change.linenr + linenr)
       if ch then
-        -- print("found change", linenr, change.linenr + linenr, vim.inspect(ch))
         break
       end
       linenr = linenr + 1
@@ -185,12 +183,13 @@ function M.toggle_diff(ctx, file, change)
     idx = idx - 1
   end
   local winid = vim.api.nvim_get_current_win()
+  local pos = vim.api.nvim_win_get_cursor(winid)
   local bufid = vim.api.nvim_win_get_buf(winid)
   if bufid == ctx.buf then
     if file then
-      vim.api.nvim_win_set_cursor(winid, { file.linenr, 0 })
+      vim.api.nvim_win_set_cursor(winid, { file.linenr, pos[2] })
     else
-      vim.api.nvim_win_set_cursor(winid, { change.linenr, 0 })
+      vim.api.nvim_win_set_cursor(winid, { change.linenr, pos[2] })
     end
   end
   return
@@ -258,7 +257,7 @@ end
 --- @param change Change current change
 --- @param force? boolean Edit immutable change
 function M.change_edit(ctx, change, force)
-  if change.status == CHANGE_STATUS.CURRENT then
+  if change.status == M.CHANGE_STATUS.CURRENT then
     vim.notify("Already editing change! ID: " .. change.id_short, vim.log.levels.INFO)
     return
   end
@@ -335,12 +334,16 @@ end
 --- @return function
 function M.file_edit(ctx, file, change, force)
   local filename = vim.fs.joinpath(ctx.root, file.filename)
-  if change.status ~= CHANGE_STATUS.CURRENT then
+  if change.status ~= M.CHANGE_STATUS.CURRENT then
     filename = "jiejie://" .. ctx.root .. "/.jj/" .. change.id .. "/" .. file.filename
   end
   local winid = vim.api.nvim_get_current_win()
-  vim.cmd.wincmd("p")
-  local winid_new = vim.api.nvim_get_current_win()
+  local winid_new
+  local bufid = vim.api.nvim_get_current_buf()
+  if vim.bo[bufid].filetype == "jiejie" then
+    vim.cmd.wincmd("p")
+    winid_new = vim.api.nvim_get_current_win()
+  end
   if winid_new == winid then
     vim.cmd.sp(filename)
   else
@@ -354,7 +357,7 @@ end
 --- @param change Change Change to edit file at
 --- @param force? boolean Change immutable
 function M.file_restore(ctx, file, change, force)
-  if change.status ~= CHANGE_STATUS.CURRENT then
+  if change.status ~= M.CHANGE_STATUS.CURRENT then
     vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
   end
   local args = { "restore", "-f", "@-", file.filename }
@@ -406,18 +409,51 @@ end
 
 --- Configure commands
 function M.setup()
-  local cmd = function(args)
+  local cmd_jj = function(args)
     if #args.fargs == 0 then
       M.show_log(context.get_context(), args.smods.vertical)
     else
       M.cli(context.get_context(), args.fargs)
     end
   end
-  local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*", range = 2 }
-  if vim.fn.exists(":J") ~= 2 then
-    vim.api.nvim_create_user_command("J", cmd, cmdOpts)
+  local cmd_jedit = function(args)
+    local object = {}
+    if #args.fargs > 0 then
+      object = parsers.parse_object(args.fargs[1]) or {}
+    end
+    object.filename = vim.fn.fnamemodify(object and object.filename and object.filename ~= "" and object.filename or vim.fn.expand("%"), ":p")
+    local root
+    local path
+    if vim.startswith(object.filename, "jiejie://") then
+      -- special handling for calling Jedit on a file name that is a jiejie URL
+      local res = parsers.parse_url(object.filename)
+      root = res.root
+      path = res.path
+      object.filename = vim.fs.joinpath(root, path)
+    else
+      local directory = vim.fn.fnamemodify(object.filename, ":h")
+      root = jujutsu.get_root(directory)
+    end
+    local ctx = context.get_context(root)
+    if not vim.startswith(object.filename, ctx.root) then
+      error("Unable to determine jj root directory")
+    end
+    if not path then
+      path = vim.fn.trim(vim.fn.strpart(object.filename, #ctx.root), "/", 1)
+    end
+    -- hacky construction of the exact data that's required for file_edit
+    M.file_edit(ctx, { filename = path }, {
+      id = object.change_id and object.change_id or "@",
+      status = object.change_id and object.change_id ~= "@" and M.CHANGE_STATUS.IMMUTABLE or M.CHANGE_STATUS.CURRENT,
+    })
   end
-  vim.api.nvim_create_user_command("Jj", cmd, cmdOpts)
+  local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*", range = 2 }
+  -- TODO: define command only for buffers that are related to a repository
+  if vim.fn.exists(":J") ~= 2 then
+    vim.api.nvim_create_user_command("J", cmd_jj, cmdOpts)
+  end
+  vim.api.nvim_create_user_command("Jj", cmd_jj, cmdOpts)
+  vim.api.nvim_create_user_command("Jedit", cmd_jedit, { desc = ":edit a jiejie-object", nargs = "?" })
   local id = vim.api.nvim_create_augroup("Jiejie", {})
   require("jiejie.log").setup(id)
   require("jiejie.log_dirty_check").setup()

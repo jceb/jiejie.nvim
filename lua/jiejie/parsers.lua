@@ -41,21 +41,46 @@ function M.parse_change(line, linenr)
   }
 end
 
+--- @class JiejieObject
+--- @field change_id? string ChangeID
+--- @field work_tree? string Work tree
+--- @field filename? string File name
+
+--- Parse jiejie object definition
+--- @param object_string string Object string
+--- @return JiejieObject?
+function M.parse_object(object_string)
+  local match = vim.fn.matchlist(object_string, [[^\([^:]\+\)\?\%(:\(([^)]\+)\)\?\(.*\)\)\?$]])
+  if not match then
+    return nil
+  end
+  local change_id = match[2]
+  local work_tree = match[3]
+  local filename = match[4] and vim.fn.expand(match[4]) or match[4]
+  return {
+    change_id = change_id ~= "" and change_id or "@",
+    work_tree = work_tree,
+    filename = filename,
+  }
+end
+
 --- Parse change string into structured data
 --- @param line string Line containing a file name string
 --- @param linenr number Line number in log buffer that contains filename
 --- @return ModifiedFile?
 function M.parse_filename(line, linenr)
   local match = vim.fn.matchlist(line, [[^[╮├─╯│ ]\+  \([MADR]\) \(.\+\)$]])
+  if match == nil then
+    return nil
+  end
   local modification = match[2]
   local filename = match[3]
-  if match == nil or modification == nil or filename == nil then
+  if not modification or not filename then
     return nil
   end
   if modification == "R" then
     -- adjust filename that is provided in jj's rname format
     filename = vim.fn.substitute(vim.fn.substitute(filename, "{[^=]\\+ => ", "", ""), "}$", "", "")
-    print("filename", filename)
   end
   return {
     modification = modification,

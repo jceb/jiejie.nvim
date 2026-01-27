@@ -24,6 +24,7 @@ return {
 | --------------------- | ---------------------------------------------------- |
 | `:J` or `:Jj`         | Open or focus log window, when no argument is passed |
 | `:Jj <command>`       | Execute `jj <command>`                               |
+| `:Jedit [object]`     | :edit a jiejie-object                                |
 | `g?`                  | Show help for supported mappings                     |
 
 ## Roadmap
@@ -43,6 +44,7 @@ return {
 - [x] Commands: git push & pull
 - [x] Basic feature: Display file changes as diff inside the log window
 - [x] Commands: op revert last operation
+- [x] Commands: Jedit
 - [ ] Commands: split
 - [ ] Commands: bookmark
 - [ ] Commands: absorb

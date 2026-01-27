@@ -13,7 +13,7 @@ CONFIGURATION                                                    *jiejie-config*
 
 COMMANDS                                                       *jiejie-commands*
 
-                                                                     *jiejie-:J*
+                                                                            *:J*
 :J [args]               Same as :Jj, but one character shorter.
 
                                                                 *jiejie-summary*
@@ -24,6 +24,9 @@ COMMANDS                                                       *jiejie-commands*
 
                                                                            *:Jj*
 :Jj {args}              Run an arbitrary git command and display any output.
+
+                                                                        *:Jedit*
+:Jedit [object]         |:edit| a |jiejie-object|.
 
 MAPS                                                               *jiejie-maps*
 
@@ -97,6 +100,34 @@ X                       Abandon change or restore file from parent change.
                                                                      *jiejie_!X*
 !X                      Abandon immutuable change or restore file from parent
                         change.
+
+
+SPECIFYING OBJECTS                               *jiejie-object* *jiejie-revision*
+
+Jiejie objects are either work tree files or Git revisions as defined in the
+"Operators" section in the jj documtenation,
+https://docs.jj-vcs.dev/latest/revsets/, with expansions inspired by
+|cmdline-special| layered on top. For commands that accept an optional object,
+the default is the file in the index for work tree files and the work tree
+file for everything else. Example objects follow.
+
+Object          Meaning ~
+@               The change referenced by @ aka HEAD
+main            The change referenced by main
+:               The |jiejie-summary| buffer
+:./main         The file named main in the working directory
+:Makefile       The file named Makefile in the work tree
+:%              The current file in the work tree
+@-:%            The current file in the parent of HEAD
+@--:%           The current file in the grandparent of HEAD
+<cfile>         The file or change under the cursor
+
+Not yet implemented:
+
+:(top)main      The file named main in the work tree
+:1:%            The current file's common ancestor during a conflict
+:2:#            The alternate file in the target branch during a conflict
+:3:#5           The file from buffer #5 in the merged branch during a conflict
 
 ABOUT                                                             *jiejie-about*
 
