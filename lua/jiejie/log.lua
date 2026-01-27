@@ -32,6 +32,10 @@ M.load = function(ctx, callback)
       end
       local data = vim.split(res.stdout, "\n")
       local headers = { buffer.create_header("Help", "g?") }
+      local oplog = jujutsu.cli(ctx, { "op", "log", "-n", "1", "--no-graph", "-T", 'id.short(4) ++ " " ++ user ++ " " ++ description' })
+      if oplog.code == 0 then
+        headers = vim.list_extend(headers, { buffer.create_header("Last operation", vim.trim(oplog.stdout)) })
+      end
       ctx.curpos = buffer.render(ctx, data, headers)
       if callback then
         callback(ctx)

@@ -88,6 +88,9 @@ p                       Fetch changes from remote.
                                                                       *jiejie_P*
 P                       Push changes to remote.
 
+                                                                      *jiejie_u*
+u                       Revert last operation.
+
                                                                       *jiejie_X*
 X                       Abandon change or restore file from parent change.
 

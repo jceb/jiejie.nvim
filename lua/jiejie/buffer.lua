@@ -446,6 +446,13 @@ function M.setup_buffer(ctx)
       desc = "Push changes to remote",
     },
     {
+      key = "u",
+      fn = with_root_context(function(ctx)
+        commands.cli(ctx, { "op", "revert" })
+      end),
+      desc = "Revert last operation",
+    },
+    {
       key = "X",
       fn = with_root_context(function(ctx)
         if not M.with_file_at_position(M.search_change_upwards(commands.file_restore), false)(ctx) then

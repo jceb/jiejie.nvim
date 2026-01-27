@@ -42,6 +42,7 @@ return {
 - [x] Log: Increase / decrease the number of displayed revisions
 - [x] Commands: git push & pull
 - [x] Basic feature: Display file changes as diff inside the log window
+- [x] Commands: op revert last operation
 - [ ] Commands: split
 - [ ] Commands: bookmark
 - [ ] Commands: absorb

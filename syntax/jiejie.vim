@@ -9,7 +9,7 @@ syn spell notoplevel
 syn include @jiejieDiff syntax/diff.vim
 
 syn region jiejieHeadSection start=/^[A-Za-z]\+:/ end=/^$/ fold
-syn match jiejieHeader /^[A-Za-z]\+:/ contained containedin=jiejieHeadSection nextgroup=jiejieHeaderValue skipwhite
+syn match jiejieHeader /^[A-Za-z ]\+:/ contained containedin=jiejieHeadSection nextgroup=jiejieHeaderValue skipwhite
 syn match jiejieHeaderValue /.\+/ contained
 
 syn match jiejieElided /^\~  .*$/
