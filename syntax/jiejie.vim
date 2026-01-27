@@ -22,7 +22,7 @@ syn match jiejieChangeStatusCurrent /@/ contained containedin=jiejieChangeSectio
 syn match jiejieChangeStatusConflict /×/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusImmutable /◆/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 
-syn region jiejieFileSection start=/^[╮├─╯│ ]\+  \zs[MAD]/ end=/^\%([╮├─╯│@×◆◇○][╮├─╯│  ]\)\@=/ containedin=jiejieChangeSection contained
+syn region jiejieFileSection start=/^[╮├─╯│ ]\+  \zs[MADR]/ end=/^\%([╮├─╯│@×◆◇○][╮├─╯│  ]\)\@=/ containedin=jiejieChangeSection contained
 syn match jiejieFileModified /M\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileDeleted /D\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileAdded /A\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite

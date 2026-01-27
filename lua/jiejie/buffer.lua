@@ -321,7 +321,7 @@ function M.setup_buffer(ctx)
     return M.with_context(ctx.root, fn)
   end
   --- @type table<number, {key: string, fn: fun(), desc: string}>
-  local mappings = {
+  local nmappings = {
     {
       key = "<C-a>",
       fn = with_root_context(M.with_count(commands.log_revisions_adjust)),
@@ -478,7 +478,7 @@ function M.setup_buffer(ctx)
       desc = "Show help",
     },
   }
-  for index, value in ipairs(mappings) do
+  for index, value in ipairs(nmappings) do
     vim.keymap.set("n", value.key, value.fn, { desc = value.desc, buffer = true })
   end
   require("jiejie.log_diff").setup_buffer(ctx)

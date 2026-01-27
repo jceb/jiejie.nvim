@@ -46,11 +46,16 @@ end
 --- @param linenr number Line number in log buffer that contains filename
 --- @return ModifiedFile?
 function M.parse_filename(line, linenr)
-  local match = vim.fn.matchlist(line, [[^[╮├─╯│ ]\+  \([MAD]\) \(.\+\)$]])
+  local match = vim.fn.matchlist(line, [[^[╮├─╯│ ]\+  \([MADR]\) \(.\+\)$]])
   local modification = match[2]
   local filename = match[3]
   if match == nil or modification == nil or filename == nil then
     return nil
+  end
+  if modification == "R" then
+    -- adjust filename that is provided in jj's rname format
+    filename = vim.fn.substitute(vim.fn.substitute(filename, "{[^=]\\+ => ", "", ""), "}$", "", "")
+    print("filename", filename)
   end
   return {
     modification = modification,
