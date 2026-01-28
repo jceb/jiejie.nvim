@@ -22,11 +22,12 @@ syn match jiejieChangeStatusCurrent /@/ contained containedin=jiejieChangeSectio
 syn match jiejieChangeStatusConflict /×/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusImmutable /◆/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 
-syn region jiejieFileSection start=/^[╮├─╯│ ]\+  \zs[MADR]/ end=/^\%([╮├─╯│@×◆◇○][╮├─╯│  ]\)\@=/ containedin=jiejieChangeSection contained
+syn region jiejieFileSection start=/^[╮├─╯│ ]\+  \zs[MADRC]/ end=/^\%([╮├─╯│@×◆◇○][╮├─╯│  ]\)\@=/ containedin=jiejieChangeSection contained
 syn match jiejieFileModified /M\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileDeleted /D\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileAdded /A\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileRenamed /R\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
+syn match jiejieFileCopied /C\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFilename /.*$/ contained nextgroup=jiejieHunkSection skipnl
 syn region jiejieHunkSection start=/^\%(@@\+ -\)\@=/ end=/^\%([╮├─╯│@×◆◇○][╮├─╯│  ]\)\@=/ contains=diffLine,diffRemoved,diffAdded,diffNoEOL contained fold
 
@@ -67,6 +68,7 @@ hi def link jiejieFileModified Type
 hi def link jiejieFileDeleted Type
 hi def link jiejieFileAdded Type
 hi def link jiejieFileRenamed Type
+hi def link jiejieFileCopied Type
 
 hi def link jiejieElided NonText
 hi def link jiejieGitHead Include

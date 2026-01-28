@@ -85,6 +85,9 @@ function M.setup(id)
       -- Loader function for files of type jiejie
       vim.cmd.doau("BufReadPre")
       local url = parsers.parse_url(ev.file)
+      if not url then
+        error("Error: unknown URL: " .. ev.file)
+      end
       if url.version == "repo" and url.path == "index" then
         local ctx = context.get_context(url.root)
         ctx.buf = ctx.buf or ev.buf

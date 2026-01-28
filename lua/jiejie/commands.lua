@@ -122,7 +122,7 @@ end
 --- @field id string change ID
 --- @field id_short string Short change ID
 --- @field empty boolean It's an empty change
---- @field description_shortened string Description, truncated first line
+--- @field description_first_line string First line of description
 --- @field bookmarks string[] Bookmarks
 --- @field tags string[] Tags
 --- @field git_head boolean Git head is on this change
@@ -426,9 +426,12 @@ function M.setup()
     local path
     if vim.startswith(object.filename, "jiejie://") then
       -- special handling for calling Jedit on a file name that is a jiejie URL
-      local res = parsers.parse_url(object.filename)
-      root = res.root
-      path = res.path
+      local url = parsers.parse_url(object.filename)
+      if not url then
+        error("Error: unknown URL: " .. object.filename)
+      end
+      root = url.root
+      path = url.path
       object.filename = vim.fs.joinpath(root, path)
     else
       local directory = vim.fn.fnamemodify(object.filename, ":h")
