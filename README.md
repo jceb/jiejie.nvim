@@ -48,11 +48,11 @@ return {
 - [x] Configuration: expose all key bindings as <Plug>
 - [x] Commands: provide convenience mappings for editing the current file in a
       new split (o) or tab (O)
+- [x] Commands: squash and commit for individual files
 
 Priority 1
 
 - [ ] Navigation: movement mappings for commits, files and hunks
-- [ ] Commands: squash and commit for individual files
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Commands: split

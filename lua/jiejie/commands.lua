@@ -234,20 +234,24 @@ end
 
 --- Commit changes
 --- @param ctx Context context
-function M.change_commit(ctx)
-  start_dummy_editor(ctx, "commit")
+--- @param opts? {files?: string[]} Options
+--- - files List of file names relative to the root of the repository
+function M.change_commit(ctx, opts)
+  local lopts = opts or {}
+  start_dummy_editor(ctx, "commit", lopts.files or {})
 end
 
 --- Squash changes
 --- @param ctx Context context
 --- @param src_change Change Soruce change
---- @param opts? {dst_change?: Change, force?: boolean} Options
+--- @param opts? {dst_change?: Change, files?: string[], force?: boolean} Options
 --- - dst_change Destination change
+--- - files List of file names relative to the root of the repository
 --- - force Edit immutable change
 --- @return boolean?
 function M.change_squash(ctx, src_change, opts)
   local lopts = opts or {}
-  local args = { lopts.dst_change and "-f" or "-r", src_change.id }
+  local args = vim.list_extend({ lopts.dst_change and "-f" or "-r", src_change.id }, lopts.files or {})
   local dst = "it's parent"
   if lopts.dst_change then
     args = vim.list_extend(args, { "-t", lopts.dst_change.id })

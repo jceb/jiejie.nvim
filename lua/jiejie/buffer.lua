@@ -499,10 +499,17 @@ function M.setup_buffer(ctx)
     {
       key = "cc",
       plug = "<Plug>(jiejie-cc)",
-      fn = with_root_context(function(args)
-        commands.change_commit(args.ctx)
-        return true
-      end),
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(function(args)
+          if args.src_change.status ~= commands.CHANGE_STATUS.CURRENT then
+            vim.notify("Commit not possible, curser is not on the currently edited change", vim.log.levels.ERROR)
+            return false
+          end
+          commands.change_commit(args.ctx, { files = { args.file and args.file.filename or nil } })
+          return true
+        end),
+        { err_continue = true }
+      )),
       desc = "Commit currently edited change and create a new change",
     },
     {
@@ -526,37 +533,53 @@ function M.setup_buffer(ctx)
     {
       key = "cs",
       plug = "<Plug>(jiejie-cs)",
-      fn = with_root_context(M.search_change_upwards(function(args)
-        commands.change_squash(args.ctx, args.src_change)
-        return true
-      end)),
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(function(args)
+          commands.change_squash(args.ctx, args.src_change, { files = { args.file and args.file.filename or nil } })
+          return true
+        end),
+        { err_continue = true }
+      )),
       desc = "Squash current changes into it's parent",
     },
     {
       key = "!cs",
       plug = "<Plug>(jiejie-!cs)",
-      fn = with_root_context(M.search_change_upwards(function(args)
-        commands.change_squash(args.ctx, args.src_change, M.with_direct_force())
-        return true
-      end)),
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(function(args)
+          commands.change_squash(args.ctx, args.src_change, M.with_direct_force({ files = { args.file and args.file.filename or nil } }))
+          return true
+        end),
+        { err_notify = false }
+      )),
       desc = "Squash current changes into it's immutable parent",
     },
     {
       key = "cS",
       plug = "<Plug>(jiejie-cS)",
-      fn = with_root_context(M.search_change_upwards(M.with_target_change(function(args)
-        commands.change_squash(args.ctx, args.src_change, { dst_change = args.dst_change })
-        return true
-      end, { err_notify = false }))),
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(M.with_target_change(function(args)
+          commands.change_squash(args.ctx, args.src_change, { dst_change = args.dst_change, files = { args.file and args.file.filename or nil } })
+          return true
+        end, { err_notify = false })),
+        { err_notify = false }
+      )),
       desc = "Squash current changes into the selecated change",
     },
     {
       key = "!cS",
       plug = "<Plug>(jiejie-!cS)",
-      fn = with_root_context(M.search_change_upwards(M.with_target_change(function(args)
-        commands.change_squash(args.ctx, args.src_change, M.with_direct_force({ dst_change = args.dst_change }))
-        return true
-      end, { err_notify = false, err_continue = true }))),
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(M.with_target_change(function(args)
+          commands.change_squash(
+            args.ctx,
+            args.src_change,
+            M.with_direct_force({ dst_change = args.dst_change, files = { args.file and args.file.filename or nil } })
+          )
+          return true
+        end, { err_notify = false, err_continue = true })),
+        { err_notify = false }
+      )),
       desc = "Squash current changes into the immutuable selecated change",
     },
     {
