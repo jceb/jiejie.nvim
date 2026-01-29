@@ -51,11 +51,14 @@ end
 --- @param url JiejieURL File url
 --- @param callback fun(ctx: Context) Asynchronous callback
 M.load_file = function(ctx, url, callback)
+  if not url.path then
+    error("Path missing in URL", url)
+  end
   local args = {
     "file",
     "show",
     "-r",
-    url.version,
+    url.revision,
     url.path,
   }
   jujutsu.cli(
@@ -88,7 +91,7 @@ function M.setup(id)
       if not url then
         error("Error: unknown URL: " .. ev.file)
       end
-      if url.version == "repo" and url.path == "index" then
+      if url.revision == "repo" and url.path == "index" then
         local ctx = context.get_context(url.root)
         ctx.buf = ctx.buf or ev.buf
         M.load(ctx, function(ctx)

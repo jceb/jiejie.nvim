@@ -330,25 +330,32 @@ end
 --- @param ctx Context context
 --- @param file ModifiedFile File name
 --- @param change Change Change to edit file at
---- @param force? boolean Edit immutable change
+--- @param opts? {previous_win?: boolean, edit_cmd?: fun(filename: string)}
+--- - previous_win: Navigate to previous window or split a new window before edting file, when current buffer is the log buffer
+--- - edit_cmd: Function that's called for editing file
 --- @return function
-function M.file_edit(ctx, file, change, force)
+function M.file_edit(ctx, file, change, opts)
+  local lopts = opts or {}
+  lopts.edit_cmd = lopts.edit_cmd or vim.cmd.e
   local filename = vim.fs.joinpath(ctx.root, file.filename)
   if change.status ~= M.CHANGE_STATUS.CURRENT then
-    filename = "jiejie://" .. ctx.root .. "/.jj/" .. change.id .. "/" .. file.filename
+    filename = parsers.join_url({
+      root = ctx.root,
+      revision = change.id,
+      path = file.filename,
+    })
   end
   local winid = vim.api.nvim_get_current_win()
   local winid_new
   local bufid = vim.api.nvim_get_current_buf()
-  if vim.bo[bufid].filetype == "jiejie" then
+  if lopts.previous_win and bufid == ctx.buf then
     vim.cmd.wincmd("p")
     winid_new = vim.api.nvim_get_current_win()
   end
   if winid_new == winid then
-    vim.cmd.sp(filename)
-  else
-    vim.cmd.e(filename)
+    vim.cmd.new()
   end
+  lopts.edit_cmd(filename)
 end
 
 --- Restore file
@@ -428,11 +435,12 @@ function M.setup()
       -- special handling for calling Jedit on a file name that is a jiejie URL
       local url = parsers.parse_url(object.filename)
       if not url then
-        error("Error: unknown URL: " .. object.filename)
+        error("Unknown URL: " .. object.filename)
       end
-      root = url.root
-      path = url.path
-      object.filename = vim.fs.joinpath(root, path)
+      if not url.path then
+        error("Path not specified in URL: " .. object.filename)
+      end
+      object.filename = vim.fs.joinpath(url.root, url.path)
     else
       local directory = vim.fn.fnamemodify(object.filename, ":h")
       root = jujutsu.get_root(directory)

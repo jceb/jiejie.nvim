@@ -98,10 +98,10 @@ function M.parse_filename(line, linenr)
 end
 
 --- @class JiejieURL
---- @field scheme string URL scheme
+--- @field scheme? string URL scheme
 --- @field root string Path to the repository
---- @field version string Version string
---- @field path string Path in the repository
+--- @field revision string Revision string
+--- @field path? string Path in the repository
 
 --- Parse jiejie:// URL into its componentens
 --- @param url string URL
@@ -110,7 +110,7 @@ function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     return nil
   end
-  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\+\)/.jj/\([^/]\+\)/\(.\+\)$]])
+  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)\%(/\(.\+\)\)\?$]])
   if #match == 0 then
     return nil
   end
@@ -122,9 +122,16 @@ function M.parse_url(url)
   return {
     scheme = match[2],
     root = root,
-    version = match[4],
-    path = match[5],
+    revision = match[4],
+    path = match[5] ~= "" and match[5] or nil,
   }
+end
+
+--- Join URL into a string
+--- @param url JiejieURL
+--- @return string
+function M.join_url(url)
+  return "jiejie://" .. url.root .. "/.jj/" .. url.revision .. "/" .. (url.path or "")
 end
 
 return M

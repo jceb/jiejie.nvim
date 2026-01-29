@@ -256,11 +256,15 @@ function M.focus(ctx, vertical)
   ctx.buf = M.is_valid(ctx.buf)
   if ctx.buf == nil then
     -- If buffer doesn't exist, open a new one
-    local file = "jiejie://" .. ctx.root .. "/.jj/repo/index"
+    local filename = parsers.join_url({
+      root = ctx.root,
+      revision = "repo",
+      path = "index",
+    })
     if vertical then
-      vim.cmd.vs(file)
+      vim.cmd.vs(filename)
     else
-      vim.cmd.sp(file)
+      vim.cmd.sp(filename)
     end
     return ctx
   end
@@ -322,24 +326,86 @@ function M.setup_buffer(ctx)
   end
   --- @type table<number, {key: string, fn: fun(), plug: string, desc: string}>
   local nmappings = {
+    --- Navigation maps {{{1
     {
-      key = "<C-a>",
-      plug = "<Plug>(jiejie-<c-a>)",
-      fn = with_root_context(M.with_count(commands.log_revisions_adjust)),
-      desc = "Increase the number of displayed log revisions",
+      key = "<CR>",
+      plug = "<Plug>(jiejie-<CR>)",
+      fn = with_root_context(function(ctx)
+        if
+          not M.with_file_at_position(
+            M.search_change_upwards(function(ctx, file, change)
+              commands.file_edit(ctx, file, change, { previous_win = true })
+            end),
+            false
+          )(ctx)
+        then
+          M.with_change_at_position(commands.change_edit)(ctx)
+        end
+      end),
+      desc = "Edit change or file under the cursor",
     },
     {
-      key = "<C-x>",
-      plug = "<Plug>(jiejie-<c-x>)",
-      fn = with_root_context(M.with_count(commands.log_revisions_adjust, true)),
-      desc = "Decrease the number of displayed log revisions",
+      key = "!<CR>",
+      plug = "<Plug>(jiejie-!<CR>)",
+      fn = with_root_context(function(ctx)
+        if
+          not M.with_file_at_position(
+            M.search_change_upwards(function(ctx, file, change)
+              commands.file_edit(ctx, file, change, { previous_win = true })
+            end),
+            false
+          )(ctx)
+        then
+          M.with_change_at_position(function(ctx, change)
+            commands.change_edit(ctx, change, true)
+          end)(ctx)
+        end
+      end),
+      desc = "Edit immutable change or file under the cursor",
     },
+    {
+      key = "o",
+      plug = "<Plug>(jiejie-o)",
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(function(ctx, file, change)
+          commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.sp })
+        end),
+        false
+      )),
+      desc = "Open the file or jiejie-object under the cursor in a new split",
+    },
+    {
+      key = "gO",
+      plug = "<Plug>(jiejie-gO)",
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(function(ctx, file, change)
+          commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.vnew })
+        end),
+        false
+      )),
+      desc = "Open the file or jiejie-object under the cursor in a new vertical split",
+    },
+    {
+      key = "O",
+      plug = "<Plug>(jiejie-O)",
+      fn = with_root_context(M.with_file_at_position(
+        M.search_change_upwards(function(ctx, file, change)
+          commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.tabnew })
+        end),
+        false
+      )),
+      desc = "Open the file or jiejie-object under the cursor in a new vertical split",
+    },
+
+    --- Diff maps {{{1
     {
       key = "=",
       plug = "<Plug>(jiejie-=)",
       fn = with_root_context(M.search_file_upwards(M.search_change_upwards(commands.toggle_diff), true, true)),
       desc = "Toggle an inline diff of the change or file under the cursor",
     },
+
+    --- Commit maps {{{1
     {
       key = "cc",
       plug = "<Plug>(jiejie-cc)",
@@ -387,35 +453,6 @@ function M.setup_buffer(ctx)
       desc = "Squash current changes into the immutuable selecated change",
     },
     {
-      key = "<CR>",
-      plug = "<Plug>(jiejie-<CR>)",
-      fn = with_root_context(function(ctx)
-        if not M.with_file_at_position(M.search_change_upwards(commands.file_edit), false)(ctx) then
-          M.with_change_at_position(commands.change_edit)(ctx)
-        end
-      end),
-      desc = "Edit change or file under the cursor",
-    },
-    {
-      key = "!<CR>",
-      plug = "<Plug>(jiejie-!<CR>)",
-      fn = with_root_context(function(ctx)
-        if
-          not M.with_file_at_position(
-            M.search_change_upwards(function(ctx, filename, change)
-              commands.file_edit(ctx, filename, change, true)
-            end),
-            false
-          )(ctx)
-        then
-          M.with_change_at_position(function(ctx, change)
-            commands.change_edit(ctx, change, true)
-          end)(ctx)
-        end
-      end),
-      desc = "Edit immutable change or file under the cursor",
-    },
-    {
       key = "de",
       plug = "<Plug>(jiejie-de)",
       fn = with_root_context(M.with_change_at_position(function(ctx, change)
@@ -448,24 +485,24 @@ function M.setup_buffer(ctx)
       desc = "Edit first line of an immutable change description",
     },
     {
-      key = "p",
-      plug = "<Plug>(jiejie-p)",
+      key = "cp",
+      plug = "<Plug>(jiejie-cp)",
       fn = with_root_context(function(ctx)
         commands.cli(ctx, { "git", "fetch" })
       end),
       desc = "Fetch changes from remote",
     },
     {
-      key = "P",
-      plug = "<Plug>(jiejie-P)",
+      key = "cP",
+      plug = "<Plug>(jiejie-cP)",
       fn = with_root_context(function(ctx)
         commands.cli(ctx, { "git", "push" })
       end),
       desc = "Push changes to remote",
     },
     {
-      key = "u",
-      plug = "<Plug>(jiejie-u)",
+      key = "cU",
+      plug = "<Plug>(jiejie-cU)",
       fn = with_root_context(function(ctx)
         commands.cli(ctx, { "op", "revert" })
       end),
@@ -500,11 +537,25 @@ function M.setup_buffer(ctx)
       end),
       desc = "Abandon immutuable change or restore file from parent change",
     },
+
+    --- Miscellaneous maps {{{1
     {
       key = "g?",
       plug = "<Plug>(jiejie-g?)",
       fn = commands.show_help,
       desc = "Show help",
+    },
+    {
+      key = "<C-a>",
+      plug = "<Plug>(jiejie-<c-a>)",
+      fn = with_root_context(M.with_count(commands.log_revisions_adjust)),
+      desc = "Increase the number of displayed log revisions",
+    },
+    {
+      key = "<C-x>",
+      plug = "<Plug>(jiejie-<c-x>)",
+      fn = with_root_context(M.with_count(commands.log_revisions_adjust, true)),
+      desc = "Decrease the number of displayed log revisions",
     },
   }
   for index, value in ipairs(nmappings) do

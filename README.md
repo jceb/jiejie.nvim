@@ -46,12 +46,12 @@ return {
 - [x] Commands: op revert (undo) last operation
 - [x] Commands: Jedit
 - [x] Configuration: expose all key bindings as <Plug>
+- [x] Commands: provide convenience mappings for editing the current file in a
+      new split (o) or tab (O)
 
 Priority 1
 
 - [ ] Navigation: movement mappings for commits, files and hunks
-- [ ] Commands: provide convenience mappings for editing the current file in a
-      new split (o) or tab (t)
 - [ ] Commands: squash and commit for individual files
 - [ ] Refactor: convert command options to option tables
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
