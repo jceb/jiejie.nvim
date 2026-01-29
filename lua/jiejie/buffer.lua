@@ -331,15 +331,13 @@ function M.setup_buffer(ctx)
       key = "<CR>",
       plug = "<Plug>(jiejie-<CR>)",
       fn = with_root_context(function(ctx)
-        if
-          not M.with_file_at_position(
+        if not M.with_change_at_position(commands.change_edit)(ctx) then
+          M.search_file_upwards(
             M.search_change_upwards(function(ctx, file, change)
               commands.file_edit(ctx, file, change, { previous_win = true })
             end),
             false
           )(ctx)
-        then
-          M.with_change_at_position(commands.change_edit)(ctx)
         end
       end),
       desc = "Edit change or file under the cursor",
@@ -348,17 +346,15 @@ function M.setup_buffer(ctx)
       key = "!<CR>",
       plug = "<Plug>(jiejie-!<CR>)",
       fn = with_root_context(function(ctx)
-        if
-          not M.with_file_at_position(
+        if not M.with_change_at_position(function(ctx, change)
+          commands.change_edit(ctx, change, true)
+        end)(ctx) then
+          M.search_file_upwards(
             M.search_change_upwards(function(ctx, file, change)
               commands.file_edit(ctx, file, change, { previous_win = true })
             end),
             false
           )(ctx)
-        then
-          M.with_change_at_position(function(ctx, change)
-            commands.change_edit(ctx, change, true)
-          end)(ctx)
         end
       end),
       desc = "Edit immutable change or file under the cursor",
@@ -366,7 +362,7 @@ function M.setup_buffer(ctx)
     {
       key = "o",
       plug = "<Plug>(jiejie-o)",
-      fn = with_root_context(M.with_file_at_position(
+      fn = with_root_context(M.search_file_upwards(
         M.search_change_upwards(function(ctx, file, change)
           commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.sp })
         end),
@@ -377,7 +373,7 @@ function M.setup_buffer(ctx)
     {
       key = "gO",
       plug = "<Plug>(jiejie-gO)",
-      fn = with_root_context(M.with_file_at_position(
+      fn = with_root_context(M.search_file_upwards(
         M.search_change_upwards(function(ctx, file, change)
           commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.vnew })
         end),
@@ -388,7 +384,7 @@ function M.setup_buffer(ctx)
     {
       key = "O",
       plug = "<Plug>(jiejie-O)",
-      fn = with_root_context(M.with_file_at_position(
+      fn = with_root_context(M.search_file_upwards(
         M.search_change_upwards(function(ctx, file, change)
           commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.tabnew })
         end),
@@ -512,8 +508,8 @@ function M.setup_buffer(ctx)
       key = "X",
       plug = "<Plug>(jiejie-X)",
       fn = with_root_context(function(ctx)
-        if not M.with_file_at_position(M.search_change_upwards(commands.file_restore), false)(ctx) then
-          M.with_change_at_position(commands.change_abandon)(ctx)
+        if not M.with_change_at_position(commands.change_abandon)(ctx) then
+          M.search_file_upwards(M.search_change_upwards(commands.file_restore), false)(ctx)
         end
       end),
       desc = "Abandon change or restore file from parent change",
@@ -522,17 +518,15 @@ function M.setup_buffer(ctx)
       key = "!X",
       plug = "<Plug>(jiejie-!X)",
       fn = with_root_context(function(ctx)
-        if
-          not M.with_file_at_position(
+        if not M.with_change_at_position(function(ctx, change)
+          commands.change_abandon(ctx, change, true)
+        end)(ctx) then
+          M.search_file_upwards(
             M.search_change_upwards(function(ctx, file, change)
               commands.file_restore(ctx, file, change, true)
             end),
             false
           )(ctx)
-        then
-          M.with_change_at_position(function(ctx, change)
-            commands.change_abandon(ctx, change, true)
-          end)(ctx)
         end
       end),
       desc = "Abandon immutuable change or restore file from parent change",
