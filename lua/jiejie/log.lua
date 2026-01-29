@@ -33,7 +33,7 @@ M.load = function(ctx, callback)
         error("Error getting log:\n" .. res.stderr)
       end
       local data = vim.split(res.stdout, "\n")
-      local headers = { buffer.create_header("Help", "g?") }
+      local headers = { buffer.create_header("Help", "g?"), buffer.create_header("Reload", "r") }
       local oplog = jujutsu.cli(ctx, { "op", "log", "-n", "1", "--no-graph", "-T", 'id.short(4) ++ " " ++ user ++ " " ++ description' })
       if oplog.code == 0 then
         headers = vim.list_extend(headers, { buffer.create_header("Last operation", vim.trim(oplog.stdout)) })

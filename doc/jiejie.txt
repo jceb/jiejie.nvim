@@ -121,6 +121,9 @@ Miscellaneous maps ~
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.
 
+                                                                      *jiejie_r*
+r                       Reload log.
+
                                                                   *jiejie_<C-a>*
 <C-a>                   Increase the number of displayed revisions in log.
 

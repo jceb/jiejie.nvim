@@ -692,6 +692,19 @@ function M.setup_buffer(ctx)
       desc = "Show help",
     },
     {
+      key = "r",
+      plug = "<Plug>(jiejie-r)",
+      fn = with_root_context(function(args)
+        local _winid = vim.api.nvim_get_current_win()
+        local pos = vim.api.nvim_win_get_cursor(_winid)
+        commands.reload_log(args.ctx, function()
+          vim.notify("Log reloaded", vim.log.levels.INFO)
+          vim.api.nvim_win_set_cursor(_winid, pos)
+        end)
+      end),
+      desc = "Reload log",
+    },
+    {
       key = "<C-a>",
       plug = "<Plug>(jiejie-<c-a>)",
       fn = with_root_context(M.with_count(function(args)
