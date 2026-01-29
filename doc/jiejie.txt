@@ -127,6 +127,14 @@ Rebase maps ~
 rr                      Rebase the change under the cursor, together with its
                         descendants.
 
+                                                                    *jiejie_~!rr*
+!rr                      Rebase the change under the cursor, together with its
+                        descendants.
+
+                                                                    *jiejie_!ro*
+!ro                      Rebase only change under the cursor, without its
+                        descendants.
+
                                                                      *jiejie_ro*
 ro                      Rebase only change under the cursor, without its
                         descendants.

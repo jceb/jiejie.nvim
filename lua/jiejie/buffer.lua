@@ -768,7 +768,7 @@ function M.setup_buffer(ctx)
     {
       key = "!cn",
       fn = with_root_context(M.search_change(function(args)
-        commands.change_new(args.ctx, args.src_change, M.with_force())
+        commands.change_new(args.ctx, args.src_change, M.with_direct_force())
         return true
       end)),
       desc = "Create a new change after the change under the cursor",
@@ -910,7 +910,19 @@ function M.setup_buffer(ctx)
       fn = with_root_context(M.search_change(M.with_target_change(function(args)
         commands.cli(args.ctx, { "rebase", "-s", args.src_change.id, "-d", args.dst_change.id }, {
           callback = function()
-            vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, level, opts)
+            vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end, { defualt_target = "" }))),
+      desc = "Rebase the change under the cursor, together with its descendants",
+    },
+    {
+      key = "!rr",
+      fn = with_root_context(M.search_change(M.with_target_change(function(args)
+        commands.cli(args.ctx, M.with_direct_force({ "rebase", "-s", args.src_change.id, "-d", args.dst_change.id }), {
+          callback = function()
+            vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
         return true
@@ -922,7 +934,19 @@ function M.setup_buffer(ctx)
       fn = with_root_context(M.search_change(M.with_target_change(function(args)
         commands.cli(args.ctx, { "rebase", "-r", args.src_change.id, "-d", args.dst_change.id }, {
           callback = function()
-            vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, level, opts)
+            vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end, { defualt_target = "" }))),
+      desc = "Rebase only change under the cursor, without its descendants",
+    },
+    {
+      key = "!ro",
+      fn = with_root_context(M.search_change(M.with_target_change(function(args)
+        commands.cli(args.ctx, M.with_direct_force({ "rebase", "-r", args.src_change.id, "-d", args.dst_change.id }), {
+          callback = function()
+            vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
         return true
