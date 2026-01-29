@@ -38,7 +38,7 @@ function M.cli(ctx, fargs, opts, on_exit, errOpts)
     }, opts or {}),
     on_exit
   )
-  if on_exit ~= nil then
+  if on_exit then
     return exec
   end
   local out = exec:wait()
@@ -66,7 +66,7 @@ end
 --- @return Editor
 function M.create_dummy_editor()
   local fd, editorScript, err_msgx = vim.uv.fs_mkstemp((vim.env.TMPDIR or "/tmp") .. "/jj_editor_XXXXXX")
-  if fd == nil or err_msgx ~= nil then
+  if fd == nil or err_msgx then
     error(err_msgx)
   end
   assert(vim.uv.fs_close(fd))

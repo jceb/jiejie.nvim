@@ -337,3 +337,39 @@ describe("jiejie parse_url", function()
 
   --
 end)
+
+describe("jiejie parse_url", function()
+  --
+
+  it("When parsing an empty string, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_hunk("")
+    local expected = false
+    eq(expected, result)
+  end)
+
+  it("When parsing a line that looks like a hunk but isn't, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_hunk("@@ ")
+    local expected = false
+    eq(expected, result)
+  end)
+
+  it("When parsing a line that looks like a hunk but isn't, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_hunk("@@ xx @")
+    local expected = false
+    eq(expected, result)
+  end)
+
+  it("When parsing a line that looks like a hunk but isn't, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_hunk("@ xx @@")
+    local expected = false
+    eq(expected, result)
+  end)
+
+  it("When parsing a hunk, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_hunk("@@ xyz @@")
+    local expected = true
+    eq(expected, result)
+  end)
+
+  --
+end)

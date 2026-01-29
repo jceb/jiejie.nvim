@@ -5,7 +5,7 @@ local jujutsu = require("jiejie.jujutsu")
 --- @param filename string File name
 local function unset_expanded(change_id, filename)
   vim.b.jiejie_diff_expansion = vim.tbl_filter(function(e)
-    if e ~= nil and e.change_id == change_id and e.filename == filename then
+    if e and e.change_id == change_id and e.filename == filename then
       return false
     end
     return true
@@ -23,9 +23,10 @@ end
 --- Get DiffExpansion status
 --- @param change_id string ChangeID
 --- @param filename string File name
+--- @return table
 local function get_expanded(change_id, filename)
   local res = vim.tbl_filter(function(e)
-    if e ~= nil and e.change_id == change_id and e.filename == filename then
+    if e and e.change_id == change_id and e.filename == filename then
       return true
     end
     return false
@@ -52,6 +53,10 @@ end
 --- @param file ModifiedFile File name
 --- @param change Change Change data
 function M.diff_show(ctx, file, change)
+  local expanded = get_expanded(change.id, file.filename)
+  if expanded then
+    return
+  end
   local args = { "diff", "--git", "-r", change.id, file.filename }
   local res = jujutsu.cli(ctx, args)
   local diff = vim.split(vim.trim(res.stdout), "\n")

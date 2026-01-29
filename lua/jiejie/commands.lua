@@ -165,16 +165,15 @@ function M.toggle_diff(ctx, change, opts)
   if lopts.file then
     files = vim.list_extend(files, { lopts.file })
   else
-    for linenr, line in ipairs(vim.fn.getbufline(ctx.buf, change.linenr + 1, "$")) do
-      local f = parsers.parse_filename(line, change.linenr + linenr)
+    for idx, line in ipairs(vim.fn.getbufline(ctx.buf, change.linenr + 1, "$")) do
+      local f = parsers.parse_filename(line, change.linenr + idx)
       if f then
         files = vim.list_extend(files, { f })
       end
-      local ch = parsers.parse_change(line, change.linenr + linenr)
+      local ch = parsers.parse_change(line, change.linenr + idx)
       if ch then
         break
       end
-      linenr = linenr + 1
     end
   end
   -- walk backwards through the list of files to hide / show them

@@ -127,6 +127,13 @@ function M.parse_url(url)
   }
 end
 
+--- Parse a line to identify it as containing a diff hunk
+--- @param line string Line
+--- @return boolean
+function M.parse_hunk(line)
+  return vim.startswith(line, "@@ ") and vim.endswith(line, " @@")
+end
+
 --- Join URL into a string
 --- @param url JiejieURL
 --- @return string

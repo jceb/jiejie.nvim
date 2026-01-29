@@ -52,6 +52,16 @@ gO                      Open the file or |jiejie-object| under the cursor in a
 O                       Open the file or |jiejie-object| under the cursor in a
                         new tab.
 
+                                                                      *jiejie_i*
+i                       Jump to the next file or hunk, expanding inline diffs
+                        automatically.
+
+                                                                     *jiejie_[[*
+[[                      Jump [count] sections backward.
+
+                                                                     *jiejie_]]*
+]]                      Jump [count] sections forward.
+
                                                                       *jiejie_d*
 Diff maps ~
                                                                       *jiejie_=*

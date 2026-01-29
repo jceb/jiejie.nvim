@@ -30,7 +30,7 @@ function M.dirty_check(ev)
   if M.dirty_check_content(bufid) then
     local curpos_current = vim.api.nvim_win_get_cursor(0)
     commands.reload_log(ctx, function(ctx)
-      if M.dirty_check_cursor(bufid) and ctx.curpos ~= nil then
+      if M.dirty_check_cursor(bufid) and ctx.curpos then
         vim.api.nvim_win_set_cursor(0, ctx.curpos)
       else
         vim.api.nvim_win_set_cursor(0, curpos_current)
@@ -39,7 +39,7 @@ function M.dirty_check(ev)
     end)
   elseif M.dirty_check_cursor(bufid) then
     local curpos = M.get_dirty_cursor(bufid)
-    if curpos ~= nil then
+    if curpos then
       vim.api.nvim_win_set_cursor(0, curpos)
     end
     M.dirty_clear(bufid)
