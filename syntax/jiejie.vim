@@ -61,7 +61,7 @@ hi def link jiejieChangeMessageEmpty String
 hi def link jiejieChangeStatusConflict Error
 hi def link jiejieChangeStatusCurrent Todo
 hi def link jiejieChangeStatusMutable Normal
-hi def link jiejieChangeStatusHead Search
+hi def link jiejieChangeStatusHead Function
 hi def link jiejieChangeStatusImmutable Constant
 
 hi def link jiejieFileModified Type
