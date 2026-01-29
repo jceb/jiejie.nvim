@@ -509,14 +509,13 @@ function M.setup_buffer(ctx)
   local with_root_context = function(fn)
     return M.with_context(ctx.root, fn)
   end
-  --- @type table<number, {key: string, fn: fun(), plug: string, desc: string}>
+  --- @type table<number, {key: string, fn: fun(), desc: string}>
   local nmaps = {
     --
 
     -- Navigation maps {{{1
     {
       key = "<CR>",
-      plug = "<Plug>(jiejie-<CR>)",
       fn = with_root_context(function(_args)
         if
           not M.with_change_at_position(function(args)
@@ -534,7 +533,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!<CR>",
-      plug = "<Plug>(jiejie-!<CR>)",
       fn = with_root_context(function(_args)
         if
           not M.with_change_at_position(function(args)
@@ -552,7 +550,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "o",
-      plug = "<Plug>(jiejie-o)",
       fn = with_root_context(M.search_file(M.search_change(function(args)
         commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.sp })
         return true
@@ -561,7 +558,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "gO",
-      plug = "<Plug>(jiejie-gO)",
       fn = with_root_context(M.search_file(M.search_change(function(args)
         commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.vnew })
         return true
@@ -570,7 +566,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "O",
-      plug = "<Plug>(jiejie-O)",
       fn = with_root_context(M.search_file(M.search_change(function(args)
         commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.tabnew })
         return true
@@ -579,7 +574,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "i",
-      plug = "<Plug>(jiejie-i)",
       fn = with_root_context(
         M.search_file(
           M.search_change(
@@ -620,7 +614,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "[[",
-      plug = "<Plug>(jiejie-[[)",
       fn = with_root_context(
         M.search_file(
           M.search_change(
@@ -667,7 +660,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "]]",
-      plug = "<Plug>(jiejie-]])",
       fn = with_root_context(
         M.search_file(
           M.search_change(
@@ -717,7 +709,6 @@ function M.setup_buffer(ctx)
     -- Diff maps {{{1
     {
       key = "=",
-      plug = "<Plug>(jiejie-=)",
       fn = with_root_context(M.search_file(
         M.search_change(function(args)
           commands.toggle_diff(args.ctx, args.src_change, { file = args.file })
@@ -731,7 +722,6 @@ function M.setup_buffer(ctx)
     -- Commit maps {{{1
     {
       key = "cc",
-      plug = "<Plug>(jiejie-cc)",
       fn = with_root_context(M.search_file(
         M.search_change(function(args)
           if args.src_change.status ~= commands.CHANGE_STATUS.CURRENT then
@@ -747,7 +737,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "cn",
-      plug = "<Plug>(jiejie-cn)",
       fn = with_root_context(M.search_change(function(args)
         commands.change_new(args.ctx, args.src_change)
         return true
@@ -756,7 +745,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "crc",
-      plug = "<Plug>(jiejie-crc)",
       fn = with_root_context(M.search_change(function(args)
         commands.change_revert(args.ctx, args.src_change)
         return true
@@ -765,7 +753,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "cs",
-      plug = "<Plug>(jiejie-cs)",
       fn = with_root_context(M.search_file(
         M.search_change(function(args)
           commands.change_squash(args.ctx, args.src_change, { files = { args.file and args.file.filename or nil } })
@@ -777,7 +764,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!cs",
-      plug = "<Plug>(jiejie-!cs)",
       fn = with_root_context(M.search_file(
         M.search_change(function(args)
           commands.change_squash(args.ctx, args.src_change, M.with_direct_force({ files = { args.file and args.file.filename or nil } }))
@@ -789,7 +775,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "cS",
-      plug = "<Plug>(jiejie-cS)",
       fn = with_root_context(M.search_file(
         M.search_change(M.with_target_change(function(args)
           commands.change_squash(args.ctx, args.src_change, { dst_change = args.dst_change, files = { args.file and args.file.filename or nil } })
@@ -801,7 +786,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!cS",
-      plug = "<Plug>(jiejie-!cS)",
       fn = with_root_context(M.search_file(
         M.search_change(M.with_target_change(function(args)
           commands.change_squash(
@@ -817,7 +801,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "de",
-      plug = "<Plug>(jiejie-de)",
       fn = with_root_context(M.search_change(function(args)
         commands.change_describe(args.ctx, args.src_change)
         return true
@@ -826,7 +809,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!de",
-      plug = "<Plug>(jiejie-!de)",
       fn = with_root_context(M.search_change(function(args)
         commands.change_describe(args.ctx, args.src_change, M.with_direct_force())
         return true
@@ -835,7 +817,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "dd",
-      plug = "<Plug>(jiejie-dd)",
       fn = with_root_context(M.search_change(function(args)
         commands.change_describe(args.ctx, args.src_change, { firstline = true })
         return true
@@ -844,7 +825,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!dd",
-      plug = "<Plug>(jiejie-!dd)",
       fn = with_root_context(M.search_change(function(args)
         commands.change_describe(args.ctx, args.src_change, M.with_direct_force({ firstline = true }))
         return true
@@ -853,7 +833,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "cU",
-      plug = "<Plug>(jiejie-cU)",
       fn = with_root_context(function(args)
         commands.cli(args.ctx, { "op", "revert" })
         return true
@@ -862,7 +841,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "X",
-      plug = "<Plug>(jiejie-X)",
       fn = with_root_context(function(_args)
         if
           not M.with_change_at_position(function(args)
@@ -880,7 +858,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!X",
-      plug = "<Plug>(jiejie-!X)",
       fn = with_root_context(function(_args)
         if
           not M.with_change_at_position(function(args)
@@ -900,7 +877,6 @@ function M.setup_buffer(ctx)
     -- Git maps {{{1
     {
       key = "gp",
-      plug = "<Plug>(jiejie-gp)",
       fn = with_root_context(function(args)
         commands.cli(args.ctx, { "git", "fetch" })
         return true
@@ -909,7 +885,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "gP",
-      plug = "<Plug>(jiejie-gP)",
       fn = with_root_context(function(args)
         commands.cli(args.ctx, { "git", "push" })
         return true
@@ -920,13 +895,11 @@ function M.setup_buffer(ctx)
     -- Miscellaneous maps {{{1
     {
       key = "g?",
-      plug = "<Plug>(jiejie-g?)",
       fn = commands.show_help,
       desc = "Show help",
     },
     {
       key = "r",
-      plug = "<Plug>(jiejie-r)",
       fn = with_root_context(function(args)
         local _winid = vim.api.nvim_get_current_win()
         local pos = vim.api.nvim_win_get_cursor(_winid)
@@ -939,7 +912,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "<C-a>",
-      plug = "<Plug>(jiejie-<c-a>)",
       fn = with_root_context(M.with_count(function(args)
         commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
         return true
@@ -948,7 +920,6 @@ function M.setup_buffer(ctx)
     },
     {
       key = "<C-x>",
-      plug = "<Plug>(jiejie-<c-x>)",
       fn = with_root_context(M.with_count(function(args)
         commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
         return true
@@ -957,8 +928,9 @@ function M.setup_buffer(ctx)
     },
   }
   for _i, value in ipairs(nmaps) do
-    vim.keymap.set("n", value.key, value.plug, { desc = value.desc, nowait = true, buffer = true })
-    vim.keymap.set("n", value.plug, value.fn, { desc = value.desc, buffer = true })
+    local plug = "<Plug>(jiejie-" .. value.key .. ")"
+    vim.keymap.set("n", value.key, plug, { desc = value.desc, nowait = true, buffer = true })
+    vim.keymap.set("n", plug, value.fn, { desc = value.desc, buffer = true })
   end
   require("jiejie.log_diff").setup_buffer(ctx)
   require("jiejie.log_dirty_check").setup_buffer(ctx)
