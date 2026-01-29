@@ -320,45 +320,53 @@ function M.setup_buffer(ctx)
   local with_root_context = function(fn)
     return M.with_context(ctx.root, fn)
   end
-  --- @type table<number, {key: string, fn: fun(), desc: string}>
+  --- @type table<number, {key: string, fn: fun(), plug: string, desc: string}>
   local nmappings = {
     {
       key = "<C-a>",
+      plug = "<Plug>(jiejie-<c-a>)",
       fn = with_root_context(M.with_count(commands.log_revisions_adjust)),
       desc = "Increase the number of displayed log revisions",
     },
     {
       key = "<C-x>",
+      plug = "<Plug>(jiejie-<c-x>)",
       fn = with_root_context(M.with_count(commands.log_revisions_adjust, true)),
       desc = "Decrease the number of displayed log revisions",
     },
     {
       key = "=",
+      plug = "<Plug>(jiejie-=)",
       fn = with_root_context(M.search_file_upwards(M.search_change_upwards(commands.toggle_diff), true, true)),
       desc = "Toggle an inline diff of the change or file under the cursor",
     },
     {
       key = "cc",
+      plug = "<Plug>(jiejie-cc)",
       fn = with_root_context(commands.change_commit),
       desc = "Commit currently edited change and create a new change",
     },
     {
       key = "cn",
+      plug = "<Plug>(jiejie-cn)",
       fn = with_root_context(M.with_change_at_position(commands.change_new)),
       desc = "Create a new change after the change under the cursor",
     },
     {
       key = "crc",
+      plug = "<Plug>(jiejie-crc)",
       fn = with_root_context(M.with_change_at_position(commands.change_revert)),
       desc = "Revert the commit under the cursor",
     },
     {
       key = "cs",
+      plug = "<Plug>(jiejie-cs)",
       fn = with_root_context(M.with_change_at_position(commands.change_squash)),
       desc = "Squash current changes into it's parent",
     },
     {
       key = "!cs",
+      plug = "<Plug>(jiejie-!cs)",
       fn = with_root_context(M.with_change_at_position(function(ctx, change)
         commands.change_squash(ctx, change, nil, true)
       end)),
@@ -366,11 +374,13 @@ function M.setup_buffer(ctx)
     },
     {
       key = "cS",
+      plug = "<Plug>(jiejie-cS)",
       fn = with_root_context(M.with_change_at_position(M.with_target_change_id(commands.change_squash))),
       desc = "Squash current changes into the selecated change",
     },
     {
       key = "!cS",
+      plug = "<Plug>(jiejie-!cS)",
       fn = with_root_context(M.with_change_at_position(M.with_target_change_id(function(ctx, src_change, dst_change)
         commands.change_squash(ctx, src_change, dst_change, true)
       end))),
@@ -378,6 +388,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "<CR>",
+      plug = "<Plug>(jiejie-<CR>)",
       fn = with_root_context(function(ctx)
         if not M.with_file_at_position(M.search_change_upwards(commands.file_edit), false)(ctx) then
           M.with_change_at_position(commands.change_edit)(ctx)
@@ -387,6 +398,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!<CR>",
+      plug = "<Plug>(jiejie-!<CR>)",
       fn = with_root_context(function(ctx)
         if
           not M.with_file_at_position(
@@ -405,6 +417,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "de",
+      plug = "<Plug>(jiejie-de)",
       fn = with_root_context(M.with_change_at_position(function(ctx, change)
         commands.change_describe(ctx, change, false)
       end)),
@@ -412,6 +425,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!de",
+      plug = "<Plug>(jiejie-!de)",
       fn = with_root_context(M.with_change_at_position(function(ctx, change)
         commands.change_describe(ctx, change, true)
       end)),
@@ -419,6 +433,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "dd",
+      plug = "<Plug>(jiejie-dd)",
       fn = with_root_context(M.with_change_at_position(function(ctx, change)
         commands.change_describe(ctx, change, false, true)
       end)),
@@ -426,6 +441,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!dd",
+      plug = "<Plug>(jiejie-!dd)",
       fn = with_root_context(M.with_change_at_position(function(ctx, change)
         commands.change_describe(ctx, change, true, true)
       end)),
@@ -433,6 +449,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "p",
+      plug = "<Plug>(jiejie-p)",
       fn = with_root_context(function(ctx)
         commands.cli(ctx, { "git", "fetch" })
       end),
@@ -440,6 +457,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "P",
+      plug = "<Plug>(jiejie-P)",
       fn = with_root_context(function(ctx)
         commands.cli(ctx, { "git", "push" })
       end),
@@ -447,6 +465,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "u",
+      plug = "<Plug>(jiejie-u)",
       fn = with_root_context(function(ctx)
         commands.cli(ctx, { "op", "revert" })
       end),
@@ -454,6 +473,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "X",
+      plug = "<Plug>(jiejie-X)",
       fn = with_root_context(function(ctx)
         if not M.with_file_at_position(M.search_change_upwards(commands.file_restore), false)(ctx) then
           M.with_change_at_position(commands.change_abandon)(ctx)
@@ -463,6 +483,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "!X",
+      plug = "<Plug>(jiejie-!X)",
       fn = with_root_context(function(ctx)
         if
           not M.with_file_at_position(
@@ -481,12 +502,14 @@ function M.setup_buffer(ctx)
     },
     {
       key = "g?",
+      plug = "<Plug>(jiejie-g?)",
       fn = commands.show_help,
       desc = "Show help",
     },
   }
   for index, value in ipairs(nmappings) do
-    vim.keymap.set("n", value.key, value.fn, { desc = value.desc, buffer = true })
+    vim.keymap.set("n", value.key, value.plug, { desc = value.desc, nowait = true, buffer = true })
+    vim.keymap.set("n", value.plug, value.fn, { desc = value.desc, buffer = true })
   end
   require("jiejie.log_diff").setup_buffer(ctx)
   require("jiejie.log_dirty_check").setup_buffer(ctx)
