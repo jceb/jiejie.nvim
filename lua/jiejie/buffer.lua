@@ -580,24 +580,30 @@ function M.setup_buffer(ctx)
             M.search_hunk(
               M.search_file(
                 M.search_change(function(args)
+                  local count = vim.v.count
                   local _winid = vim.api.nvim_get_current_win()
+                  local linenr
                   if args.cur_file and args.cur_change then
                     if not log_diff.diff_shown(args.cur_file, args.cur_change) then
                       log_diff.diff_show(args.ctx, args.cur_file, args.cur_change)
-                      vim.api.nvim_win_set_cursor(_winid, { args.cur_file.linenr + 1, 0 })
-                      return true
+                      linenr = args.cur_file.linenr + 1
                     elseif args.hunk and args.hunk > args.cur_file.linenr then
                       if args.file and args.hunk < args.file.linenr then
                         if args.src_change and args.hunk < args.src_change.linenr then
-                          vim.api.nvim_win_set_cursor(_winid, { args.hunk, 0 })
-                          return true
+                          linenr = args.hunk
                         end
                       end
                     end
                   end
-                  local pos = { math.min(args.file and args.file.linenr or math.huge, args.src_change and args.src_change.linenr or math.huge), 0 }
+                  if not linenr then
+                    linenr = math.min(args.file and args.file.linenr or math.huge, args.src_change and args.src_change.linenr or math.huge)
+                  end
+                  local pos = { linenr, 0 }
                   if pos[1] ~= math.huge then
                     vim.api.nvim_win_set_cursor(_winid, pos)
+                    if count > 1 then
+                      vim.fn.feedkeys((count - 1) .. "i")
+                    end
                   end
                   return true
                 end, { search_downwards = true, err_continue = true, linenr_offset = 1 }),
@@ -619,6 +625,7 @@ function M.setup_buffer(ctx)
           M.search_change(
             M.search_file(
               M.search_change(function(args)
+                local count = vim.v.count
                 local _winid = vim.api.nvim_get_current_win()
                 local cur_change_linenr = args.cur_change and args.cur_change.linenr or 1
                 local linenr = 1
@@ -642,6 +649,9 @@ function M.setup_buffer(ctx)
                 end
                 local pos = { linenr, 0 }
                 vim.api.nvim_win_set_cursor(_winid, pos)
+                if count > 1 then
+                  vim.fn.feedkeys((count - 1) .. "[[")
+                end
                 return true
               end, {
                 linenr_from_file = true,
@@ -665,6 +675,7 @@ function M.setup_buffer(ctx)
           M.search_change(
             M.search_file(
               M.search_change(function(args)
+                local count = vim.v.count
                 local _winid = vim.api.nvim_get_current_win()
                 local linenr = 1
                 local src_change_linenr = args.src_change and args.src_change.linenr or 1
@@ -688,6 +699,9 @@ function M.setup_buffer(ctx)
                 end
                 local pos = { linenr, 0 }
                 vim.api.nvim_win_set_cursor(_winid, pos)
+                if count > 1 then
+                  vim.fn.feedkeys((count - 1) .. "]]")
+                end
                 return true
               end, {
                 search_downwards = true,
