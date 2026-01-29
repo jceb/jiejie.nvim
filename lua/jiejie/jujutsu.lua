@@ -2,10 +2,12 @@ local M = {}
 
 --- Add --ignore-immutable flag to the list of arguments when force is true.
 --- @param args string[] List of arguments
---- @param force? boolean If true, --ignore-immutable flag is added
+--- @param opts? {force?: boolean} Options
+--- - force If true, --ignore-immutable flag is added
 --- @return string[]
-function M.ignore_immtuable(args, force)
-  if force then
+function M.ignore_immtuable(args, opts)
+  local lopts = opts or {}
+  if lopts.force then
     table.insert(args, "--ignore-immutable")
   end
   return args

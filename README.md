@@ -53,7 +53,6 @@ Priority 1
 
 - [ ] Navigation: movement mappings for commits, files and hunks
 - [ ] Commands: squash and commit for individual files
-- [ ] Refactor: convert command options to option tables
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Commands: split

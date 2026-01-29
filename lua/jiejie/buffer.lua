@@ -5,179 +5,258 @@ local parsers = require("jiejie.parsers")
 local M = {}
 
 --- Adjust the displayed number of revisions
---- @param fn fun(ctx: Context, count: number) Callback function
+--- @param fn fun(args: {ctx: Context, count: number}): boolean Callback function
 --- @param negate? boolean Negate count or pass it on as received
 function M.with_count(fn, negate)
-  --- @param ctx Context context
-  return function(ctx)
+  --- @param args? {} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
     local count = vim.v.count ~= 0 and vim.v.count or 1
-    fn(ctx, (negate and -1 or 1) * count)
+    return fn(vim.tbl_extend("force", largs, { count = (negate and -1 or 1) * count }))
   end
+end
+
+--- Add force to arguments
+--- @param fn fun(args: {force: boolean}): boolean Callback function
+--- - force Add force = true to argument list
+--- @return function
+function M.with_force(fn)
+  --- @param args? {} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    return fn(vim.tbl_extend("force", largs, { force = true }))
+  end
+end
+
+--- Add force to arguments
+--- @param args? {} Arguments
+--- @return {}
+function M.with_direct_force(args)
+  local largs = args or {}
+  return vim.tbl_extend("force", largs, { force = true })
 end
 
 --- Provide repository context
 --- @param root string Root directory of repository
---- @param fn fun(ctx: Context) Callback that is called with Context
+--- @param fn fun(args: {ctx: Context}): boolean Callback function
 --- @return function
 function M.with_context(root, fn)
-  return function()
-    fn(context.get_context(root))
+  --- @param args? {} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    return fn(vim.tbl_extend("force", largs, { ctx = context.get_context(root) }))
   end
 end
 
 --- Retrieve data about the change that the cursor is on
---- @param fn fun(ctx: Context, change: Change) Callback that is called with Context and the extracted change information. The function is only
----                    called when a change id is found at the cursor position
---- @param err_notify? boolean Send notification is change is not found
+--- @param fn fun(args: {ctx: Context, src_change?: Change}): boolean Callback that is called with Context and the extracted change
+---           information. The function is only called when a change id is found at the cursor position
+--- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
 --- @return function
-function M.with_change_at_position(fn, err_notify)
-  --- @param ctx Context context
-  return function(ctx)
+function M.with_change_at_position(fn, opts)
+  --- @param args? {ctx: Context} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    if not largs.ctx then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Context missing.", vim.log.levels.WARN)
+      end
+      return
+    end
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
-    if bufid ~= ctx.buf then
+    if bufid ~= largs.ctx.buf then
       -- somehow the incorrect window/buffer is being edited
-      return nil
+      return
     end
     local linenr = vim.api.nvim_win_get_cursor(winid)[1]
-    local line = vim.fn.getbufoneline(ctx.buf, linenr)
+    local line = vim.fn.getbufoneline(largs.ctx.buf, linenr)
     local change = parsers.parse_change(line, linenr)
-    if change == nil then
-      if err_notify then
+    if change == nil and not lopts.err_continue then
+      if lopts.err_notify or lopts.err_notify == nil then
         vim.notify("No change data found.", vim.log.levels.WARN)
       end
     else
-      fn(ctx, change)
-      return true
-    end
-  end
-end
-
---- Retrieve data about the file name that the cursor is on
---- @param fn fun(ctx: Context, file?: ModifiedFile) Callback that is called with Context and the extracted file name
---- @param err_notify? boolean Send notification is change is not found
---- @param err_continue? boolean Continue execution callback execution on error
---- @return function
-function M.with_file_at_position(fn, err_notify, err_continue)
-  --- @param ctx Context context
-  return function(ctx)
-    local winid = vim.api.nvim_get_current_win()
-    local bufid = vim.api.nvim_win_get_buf(winid)
-    if bufid ~= ctx.buf then
-      -- somehow the incorrect window/buffer is being edited
-      return nil
-    end
-    local pos = vim.api.nvim_win_get_cursor(winid)
-    local line = vim.fn.getbufoneline(ctx.buf, pos[1])
-    local file = parsers.parse_filename(line, pos[1])
-    if file == nil and not err_continue then
-      if err_notify then
-        vim.notify("No file name found.", vim.log.levels.WARN)
-      end
-    else
-      fn(ctx, file)
-      return true
+      return fn(vim.tbl_extend("force", largs, { src_change = change }))
     end
   end
 end
 
 --- Request a target change ID
---- @param fn fun(ctx: Context, src_change: Change, dst_change?: Change) Callback that is called with Context and the extracted change information. The function is only
----                    called when a change id is found at the cursor position
+--- @param fn fun(args: {ctx: Context, src_change: Change, dst_change?: Change}): boolean Callback that is called with Context
+--- and the extracted change information. The function is only called when a change id is found at the cursor position
+--- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
 --- @return function
-function M.with_target_change_id(fn)
-  --- @param ctx Context context
-  --- @param src_change Change context
-  return function(ctx, src_change)
+function M.with_target_change(fn, opts)
+  --- @param args? {ctx: Context, src_change: Change} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    if not largs.ctx then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Context missing.", vim.log.levels.WARN)
+      end
+      return
+    end
     vim.ui.input({ prompt = "Target change (@-): " }, function(input)
-      if input == nil then
+      if input == nil and not lopts.err_continue then
+        if lopts.err_notify or lopts.err_notify == nil then
+          vim.notify("Target change ID nil.", vim.log.levels.WARN)
+        end
         return
       end
-      if input == "" then
-        fn(ctx, src_change)
+      if input == "" or input == nil then
+        return fn(largs)
       else
         -- TODO: verify existence of id before passing it on + generate a proper Change object
-        fn(ctx, src_change, { id = input, id_short = input })
+        return fn(vim.tbl_extend("force", largs, { dst_change = { id = input, id_short = input } }))
       end
     end)
   end
 end
 
---- Retrieve data about the change that the cursor is on
---- @param fn fun(ctx: Context, file?: ModifiedFile, change?: Change) Callback that is called with Context and the extracted change information. The function is only
----                    called when a change id is found at the cursor position
---- @param err_notify? boolean Send notification is change is not found
---- @param err_continue? boolean Continue execution callback execution on error
+--- Retrieve data about the file name that the cursor is on
+--- @param fn fun(args: {ctx: Context, file?: ModifiedFile}): boolean Callback that is called with Context and the extracted file name
+--- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
 --- @return function
-function M.search_change_upwards(fn, err_notify, err_continue)
-  return function(ctx, file)
+function M.with_file_at_position(fn, opts)
+  --- @param args? {ctx: Context} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    if not largs.ctx then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Context missing.", vim.log.levels.WARN)
+      end
+      return
+    end
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
-    if bufid ~= ctx.buf then
+    if bufid ~= largs.ctx.buf then
       -- somehow the incorrect window/buffer is being edited
-      return nil
+      return
+    end
+    local pos = vim.api.nvim_win_get_cursor(winid)
+    local line = vim.fn.getbufoneline(largs.ctx.buf, pos[1])
+    local file = parsers.parse_filename(line, pos[1])
+    if file == nil and not lopts.err_continue then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("No file name found.", vim.log.levels.WARN)
+      end
+    else
+      return fn(vim.tbl_extend("force", largs, { file = file }))
+    end
+  end
+end
+
+--- Retrieve data about the change that the cursor is on
+--- @param fn fun(args: {ctx: Context, file?: ModifiedFile, src_change?: Change}): boolean Callback that is called with Context
+--- and the extracted change information. The function is only called when a change id is found at the cursor position
+--- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
+--- @return function
+function M.search_change_upwards(fn, opts)
+  --- @param args? {ctx: Context} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    if not largs.ctx then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Context missing.", vim.log.levels.WARN)
+      end
+      return
+    end
+    local winid = vim.api.nvim_get_current_win()
+    local bufid = vim.api.nvim_win_get_buf(winid)
+    if bufid ~= largs.ctx.buf then
+      -- somehow the incorrect window/buffer is being edited
+      return
     end
     local linenr = vim.api.nvim_win_get_cursor(winid)[1] -- start search at the current line
     local change
     while linenr > 0 do
-      change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, linenr), linenr)
+      change = parsers.parse_change(vim.fn.getbufoneline(largs.ctx.buf, linenr), linenr)
       if change then
-        fn(ctx, file, change)
-        return true
+        return fn(vim.tbl_extend("force", largs, { src_change = change }))
       else
         linenr = linenr - 1
       end
     end
-    if change == nil and not err_continue then
-      if err_notify then
-        vim.notify("No change data found.", vim.log.levels.WARN)
+    if change == nil and not lopts.err_continue then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Change data not found.", vim.log.levels.WARN)
       end
     else
-      fn(ctx, file, change)
-      return true
+      return fn(vim.tbl_extend("force", largs, { src_change = change }))
     end
   end
 end
 
 --- Retrieve data about the filename that the cursor is on
---- @param fn fun(ctx: Context, file?: ModifiedFile) Callback that is called with Context and the extracted change information. The function is only
----                    called when a filename is found at the cursor position
---- @param err_notify? boolean Send notification is change is not found
---- @param err_continue? boolean Continue execution callback execution on error
+--- @param fn fun(args: {ctx: Context, file?: ModifiedFile, src_change?: Change}): boolean Callback that is called with Context
+--- and the extracted change information. The function is only called when a filename is found at the cursor position
+--- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
 --- @return function
-function M.search_file_upwards(fn, err_notify, err_continue)
-  return function(ctx)
+function M.search_file_upwards(fn, opts)
+  --- @param args? {ctx: Context} Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    if not largs.ctx then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Context missing.", vim.log.levels.WARN)
+      end
+      return
+    end
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
-    if bufid ~= ctx.buf then
+    if bufid ~= largs.ctx.buf then
       -- somehow the incorrect window/buffer is being edited
-      return nil
+      return
     end
     local linenr = vim.api.nvim_win_get_cursor(winid)[1] -- start search at the current line
     local file
     while linenr > 0 do
-      file = parsers.parse_filename(vim.fn.getbufoneline(ctx.buf, linenr), linenr)
+      file = parsers.parse_filename(vim.fn.getbufoneline(largs.ctx.buf, linenr), linenr)
       if file then
-        fn(ctx, file)
-        return true
+        return fn(vim.tbl_extend("force", largs, { file = file }))
       end
-      local change = parsers.parse_change(vim.fn.getbufoneline(ctx.buf, linenr), linenr)
+      local change = parsers.parse_change(vim.fn.getbufoneline(largs.ctx.buf, linenr), linenr)
       if change then
         break
       else
         linenr = linenr - 1
       end
     end
-    if file == nil and not err_continue then
-      if err_notify then
-        vim.notify("No file data found.", vim.log.levels.WARN)
+    if file == nil and not lopts.err_continue then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("File data not found.", vim.log.levels.WARN)
       end
     else
-      fn(ctx, file)
-      return true
+      return fn(vim.tbl_extend("force", largs, { file = file }))
     end
   end
 end
+
+--- Retrieve data about the next filename from the cusor position downwards
 
 --- Tests validity of buffer, returns nil if buffer is not valid, otherwise the passed in buffer id
 --- @param buf number Buffer ID
@@ -325,19 +404,24 @@ function M.setup_buffer(ctx)
     return M.with_context(ctx.root, fn)
   end
   --- @type table<number, {key: string, fn: fun(), plug: string, desc: string}>
-  local nmappings = {
-    --- Navigation maps {{{1
+  local nmaps = {
+    --
+
+    -- Navigation maps {{{1
     {
       key = "<CR>",
       plug = "<Plug>(jiejie-<CR>)",
-      fn = with_root_context(function(ctx)
-        if not M.with_change_at_position(commands.change_edit)(ctx) then
-          M.search_file_upwards(
-            M.search_change_upwards(function(ctx, file, change)
-              commands.file_edit(ctx, file, change, { previous_win = true })
-            end),
-            false
-          )(ctx)
+      fn = with_root_context(function(_args)
+        if
+          not M.with_change_at_position(function(args)
+            commands.change_edit(args.ctx, args.src_change)
+            return true
+          end)({ ctx = _args.ctx })
+        then
+          M.search_file_upwards(M.search_change_upwards(function(args)
+            commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true })
+            return true
+          end))({ ctx = _args.ctx })
         end
       end),
       desc = "Edit change or file under the cursor",
@@ -345,16 +429,17 @@ function M.setup_buffer(ctx)
     {
       key = "!<CR>",
       plug = "<Plug>(jiejie-!<CR>)",
-      fn = with_root_context(function(ctx)
-        if not M.with_change_at_position(function(ctx, change)
-          commands.change_edit(ctx, change, true)
-        end)(ctx) then
-          M.search_file_upwards(
-            M.search_change_upwards(function(ctx, file, change)
-              commands.file_edit(ctx, file, change, { previous_win = true })
-            end),
-            false
-          )(ctx)
+      fn = with_root_context(function(_args)
+        if
+          not M.with_change_at_position(function(args)
+            commands.change_edit(args.ctx, args.src_change, M.with_direct_force())
+            return true
+          end)({ ctx = _args.ctx })
+        then
+          M.search_file_upwards(M.search_change_upwards(function(args)
+            commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true })
+            return true
+          end))({ ctx = _args.ctx })
         end
       end),
       desc = "Edit immutable change or file under the cursor",
@@ -362,154 +447,177 @@ function M.setup_buffer(ctx)
     {
       key = "o",
       plug = "<Plug>(jiejie-o)",
-      fn = with_root_context(M.search_file_upwards(
-        M.search_change_upwards(function(ctx, file, change)
-          commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.sp })
-        end),
-        false
-      )),
+      fn = with_root_context(M.search_file_upwards(M.search_change_upwards(function(args)
+        commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.sp })
+        return true
+      end))),
       desc = "Open the file or jiejie-object under the cursor in a new split",
     },
     {
       key = "gO",
       plug = "<Plug>(jiejie-gO)",
-      fn = with_root_context(M.search_file_upwards(
-        M.search_change_upwards(function(ctx, file, change)
-          commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.vnew })
-        end),
-        false
-      )),
+      fn = with_root_context(M.search_file_upwards(M.search_change_upwards(function(args)
+        commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.vnew })
+        return true
+      end))),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
     },
     {
       key = "O",
       plug = "<Plug>(jiejie-O)",
-      fn = with_root_context(M.search_file_upwards(
-        M.search_change_upwards(function(ctx, file, change)
-          commands.file_edit(ctx, file, change, { edit_cmd = vim.cmd.tabnew })
-        end),
-        false
-      )),
+      fn = with_root_context(M.search_file_upwards(M.search_change_upwards(function(args)
+        commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.tabnew })
+        return true
+      end))),
+      desc = "Open the file or jiejie-object under the cursor in a new vertical split",
+    },
+    {
+      key = "i",
+      plug = "<Plug>(jiejie-i)",
+      fn = with_root_context(M.search_file_upwards(M.search_change_upwards(function(args)
+        commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.tabnew })
+        return true
+      end))),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
     },
 
-    --- Diff maps {{{1
+    -- Diff maps {{{1
     {
       key = "=",
       plug = "<Plug>(jiejie-=)",
-      fn = with_root_context(M.search_file_upwards(M.search_change_upwards(commands.toggle_diff), true, true)),
+      fn = with_root_context(M.search_file_upwards(
+        M.search_change_upwards(function(args)
+          commands.toggle_diff(args.ctx, args.src_change, { file = args.file })
+          return true
+        end),
+        { err_continue = true }
+      )),
       desc = "Toggle an inline diff of the change or file under the cursor",
     },
 
-    --- Commit maps {{{1
+    -- Commit maps {{{1
     {
       key = "cc",
       plug = "<Plug>(jiejie-cc)",
-      fn = with_root_context(commands.change_commit),
+      fn = with_root_context(function(args)
+        commands.change_commit(args.ctx)
+        return true
+      end),
       desc = "Commit currently edited change and create a new change",
     },
     {
       key = "cn",
       plug = "<Plug>(jiejie-cn)",
-      fn = with_root_context(M.with_change_at_position(commands.change_new)),
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_new(args.ctx, args.src_change)
+        return true
+      end)),
       desc = "Create a new change after the change under the cursor",
     },
     {
       key = "crc",
       plug = "<Plug>(jiejie-crc)",
-      fn = with_root_context(M.with_change_at_position(commands.change_revert)),
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_revert(args.ctx, args.src_change)
+        return true
+      end)),
       desc = "Revert the commit under the cursor",
     },
     {
       key = "cs",
       plug = "<Plug>(jiejie-cs)",
-      fn = with_root_context(M.with_change_at_position(commands.change_squash)),
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_squash(args.ctx, args.src_change)
+        return true
+      end)),
       desc = "Squash current changes into it's parent",
     },
     {
       key = "!cs",
       plug = "<Plug>(jiejie-!cs)",
-      fn = with_root_context(M.with_change_at_position(function(ctx, change)
-        commands.change_squash(ctx, change, nil, true)
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_squash(args.ctx, args.src_change, M.with_direct_force())
+        return true
       end)),
       desc = "Squash current changes into it's immutable parent",
     },
     {
       key = "cS",
       plug = "<Plug>(jiejie-cS)",
-      fn = with_root_context(M.with_change_at_position(M.with_target_change_id(commands.change_squash))),
+      fn = with_root_context(M.search_change_upwards(M.with_target_change(function(args)
+        commands.change_squash(args.ctx, args.src_change, { dst_change = args.dst_change })
+        return true
+      end, { err_notify = false }))),
       desc = "Squash current changes into the selecated change",
     },
     {
       key = "!cS",
       plug = "<Plug>(jiejie-!cS)",
-      fn = with_root_context(M.with_change_at_position(M.with_target_change_id(function(ctx, src_change, dst_change)
-        commands.change_squash(ctx, src_change, dst_change, true)
-      end))),
+      fn = with_root_context(M.search_change_upwards(M.with_target_change(function(args)
+        commands.change_squash(args.ctx, args.src_change, M.with_direct_force({ dst_change = args.dst_change }))
+        return true
+      end, { err_notify = false, err_continue = true }))),
       desc = "Squash current changes into the immutuable selecated change",
     },
     {
       key = "de",
       plug = "<Plug>(jiejie-de)",
-      fn = with_root_context(M.with_change_at_position(function(ctx, change)
-        commands.change_describe(ctx, change, false)
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_describe(args.ctx, args.src_change)
+        return true
       end)),
       desc = "Edit change description",
     },
     {
       key = "!de",
       plug = "<Plug>(jiejie-!de)",
-      fn = with_root_context(M.with_change_at_position(function(ctx, change)
-        commands.change_describe(ctx, change, true)
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_describe(args.ctx, args.src_change, M.with_direct_force())
+        return true
       end)),
       desc = "Edit immutable change description",
     },
     {
       key = "dd",
       plug = "<Plug>(jiejie-dd)",
-      fn = with_root_context(M.with_change_at_position(function(ctx, change)
-        commands.change_describe(ctx, change, false, true)
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_describe(args.ctx, args.src_change, { firstline = true })
+        return true
       end)),
       desc = "Edit first line of change description",
     },
     {
       key = "!dd",
       plug = "<Plug>(jiejie-!dd)",
-      fn = with_root_context(M.with_change_at_position(function(ctx, change)
-        commands.change_describe(ctx, change, true, true)
+      fn = with_root_context(M.search_change_upwards(function(args)
+        commands.change_describe(args.ctx, args.src_change, M.with_direct_force({ firstline = true }))
+        return true
       end)),
       desc = "Edit first line of an immutable change description",
     },
     {
-      key = "cp",
-      plug = "<Plug>(jiejie-cp)",
-      fn = with_root_context(function(ctx)
-        commands.cli(ctx, { "git", "fetch" })
-      end),
-      desc = "Fetch changes from remote",
-    },
-    {
-      key = "cP",
-      plug = "<Plug>(jiejie-cP)",
-      fn = with_root_context(function(ctx)
-        commands.cli(ctx, { "git", "push" })
-      end),
-      desc = "Push changes to remote",
-    },
-    {
       key = "cU",
       plug = "<Plug>(jiejie-cU)",
-      fn = with_root_context(function(ctx)
-        commands.cli(ctx, { "op", "revert" })
+      fn = with_root_context(function(args)
+        commands.cli(args.ctx, { "op", "revert" })
+        return true
       end),
       desc = "Revert last operation",
     },
     {
       key = "X",
       plug = "<Plug>(jiejie-X)",
-      fn = with_root_context(function(ctx)
-        if not M.with_change_at_position(commands.change_abandon)(ctx) then
-          M.search_file_upwards(M.search_change_upwards(commands.file_restore), false)(ctx)
+      fn = with_root_context(function(_args)
+        if
+          not M.with_change_at_position(function(args)
+            commands.change_abandon(args.ctx, args.src_change)
+            return true
+          end, { err_notify = false })({ ctx = _args.ctx })
+        then
+          M.search_file_upwards(M.search_change_upwards(function(args)
+            commands.file_restore(args.ctx, args.file, args.src_change)
+            return true
+          end))({ ctx = _args.ctx })
         end
       end),
       desc = "Abandon change or restore file from parent change",
@@ -517,22 +625,43 @@ function M.setup_buffer(ctx)
     {
       key = "!X",
       plug = "<Plug>(jiejie-!X)",
-      fn = with_root_context(function(ctx)
-        if not M.with_change_at_position(function(ctx, change)
-          commands.change_abandon(ctx, change, true)
-        end)(ctx) then
-          M.search_file_upwards(
-            M.search_change_upwards(function(ctx, file, change)
-              commands.file_restore(ctx, file, change, true)
-            end),
-            false
-          )(ctx)
+      fn = with_root_context(function(_args)
+        if
+          not M.with_change_at_position(function(args)
+            commands.change_abandon(args.ctx, args.src_change, M.with_direct_force())
+            return true
+          end, { err_notify = false })({ ctx = _args.ctx })
+        then
+          M.search_file_upwards(M.search_change_upwards(function(args)
+            commands.file_restore(args.ctx, args.file, args.src_change, M.with_direct_force())
+            return true
+          end))({ ctx = _args.ctx })
         end
       end),
       desc = "Abandon immutuable change or restore file from parent change",
     },
 
-    --- Miscellaneous maps {{{1
+    -- Git maps {{{1
+    {
+      key = "gp",
+      plug = "<Plug>(jiejie-gp)",
+      fn = with_root_context(function(args)
+        commands.cli(args.ctx, { "git", "fetch" })
+        return true
+      end),
+      desc = "Fetch changes from remote",
+    },
+    {
+      key = "gP",
+      plug = "<Plug>(jiejie-gP)",
+      fn = with_root_context(function(args)
+        commands.cli(args.ctx, { "git", "push" })
+        return true
+      end),
+      desc = "Push changes to remote",
+    },
+
+    -- Miscellaneous maps {{{1
     {
       key = "g?",
       plug = "<Plug>(jiejie-g?)",
@@ -542,17 +671,23 @@ function M.setup_buffer(ctx)
     {
       key = "<C-a>",
       plug = "<Plug>(jiejie-<c-a>)",
-      fn = with_root_context(M.with_count(commands.log_revisions_adjust)),
-      desc = "Increase the number of displayed log revisions",
+      fn = with_root_context(M.with_count(function(args)
+        commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
+        return true
+      end)),
+      desc = "Increase the number of displayed revisions in log",
     },
     {
       key = "<C-x>",
       plug = "<Plug>(jiejie-<c-x>)",
-      fn = with_root_context(M.with_count(commands.log_revisions_adjust, true)),
-      desc = "Decrease the number of displayed log revisions",
+      fn = with_root_context(M.with_count(function(args)
+        commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
+        return true
+      end, true)),
+      desc = "Decrease the number of displayed revisions in log",
     },
   }
-  for index, value in ipairs(nmappings) do
+  for _i, value in ipairs(nmaps) do
     vim.keymap.set("n", value.key, value.plug, { desc = value.desc, nowait = true, buffer = true })
     vim.keymap.set("n", value.plug, value.fn, { desc = value.desc, buffer = true })
   end

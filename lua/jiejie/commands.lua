@@ -20,13 +20,15 @@ local function reload_or_error(ctx, cmd)
   end
 end
 
+--- Start dummy editor in the background
 --- @param ctx Context context
 --- @param cmd string JJ command
 --- @param args? string[] List of additional arguments
---- @param force? boolean Modify immutable change
---- @param callback? fun(out: vim.SystemCompleted) Modify immutable change
-local function start_dummy_editor(ctx, cmd, args, force, callback)
-  -- Start dummy editor in the background
+--- @param opts? {force?: boolean, callback?: fun(out: vim.SystemCompleted)} Options
+--- - force Modify immutable change
+--- - callback Modify immutable change
+local function start_dummy_editor(ctx, cmd, args, opts)
+  local lopts = opts or {}
   local editor = jujutsu.create_dummy_editor()
   local exec = jujutsu.cli(
     ctx,
@@ -38,7 +40,7 @@ local function start_dummy_editor(ctx, cmd, args, force, callback)
         }),
         args or {}
       ),
-      force
+      { force = lopts.force }
     ),
     {
       stdout = false,
@@ -55,13 +57,13 @@ local function start_dummy_editor(ctx, cmd, args, force, callback)
         local log_dirty_check = require("jiejie.log_dirty_check")
         log_dirty_check.dirty_mark_content(ctx.buf)
         log_dirty_check.do_dirty_check()
-      elseif not callback then
+      elseif not lopts.callback then
         vim.schedule(function()
           vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
         end)
       end
-      if callback then
-        callback(out)
+      if lopts.callback then
+        lopts.callback(out)
       end
     end
   )
@@ -105,13 +107,15 @@ M.CHANGE_STATUS = {
   HEAD = "○",
 }
 
---- Notifu use if change is immutable and no force is applied
+--- Notify if change is immutable and no force is applied
 --- @param change Change current change
---- @param force? boolean Edit immutable change
+--- @param opts? {force?: boolean} Options
+--- - force Edit immutable change
 --- @return boolean
-local function notify_immutable(change, force)
-  if change.status ~= M.CHANGE_STATUS.CURRENT and change.immutable and not force then
-    vim.notify("Change is immutable, use force to modify it! ID: " .. change.id_short, vim.log.levels.ERROR)
+local function notify_immutable(change, opts)
+  local lopts = opts or {}
+  if change.status ~= M.CHANGE_STATUS.CURRENT and change.immutable and not lopts.force then
+    vim.notify("Change `" .. change.id_short .. "` is immutable, use force to modify it!", vim.log.levels.ERROR)
     return true
   end
   return false
@@ -142,22 +146,21 @@ M.MODIFICATION_TYPE = {
 --- @field filename string File name
 --- @field linenr number Line number in log buffer that contains filename
 
--- support fast one line edits
 --- Show help window
---- @param ctx Context context
-function M.show_help(ctx)
+function M.show_help()
   vim.cmd.h("jiejie-maps")
 end
 
 --- Adjust the displayed number of revisions
 --- @param ctx Context context
---- @param file ModifiedFile File name
 --- @param change Change Change data
-function M.toggle_diff(ctx, file, change)
-  -- TODO: reload diffs when buffer is marked dirty
+--- @param opts? {file? ModifiedFile} Options
+--- - file File name
+function M.toggle_diff(ctx, change, opts)
+  local lopts = opts or {}
   local files = {}
-  if file then
-    files = vim.list_extend(files, { file })
+  if lopts.file then
+    files = vim.list_extend(files, { lopts.file })
   else
     for linenr, line in ipairs(vim.fn.getbufline(ctx.buf, change.linenr + 1, "$")) do
       local f = parsers.parse_filename(line, change.linenr + linenr)
@@ -186,32 +189,36 @@ function M.toggle_diff(ctx, file, change)
   local pos = vim.api.nvim_win_get_cursor(winid)
   local bufid = vim.api.nvim_win_get_buf(winid)
   if bufid == ctx.buf then
-    if file then
-      vim.api.nvim_win_set_cursor(winid, { file.linenr, pos[2] })
+    if lopts.file then
+      vim.api.nvim_win_set_cursor(winid, { lopts.file.linenr, pos[2] })
     else
       vim.api.nvim_win_set_cursor(winid, { change.linenr, pos[2] })
     end
   end
-  return
+  return true
 end
 
 --- Open or focus log window
 --- @param ctx Context context
---- @param vertical? boolean If a new window needs to be created, split it vertically?
+--- @param opts? {vertical?: boolean} Options
+--- - vertical If a new window needs to be created, split it vertically?
 --- @return Context
-function M.show_log(ctx, vertical)
+function M.show_log(ctx, opts)
+  local lopts = opts or {}
   local buffer = require("jiejie.buffer")
-  buffer.focus(ctx, vertical or false)
+  buffer.focus(ctx, lopts.vertical or false)
   return ctx
 end
 
 --- Abandon change
 --- @param ctx Context context
 --- @param change Change Change data
---- @param force? boolean Edit immutable change
-function M.change_abandon(ctx, change, force)
+--- @param opts? {force?: boolean} Options
+--- - force Edit immutable change
+function M.change_abandon(ctx, change, opts)
+  local lopts = opts or {}
   local args = { "abandon", change.id }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
 end
 
 --- Create new change
@@ -229,52 +236,57 @@ function M.change_commit(ctx)
 end
 
 --- Squash changes
---- @return function
 --- @param ctx Context context
 --- @param src_change Change Soruce change
---- @param dst_change? Change Destination change
---- @param force? boolean Edit immutable change
-function M.change_squash(ctx, src_change, dst_change, force)
-  local args = { dst_change and "-f" or "-r", src_change.id }
+--- @param opts? {dst_change?: Change, force?: boolean} Options
+--- - dst_change Destination change
+--- - force Edit immutable change
+--- @return boolean?
+function M.change_squash(ctx, src_change, opts)
+  local lopts = opts or {}
+  local args = { lopts.dst_change and "-f" or "-r", src_change.id }
   local dst = "it's parent"
-  if dst_change then
-    args = vim.list_extend(args, { "-t", dst_change.id })
-    dst = dst_change.id_short
+  if lopts.dst_change then
+    args = vim.list_extend(args, { "-t", lopts.dst_change.id })
+    dst = lopts.dst_change.id_short
   end
-  start_dummy_editor(
-    ctx,
-    "squash",
-    args,
-    force,
-    vim.schedule_wrap(function(out)
+  start_dummy_editor(ctx, "squash", args, {
+    force = lopts.force,
+    callback = vim.schedule_wrap(function()
       vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
-    end)
-  )
+    end),
+  })
+  return true
 end
 
 --- Edit change
 --- @param ctx Context context
 --- @param change Change current change
---- @param force? boolean Edit immutable change
-function M.change_edit(ctx, change, force)
+--- @param opts? {force?: boolean} Options
+--- - force Edit immutable change
+function M.change_edit(ctx, change, opts)
+  local lopts = opts or {}
   if change.status == M.CHANGE_STATUS.CURRENT then
-    vim.notify("Already editing change! ID: " .. change.id_short, vim.log.levels.INFO)
+    vim.notify("Already editing change `" .. change.id_short .. "`", vim.log.levels.INFO)
     return
   end
-  if notify_immutable(change, force) then
+  if notify_immutable(change, { force = lopts.force }) then
     return
   end
   local args = { "edit", change.id }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
 end
 
 --- Describe change
 --- @param ctx Context context
 --- @param change Change Change data
---- @param force? boolean Edit immutable change
---- @param firstline? boolean Edit just the first line
-function M.change_describe(ctx, change, force, firstline)
-  if notify_immutable(change, force) then
+--- @param opts? {force?: boolean, firstline?: boolean} Options
+--- - force: Edit immutable change
+--- - firstline: Edit just the first line
+--- @return boolean?
+function M.change_describe(ctx, change, opts)
+  local lopts = opts or {}
+  if notify_immutable(change, { force = lopts.force }) then
     return
   end
   -- get current description
@@ -289,8 +301,8 @@ function M.change_describe(ctx, change, force, firstline)
   local data = vim.trim(res.stdout)
   local current_description = vim.split(data, "\n")
   -- edit description
-  if firstline then
-    return vim.schedule(function()
+  if lopts.firstline then
+    vim.schedule(function()
       vim.ui.input({ prompt = "Describe change (" .. change.id_short .. "): ", default = current_description[1] }, function(input)
         if input == nil then
           return
@@ -305,7 +317,7 @@ function M.change_describe(ctx, change, force, firstline)
             "--stdin",
             "--no-edit",
             "--quiet",
-          }, force),
+          }, { force = lopts.force }),
           {
             stdin = new_description,
           },
@@ -313,17 +325,23 @@ function M.change_describe(ctx, change, force, firstline)
         )
       end)
     end)
+    return true
   end
-  start_dummy_editor(ctx, "describe", { "--edit", change.id }, force)
+  start_dummy_editor(ctx, "describe", { "--edit", change.id }, { force = lopts.force })
+  return true
 end
 
 --- Revert change
 --- @param ctx Context context
 --- @param change Change current change
---- @param force? boolean Edit immutable change
-function M.change_revert(ctx, change, force)
+--- @param opts? {force?: boolean} Options
+--- - force Edit immutable change
+--- @return boolean?
+function M.change_revert(ctx, change, opts)
+  local lopts = opts or {}
   local args = { "revert", "-r", change.id, "-d", "@" }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
+  return true
 end
 
 --- Edit file
@@ -333,7 +351,7 @@ end
 --- @param opts? {previous_win?: boolean, edit_cmd?: fun(filename: string)}
 --- - previous_win: Navigate to previous window or split a new window before edting file, when current buffer is the log buffer
 --- - edit_cmd: Function that's called for editing file
---- @return function
+--- @return boolean?
 function M.file_edit(ctx, file, change, opts)
   local lopts = opts or {}
   lopts.edit_cmd = lopts.edit_cmd or vim.cmd.e
@@ -356,36 +374,45 @@ function M.file_edit(ctx, file, change, opts)
     vim.cmd.new()
   end
   lopts.edit_cmd(filename)
+  return true
 end
 
 --- Restore file
 --- @param ctx Context context
 --- @param file ModifiedFile File name
 --- @param change Change Change to edit file at
---- @param force? boolean Change immutable
-function M.file_restore(ctx, file, change, force)
+--- @param opts? {force?: boolean} Options
+--- - force Change immutable
+--- @return boolean?
+function M.file_restore(ctx, file, change, opts)
+  local lopts = opts or {}
   if change.status ~= M.CHANGE_STATUS.CURRENT then
     vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
   end
   local args = { "restore", "-f", "@-", file.filename }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, force), nil, reload_or_error(ctx, args[1]))
+  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
+  return true
 end
 
 --- Open or focus log window
 --- @param ctx Context context
 --- @param callback fun(ctx: Context?) Asynchronous callback
+--- @return boolean?
 function M.reload_log(ctx, callback)
   if vim.api.nvim_get_current_buf() ~= ctx.buf then
     callback(nil)
   end
   require("jiejie.log").load(ctx, callback)
+  return true
 end
 
 --- Adjust the displayed number of revisions
 --- @param ctx Context context
---- @param adjustment? integer Adjust the number of displayed log revisions by this amount
-function M.log_revisions_adjust(ctx, adjustment)
-  local log_revisions = (ctx.log_revisions or 10) + adjustment
+--- @param opts? {adjustment?: number} Options
+--- - adjustment Adjust the number of displayed log revisions by this amount
+function M.log_revisions_adjust(ctx, opts)
+  local lopts = opts or {}
+  local log_revisions = (ctx.log_revisions or 10) + lopts.adjustment
   ctx.log_revisions = log_revisions > 0 and log_revisions or 1
   context.set_context(ctx)
   local log_dirty_check = require("jiejie.log_dirty_check")

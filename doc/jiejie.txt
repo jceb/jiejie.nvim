@@ -96,12 +96,6 @@ de                      Edit change description.
                                                                     *jiejie_!de*
 !de                     Edit immutable change description.
 
-                                                                     *jiejie_cp*
-cp                      Fetch changes from remote.
-
-                                                                     *jiejie_cP*
-cP                      Push changes to remote.
-
                                                                      *jiejie_cU*
 cU                      Revert last operation.
 
@@ -112,6 +106,15 @@ X                       Abandon change or restore file from parent change.
 !X                      Abandon immutuable change or restore file from parent
                         change.
 
+                                                                      *jiejie_g*
+Git maps ~
+
+                                                                     *jiejie_gp*
+gp                      Fetch changes from git remote.
+
+                                                                     *jiejie_gP*
+gP                      Push changes to git remote.
+
                                                               *jiejie-misc-maps*
 Miscellaneous maps ~
 
@@ -119,10 +122,10 @@ Miscellaneous maps ~
 g?                      Show help for |jiejie-maps|.
 
                                                                   *jiejie_<C-a>*
-<C-a>                   Increase the number of displayed log revisions.
+<C-a>                   Increase the number of displayed revisions in log.
 
                                                                   *jiejie_<C-x>*
-<C-x>                   Decrease the number of displayed log revisions.
+<C-x>                   Decrease the number of displayed revisions in log.
 
                                                                     *fugitive_c*
 
