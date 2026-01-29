@@ -4,6 +4,31 @@ Neovim plugin that adds support for the Jujutsu source control management
 system. The design is heavily inspired by
 [fugitive.vim](https://github.com/tpope/vim-fugitive).
 
+![jiejie](./jiejie.png)
+
+## Features
+
+- Handling very close to
+  [tope's fugitive](https://github.com/tpope/vim-fugitive)
+  - Toggle inline diff (`=`)
+  - Jump to file (`<CR>`, `o`, `gO`, `O`)
+  - Edit old revisions of a file (`:Jedit [revision]:[file]`)
+  - Wraper for `jj` CLI (`:J` or `:Jj`)
+- Log buffer (`:J` or `:Jj`)
+  - Includes the list of modified files alongside the log
+  - Navigation between changes, files and hunks (`[[`, `]]`, `i`)
+  - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
+- Modify changes from the log buffer
+  - Add `!` prefix to mappings for modification of immutable changes
+  - Edit change (`<CR>`)
+  - Pull and push changes to git (`gp`, `gP`)
+  - Modify change description in editor (`de`) or quick edit first line (`dd`)
+  - Commit change or file under the cursor (`cc`)
+  - Squash change or file under the cursor (`cs`, `cS`)
+  - Abandon change or file under the cursor (`X`)
+  - Rebase change tree or individual change (`rr`, `ro`)
+  - Revert last operation (`cU`)
+
 ## Installation
 
 With Lazy, add this configuration to nvim:
@@ -17,15 +42,6 @@ return {
   end,
 }
 ```
-
-## Usage
-
-| Command / Key binding | Description                                          |
-| --------------------- | ---------------------------------------------------- |
-| `:J` or `:Jj`         | Open or focus log window, when no argument is passed |
-| `:Jj <command>`       | Execute `jj <command>`                               |
-| `:Jedit [object]`     | :edit a jiejie-object                                |
-| `g?`                  | Show help for supported mappings                     |
 
 ## Roadmap
 
@@ -54,26 +70,32 @@ return {
 
 Priority 1
 
+- [ ] Commands: tag
+- [ ] Commands: bookmark
+- [ ] Commands: rebase - immutable mappings
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Commands: split
-- [ ] Commands: tag
-- [ ] Commands: bookmark
+- [ ] Commands: duplicate
+- [ ] Commands: diff
+- [ ] Docs: make screen recordings of jiejie's usage
+- [ ] Key: display full summary of a change via K
 
 Priority 2
 
-- [ ] Docs: make screen recordings of jiejie's usage
+- [ ] Key: pressing <CR> on a hunk should jump to the exact position in the
+      buffer
 - [ ] Commands: keep diff expansion when reloading the log
 - [ ] Commands: worktree
-- [ ] Commands: diff
 - [ ] Configuration: make mappings configurable
-- [ ] Commands: support visual mode for squash, commit and split key bindings
+- [ ] Commands: support visual mode for squash, commit, split and restore key
+      bindings
 
 Priority 3
 
 - [ ] Refactor: follow lua's style of returning errors
+- [ ] Key: pressing X on a hunk should restore it
 - [ ] Commands: absorb
-- [ ] Commands: duplicate
 - [ ] Commands: diffedit
 - [ ] Commands: show full change
 - [ ] Commands: undo / redo
