@@ -766,6 +766,14 @@ function M.setup_buffer(ctx)
       desc = "Create a new change after the change under the cursor",
     },
     {
+      key = "!cn",
+      fn = with_root_context(M.search_change(function(args)
+        commands.change_new(args.ctx, args.src_change, M.with_force())
+        return true
+      end)),
+      desc = "Create a new change after the change under the cursor",
+    },
+    {
       key = "crc",
       fn = with_root_context(M.search_change(function(args)
         commands.change_revert(args.ctx, args.src_change)

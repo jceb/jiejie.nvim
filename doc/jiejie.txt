@@ -78,6 +78,10 @@ cc                      Commit currently edited change and create a new
                                                                      *jiejie_cn*
 cn                      Create a new change after the change under the cursor.
 
+                                                                    *jiejie_!cn*
+!cn                     Create a new change after the change under the cursor,
+                        ignoring immutablily settings.
+
                                                                     *jiejie_crc*
 crc                     Revert the commit under the cursor.
 

@@ -236,10 +236,14 @@ end
 --- Create new change
 --- @param ctx Context context
 --- @param change Change Change data
-function M.change_new(ctx, change)
+--- @param opts? {force?: boolean} Options
+--- - force Edit immutable change
+function M.change_new(ctx, change, opts)
+  local lopts = opts or {}
   local cmd = "new"
   local args = { change.id }
   jujutsu.cli(ctx, cmd, {
+    args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = reload_or_error(ctx, cmd, {
       callback = function()
         vim.notify("New change created", vim.log.levels.INFO)
