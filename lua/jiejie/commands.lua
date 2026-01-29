@@ -17,6 +17,9 @@ local function reload_or_error(ctx, cmd)
     local log_dirty_check = require("jiejie.log_dirty_check")
     log_dirty_check.dirty_mark_everything(ctx.buf)
     log_dirty_check.do_dirty_check()
+    vim.schedule(function()
+      vim.cmd.checktime() -- align vim's buffer status with the file system
+    end)
   end
 end
 

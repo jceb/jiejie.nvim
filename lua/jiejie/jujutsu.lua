@@ -50,6 +50,9 @@ function M.cli(ctx, fargs, opts, on_exit, errOpts)
       error("Command failed with non-zero exit code: " .. out.code)
     end
   end
+  vim.schedule(function()
+    vim.cmd.checktime() -- align vim's buffer status with the file system
+  end)
   return out
 end
 
