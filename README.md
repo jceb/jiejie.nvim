@@ -48,24 +48,31 @@ return {
 
 Priority 1
 
+- [ ] Navigation: movement mappings for commits, files and hunks
+- [ ] Commands: provide convenience mappings for editing the current file in a
+      new split (o) or tab (t)
+- [ ] Configuration: expose all key bindings as plugs
 - [ ] Commands: squash and commit for individual files
-- [ ] Commands: tag
-- [ ] Commands: keep diff expansion when reloading the log
-- [ ] Commands: split
-- [ ] Commands: bookmark
+- [ ] Refactor: convert command options to option tables
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
-- [ ] Navigation: movement mappings for commits, files and hunks
+- [ ] Commands: split
+- [ ] Commands: tag
+- [ ] Commands: bookmark
 
 Priority 2
 
+- [ ] Docs: make screen recordings of jiejie's usage
+- [ ] Commands: keep diff expansion when reloading the log
 - [ ] Commands: worktree
 - [ ] Commands: rebase
 - [ ] Commands: diff
-- [ ] Configuration: Make mappings configurable
+- [ ] Configuration: make mappings configurable
+- [ ] Commands: support visual mode for squash, commit and split key bindings
 
 Priority 3
 
+- [ ] Refactor: follow lua's style of returning errors
 - [ ] Commands: absorb
 - [ ] Commands: duplicate
 - [ ] Commands: diffedit
@@ -75,8 +82,8 @@ Priority 3
 - [ ] Commands: metaedit
 - [ ] Commands: interdiff
 - [ ] Commands: evolog
-- [ ] New feature: Operations log support
-- [ ] New Feature: Completion for Jj command
+- [ ] New feature: operations log support
+- [ ] New Feature: completion for Jj command
 
 ## References
 
