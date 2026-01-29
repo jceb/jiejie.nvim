@@ -13,19 +13,19 @@ function M.ignore_immtuable(args, opts)
   return args
 end
 
---- @class ErrOpts
---- @field error_on_failure? boolean Throws an error if command fails, default true
---- @field notify_on_failure? boolean Display an error message when a failure occurs, default false
-
 --- Execute jj CLI with arguments
---- @param ctx Context context
---- @param fargs? string[] List of CLI arguments
---- @param opts? vim.SystemOpts Options to the CLI
---- @param on_exit? fun(out: vim.SystemCompleted) Options to the CLI
---- @param errOpts? ErrOpts Error options
+--- @param ctx Context Context
+--- @param cmd string Command
+--- @param opts? {args?: string[], sys_opts?: vim.SystemOpts, on_exit?: fun(out: vim.SystemCompleted), error_on_failure?: boolean, notify_on_failure?: boolean} Options
+--- - args? string[] List of CLI arguments
+--- - sys_opts? vim.SystemOpts Options to the CLI
+--- - on_exit? fun(out: vim.SystemCompleted) Options to the CLI
+--- - error_on_failure? boolean Throws an error if command fails, default true
+--- - notify_on_failure? boolean Display an error message when a failure occurs, default false
 --- @return table
-function M.cli(ctx, fargs, opts, on_exit, errOpts)
-  local command = vim.list_extend(vim.list_extend({ "jj" }, fargs or {}), {
+function M.cli(ctx, cmd, opts)
+  local lopts = opts or {}
+  local command = vim.list_extend(vim.list_extend({ "jj", cmd }, lopts.args or {}), {
     "--no-pager",
     "--color",
     "never",
@@ -35,18 +35,18 @@ function M.cli(ctx, fargs, opts, on_exit, errOpts)
     vim.tbl_extend("keep", {
       text = true,
       cwd = ctx.root,
-    }, opts or {}),
-    on_exit
+    }, lopts.sys_opts or {}),
+    lopts.on_exit
   )
-  if on_exit then
+  if lopts.on_exit then
     return exec
   end
   local out = exec:wait()
   if out and out.code ~= 0 then
-    if errOpts and errOpts.notify_on_failure then
+    if lopts.notify_on_failure then
       vim.notify((out.stdout or "") .. "\n" .. (out.stderr or ""), vim.log.levels.ERROR)
     end
-    if not errOpts or errOpts.error_on_failure == nil or errOpts.error_on_failure then
+    if not lopts.error_on_failure or lopts.error_on_failure then
       error("Command failed with non-zero exit code: " .. out.code)
     end
   end

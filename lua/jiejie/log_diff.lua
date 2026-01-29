@@ -57,8 +57,9 @@ function M.diff_show(ctx, file, change)
   if expanded then
     return
   end
-  local args = { "diff", "--git", "-r", change.id, file.filename }
-  local res = jujutsu.cli(ctx, args)
+  local cmd = "diff"
+  local args = { "--git", "-r", change.id, file.filename }
+  local res = jujutsu.cli(ctx, cmd, { args = args })
   local diff = vim.split(vim.trim(res.stdout), "\n")
   local offset = 0
   for index, line in ipairs(diff) do

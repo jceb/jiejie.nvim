@@ -14,8 +14,8 @@ M.load = function(ctx, callback)
   log_diff.setup_buffer(ctx) -- clear diffs as a workaround until reloading of diffs is implemented
   local template =
     'change_id.shortest() ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", description.first_line()) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ if(git_head, " git_head()") ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id'
+  local cmd = "log"
   local args = {
-    "log",
     "-n",
     tostring(ctx.log_revisions or 10), -- TODO: make default number of revisions configurable
     "-s",
@@ -24,17 +24,18 @@ M.load = function(ctx, callback)
     "-r",
     "::", -- FIMXE: make this configurable
   }
-  jujutsu.cli(
-    ctx,
-    args,
-    nil,
-    vim.schedule_wrap(function(res)
+  jujutsu.cli(ctx, cmd, {
+    args = args,
+    on_exit = vim.schedule_wrap(function(res)
       if res.code ~= 0 then
         error("Error getting log:\n" .. res.stderr)
       end
       local data = vim.split(res.stdout, "\n")
       local headers = { buffer.create_header("Help", "g?"), buffer.create_header("Reload", "r") }
-      local oplog = jujutsu.cli(ctx, { "op", "log", "-n", "1", "--no-graph", "-T", 'id.short(4) ++ " " ++ user ++ " " ++ description' })
+      local cmd_op = "op"
+      local oplog = jujutsu.cli(ctx, cmd_op, {
+        args = { "log", "-n", "1", "--no-graph", "-T", 'id.short(4) ++ " " ++ user ++ " " ++ description' },
+      })
       if oplog.code == 0 then
         headers = vim.list_extend(headers, { buffer.create_header("Last operation", vim.trim(oplog.stdout)) })
       end
@@ -42,8 +43,8 @@ M.load = function(ctx, callback)
       if callback then
         callback(ctx)
       end
-    end)
-  )
+    end),
+  })
 end
 
 --- Load/reload file contents
@@ -54,18 +55,16 @@ M.load_file = function(ctx, url, callback)
   if not url.path then
     error("Path missing in URL", url)
   end
+  local cmd = "file"
   local args = {
-    "file",
     "show",
     "-r",
     url.revision,
     url.path,
   }
-  jujutsu.cli(
-    ctx,
-    args,
-    nil,
-    vim.schedule_wrap(function(res)
+  jujutsu.cli(ctx, cmd, {
+    args = args,
+    on_exit = vim.schedule_wrap(function(res)
       if res.code ~= 0 then
         error("Error getting file contents:\n" .. res.stderr)
       end
@@ -74,8 +73,8 @@ M.load_file = function(ctx, url, callback)
       if callback then
         callback(ctx)
       end
-    end)
-  )
+    end),
+  })
 end
 
 --- Setup log model

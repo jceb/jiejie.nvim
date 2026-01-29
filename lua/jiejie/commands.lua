@@ -7,10 +7,13 @@ local timer = require("jiejie.timer")
 --- Reload buffer or error
 --- @param ctx Context context
 --- @param cmd string Command name that failed
+--- @param opts? {callback?: fun(out: vim.SystemCompleted)} Options
+--- - callback Callback function is executed in a scheduled context
 --- @return fun(out: vim.SystemCompleted)
-local function reload_or_error(ctx, cmd)
+local function reload_or_error(ctx, cmd, opts)
   --- @param out vim.SystemCompleted
   return function(out)
+    local lopts = opts or {}
     if out and out.code ~= 0 then
       error("jj " .. cmd .. " failed with non-zero exit code: " .. out.code)
     end
@@ -19,6 +22,9 @@ local function reload_or_error(ctx, cmd)
     log_dirty_check.do_dirty_check()
     vim.schedule(function()
       vim.cmd.checktime() -- align vim's buffer status with the file system
+      if lopts.callback then
+        lopts.callback(out)
+      end
     end)
   end
 end
@@ -33,19 +39,15 @@ end
 local function start_dummy_editor(ctx, cmd, args, opts)
   local lopts = opts or {}
   local editor = jujutsu.create_dummy_editor()
-  local exec = jujutsu.cli(
-    ctx,
-    jujutsu.ignore_immtuable(
-      vim.list_extend(
-        vim.list_extend({ cmd }, {
-          "--quiet",
-          -- "--debug",
-        }),
-        args or {}
-      ),
+  local exec = jujutsu.cli(ctx, cmd, {
+    args = jujutsu.ignore_immtuable(
+      vim.list_extend({
+        "--quiet",
+        -- "--debug",
+      }, args or {}),
       { force = lopts.force }
     ),
-    {
+    sys_opts = {
       stdout = false,
       stderr = false,
       env = {
@@ -53,7 +55,7 @@ local function start_dummy_editor(ctx, cmd, args, opts)
       },
     },
     --- @param out vim.SystemCompleted
-    function(out)
+    on_exit = function(out)
       -- cleanup remaining files
       editor.delete()
       if out.code == 0 then
@@ -68,8 +70,8 @@ local function start_dummy_editor(ctx, cmd, args, opts)
       if lopts.callback then
         lopts.callback(out)
       end
-    end
-  )
+    end,
+  })
   -- wait for a maximum of 50msec * 100 = 5 sec for the editor to start
   local i = 1
   timer.set_interval(50, function(t)
@@ -219,16 +221,31 @@ end
 --- - force Edit immutable change
 function M.change_abandon(ctx, change, opts)
   local lopts = opts or {}
-  local args = { "abandon", change.id }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
+  local cmd = "abandon"
+  local args = { change.id }
+  jujutsu.cli(ctx, cmd, {
+    args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
+    on_exit = reload_or_error(ctx, cmd, {
+      callback = function()
+        vim.notify("Change `" .. change.id_short .. "` abandoned", vim.log.levels.INFO)
+      end,
+    }),
+  })
 end
 
 --- Create new change
 --- @param ctx Context context
 --- @param change Change Change data
 function M.change_new(ctx, change)
-  local args = { "new", change.id }
-  jujutsu.cli(ctx, args, nil, reload_or_error(ctx, args[1]))
+  local cmd = "new"
+  local args = { change.id }
+  jujutsu.cli(ctx, cmd, {
+    on_exit = reload_or_error(ctx, cmd, {
+      callback = function()
+        vim.notify("New change created", vim.log.levels.INFO)
+      end,
+    }),
+  })
 end
 
 --- Commit changes
@@ -237,7 +254,17 @@ end
 --- - files List of file names relative to the root of the repository
 function M.change_commit(ctx, opts)
   local lopts = opts or {}
-  start_dummy_editor(ctx, "commit", lopts.files or {})
+  local cmd = "commit"
+  start_dummy_editor(
+    ctx,
+    cmd,
+    lopts.files or {},
+    { callback = reload_or_error(ctx, cmd, {
+      callback = function()
+        vim.notify("Change commited", vim.log.levels.INFO)
+      end,
+    }) }
+  )
 end
 
 --- Squash changes
@@ -247,7 +274,7 @@ end
 --- - dst_change Destination change
 --- - files List of file names relative to the root of the repository
 --- - force Edit immutable change
---- @return boolean?
+--- @return table
 function M.change_squash(ctx, src_change, opts)
   local lopts = opts or {}
   local args = vim.list_extend({ lopts.dst_change and "-f" or "-r", src_change.id }, lopts.files or {})
@@ -256,11 +283,14 @@ function M.change_squash(ctx, src_change, opts)
     args = vim.list_extend(args, { "-t", lopts.dst_change.id })
     dst = lopts.dst_change.id_short
   end
-  start_dummy_editor(ctx, "squash", args, {
+  local cmd = "squash"
+  start_dummy_editor(ctx, cmd, args, {
     force = lopts.force,
-    callback = vim.schedule_wrap(function()
-      vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
-    end),
+    callback = reload_or_error(ctx, cmd, {
+      callback = function()
+        vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
+      end,
+    }),
   })
   return true
 end
@@ -279,8 +309,16 @@ function M.change_edit(ctx, change, opts)
   if notify_immutable(change, { force = lopts.force }) then
     return
   end
-  local args = { "edit", change.id }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
+  local cmd = "edit"
+  local args = { change.id }
+  jujutsu.cli(ctx, cmd, {
+    args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
+    on_exit = reload_or_error(ctx, args[1], {
+      callback = function()
+        vim.notify("Editing change " .. change.id_short, vim.log.levels.INFO)
+      end,
+    }),
+  })
 end
 
 --- Describe change
@@ -296,14 +334,9 @@ function M.change_describe(ctx, change, opts)
     return
   end
   -- get current description
-  local res = jujutsu.cli(ctx, {
-    "log",
-    "--no-graph",
-    "-r",
-    change.id,
-    "-T",
-    "description",
-  })
+  local cmd_log = "log"
+  local args = { "--no-graph", "-r", change.id, "-T", "description" }
+  local res = jujutsu.cli(ctx, cmd_log, { args = args })
   local data = vim.trim(res.stdout)
   local current_description = vim.split(data, "\n")
   -- edit description
@@ -314,21 +347,24 @@ function M.change_describe(ctx, change, opts)
           return
         end
         local new_description = vim.list_extend({ vim.trim(input) }, vim.list_slice(current_description, 2, #current_description))
-        jujutsu.cli(
-          ctx,
-          jujutsu.ignore_immtuable({
-            "describe",
+        local cmd = "describe"
+        jujutsu.cli(ctx, cmd, {
+          args = jujutsu.ignore_immtuable({
             "-r",
             change.id,
             "--stdin",
             "--no-edit",
             "--quiet",
           }, { force = lopts.force }),
-          {
+          sys_opts = {
             stdin = new_description,
           },
-          reload_or_error(ctx, "describe")
-        )
+          on_exit = reload_or_error(ctx, cmd, {
+            callback = function()
+              vim.notify("Described change " .. change.id_short, vim.log.levels.INFO)
+            end,
+          }),
+        })
       end)
     end)
     return true
@@ -345,8 +381,16 @@ end
 --- @return boolean?
 function M.change_revert(ctx, change, opts)
   local lopts = opts or {}
-  local args = { "revert", "-r", change.id, "-d", "@" }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
+  local cmd = "revert"
+  local args = { "-r", change.id, "-d", "@" }
+  jujutsu.cli(ctx, cmd, {
+    args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
+    on_exit = reload_or_error(ctx, cmd, {
+      callback = function()
+        vim.notify("Reverted change " .. change.id_short, vim.log.levels.INFO)
+      end,
+    }),
+  })
   return true
 end
 
@@ -395,8 +439,16 @@ function M.file_restore(ctx, file, change, opts)
   if change.status ~= M.CHANGE_STATUS.CURRENT then
     vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
   end
-  local args = { "restore", "-f", "@-", file.filename }
-  jujutsu.cli(ctx, jujutsu.ignore_immtuable(args, { force = lopts.force }), nil, reload_or_error(ctx, args[1]))
+  local cmd = "restore"
+  local args = { "-f", "@-", file.filename }
+  jujutsu.cli(ctx, cmd, {
+    args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
+    on_exit = reload_or_error(ctx, args[1], {
+      callback = function()
+        vim.notify("Restored file " .. file.filename, vim.log.levels.INFO)
+      end,
+    }),
+  })
   return true
 end
 
@@ -428,9 +480,11 @@ end
 
 --- Command executes jj commands, returns exit code
 --- @param ctx Context context
---- @param fargs string[] List of CLI arguments
+--- @param args string[] List of CLI arguments
+--- @param opts? {callback?: fun(out: vim.SystemCompleted)} Options
+--- - callback Callback function is executed in a scheduled context
 --- @return table
-function M.cli(ctx, fargs)
+function M.cli(ctx, args, opts)
   local printer = function(err, data)
     if data then
       if err then
@@ -441,10 +495,14 @@ function M.cli(ctx, fargs)
       end
     end
   end
-  return jujutsu.cli(ctx, fargs, {
-    stdout = vim.schedule_wrap(printer),
-    stderr = vim.schedule_wrap(printer),
-  }, reload_or_error(ctx, fargs[1]))
+  return jujutsu.cli(ctx, args[1], {
+    args = vim.list_slice(args, 2),
+    sys_opts = {
+      stdout = vim.schedule_wrap(printer),
+      stderr = vim.schedule_wrap(printer),
+    },
+    on_exit = reload_or_error(ctx, args[1], opts),
+  })
 end
 
 --- Configure commands
