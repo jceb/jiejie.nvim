@@ -31,7 +31,7 @@ M.load = function(ctx, callback)
         error("Error getting log:\n" .. res.stderr)
       end
       local data = vim.split(res.stdout, "\n")
-      local headers = { buffer.create_header("Help", "g?"), buffer.create_header("Reload", "r") }
+      local headers = { buffer.create_header("Help", "g?"), buffer.create_header("Reload", "R") }
       local cmd_op = "op"
       local oplog = jujutsu.cli(ctx, cmd_op, {
         args = { "log", "-n", "1", "--no-graph", "-T", 'id.short(4) ++ " " ++ user ++ " " ++ description' },

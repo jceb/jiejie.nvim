@@ -116,6 +116,17 @@ X                       Abandon change or restore file from parent change.
 !X                      Abandon immutuable change or restore file from parent
                         change.
 
+                                                                      *jiejie_r*
+Rebase maps ~
+
+                                                                     *jiejie_rr*
+rr                      Rebase the change under the cursor, together with its
+                        descendants.
+
+                                                                     *jiejie_ro*
+ro                      Rebase only change under the cursor, without its
+                        descendants.
+
                                                                       *jiejie_g*
 Git maps ~
 

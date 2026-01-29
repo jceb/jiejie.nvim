@@ -93,7 +93,8 @@ end
 --- Request a target change ID
 --- @param fn fun(args: {ctx: Context, src_change: Change, dst_change?: Change}): boolean Callback that is called with Context
 --- and the extracted change information. The function is only called when a change id is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- @param opts? {err_notify?: boolean, err_continue?: boolean, defualt_target?: string} Options
+--- - defualt_target Default target change
 --- - err_notify Send notification is change is not found
 --- - err_continue Continue execution callback execution on error
 --- @return function
@@ -109,18 +110,25 @@ function M.with_target_change(fn, opts)
       end
       return
     end
-    vim.ui.input({ prompt = "Target change (@-): " }, function(input)
-      if input == nil and not lopts.err_continue then
+    local change_prompt = lopts.defualt_target and lopts.defualt_target ~= "" and (" (" .. lopts.defualt_target .. ")")
+      or (not lopts.defualt_target and " (@-)")
+      or ""
+    vim.ui.input({ prompt = "Target change" .. change_prompt .. ": " }, function(input)
+      if not input and not lopts.err_continue then
         if lopts.err_notify or lopts.err_notify == nil then
           vim.notify("Target change ID nil.", vim.log.levels.WARN)
         end
         return
       end
-      if input == "" or input == nil then
+      local target = input
+      if lopts.defualt_target and (not target or target == "") then
+        target = lopts.defualt_target
+      end
+      if not target or target == "" then
         return fn(largs)
       else
         -- TODO: verify existence of id before passing it on + generate a proper Change object
-        return fn(vim.tbl_extend("force", largs, { dst_change = { id = input, id_short = input } }))
+        return fn(vim.tbl_extend("force", largs, { dst_change = { id = target, id_short = target } }))
       end
     end)
   end
@@ -888,6 +896,32 @@ function M.setup_buffer(ctx)
       desc = "Abandon immutuable change or restore file from parent change",
     },
 
+    -- Rebase maps {{{1
+    {
+      key = "rr",
+      fn = with_root_context(M.search_change(M.with_target_change(function(args)
+        commands.cli(args.ctx, { "rebase", "-s", args.src_change.id, "-d", args.dst_change.id }, {
+          callback = function()
+            vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, level, opts)
+          end,
+        })
+        return true
+      end, { defualt_target = "" }))),
+      desc = "Rebase the change under the cursor, together with its descendants",
+    },
+    {
+      key = "ro",
+      fn = with_root_context(M.search_change(M.with_target_change(function(args)
+        commands.cli(args.ctx, { "rebase", "-r", args.src_change.id, "-d", args.dst_change.id }, {
+          callback = function()
+            vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, level, opts)
+          end,
+        })
+        return true
+      end, { defualt_target = "" }))),
+      desc = "Rebase only change under the cursor, without its descendants",
+    },
+
     -- Git maps {{{1
     {
       key = "gp",
@@ -913,7 +947,7 @@ function M.setup_buffer(ctx)
       desc = "Show help",
     },
     {
-      key = "r",
+      key = "R",
       fn = with_root_context(function(args)
         local _winid = vim.api.nvim_get_current_win()
         local pos = vim.api.nvim_win_get_cursor(_winid)

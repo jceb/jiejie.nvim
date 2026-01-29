@@ -50,6 +50,7 @@ return {
       new split (o) or tab (O)
 - [x] Commands: squash and commit for individual files
 - [x] Navigation: movement mappings for commits, files and hunks
+- [x] Commands: rebase
 
 Priority 1
 
@@ -64,7 +65,6 @@ Priority 2
 - [ ] Docs: make screen recordings of jiejie's usage
 - [ ] Commands: keep diff expansion when reloading the log
 - [ ] Commands: worktree
-- [ ] Commands: rebase
 - [ ] Commands: diff
 - [ ] Configuration: make mappings configurable
 - [ ] Commands: support visual mode for squash, commit and split key bindings
