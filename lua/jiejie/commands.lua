@@ -489,23 +489,24 @@ end
 --- - callback Callback function is executed in a scheduled context
 --- @return table
 function M.cli(ctx, args, opts)
-  local printer = function(err, data)
+  local output = ""
+  local output_collector = function(err, data)
     if data then
-      if err then
-        vim.notify(data, vim.log.levels.ERROR)
-      else
-        -- vim.notify(data, vim.log.levels.INFO)
-        print(data)
-      end
+      output = output .. "\n" .. data
     end
   end
   return jujutsu.cli(ctx, args[1], {
     args = vim.list_slice(args, 2),
     sys_opts = {
-      stdout = vim.schedule_wrap(printer),
-      stderr = vim.schedule_wrap(printer),
+      stdout = output_collector,
+      stderr = output_collector,
     },
-    on_exit = reload_or_error(ctx, args[1], opts),
+    on_exit = function(out)
+      vim.schedule(function()
+        vim.notify(output, vim.log.levels.INFO)
+      end)
+      reload_or_error(ctx, args[1], opts)(out)
+    end,
   })
 end
 
