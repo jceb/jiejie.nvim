@@ -26,6 +26,7 @@ system. The design is heavily inspired by
   - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)
   - Squash change or file under the cursor (`cs`, `cS`)
+  - Duplicate change under the cursor (`cd`)
   - Revert change under the cursor (`crc`)
   - Abandon change or file under the cursor (`X`)
   - Rebase change tree or individual change (`rr`, `ro`)
