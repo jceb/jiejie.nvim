@@ -53,7 +53,7 @@ end
 --- @param callback fun(ctx: Context) Asynchronous callback
 M.load_file = function(ctx, url, callback)
   if not url.path then
-    error("Path missing in URL", url)
+    error("Path missing in URL:" .. parsers.join_url(url))
   end
   local cmd = "file"
   local args = {
@@ -93,14 +93,14 @@ function M.setup(id)
       if url.revision == "repo" and url.path == "index" then
         local ctx = context.get_context(url.root)
         ctx.buf = ctx.buf or ev.buf
-        M.load(ctx, function(ctx)
-          context.set_context(ctx)
-          buffer.setup_buffer(ctx)
+        M.load(ctx, function(_ctx)
+          context.set_context(_ctx)
+          buffer.setup_buffer(_ctx)
           vim.cmd.doau("BufReadPost")
         end)
       else
         vim.bo[ev.buf].buftype = "nofile"
-        M.load_file({ root = url.root, buf = ev.buf, curpos = nil }, url, function(ctx)
+        M.load_file({ root = url.root, buf = ev.buf, curpos = nil }, url, function()
           vim.cmd.doau("BufReadPost")
         end)
       end

@@ -110,10 +110,12 @@ exit 0
       if not stat or err_name then
         return
       end
+      ---@diagnostic disable-next-line: redefined-local
       local fd, err_name = vim.uv.fs_open(editedFile, "r", tonumber("600", 8))
       if not fd or err_name then
         return
       end
+      ---@diagnostic disable-next-line: redefined-local
       local data, err_name = vim.uv.fs_read(fd, stat.size)
       if not data or err_name then
         return

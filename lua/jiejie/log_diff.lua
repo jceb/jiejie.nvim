@@ -24,7 +24,7 @@ end
 --- Get DiffExpansion status
 --- @param change_id string ChangeID
 --- @param filename string File name
---- @return table
+--- @return table?
 local function get_expanded(change_id, filename)
   local res = vim.tbl_filter(function(e)
     if e and e.change_id == change_id and e.filename == filename then
@@ -67,8 +67,9 @@ function M.diff_show(ctx, file, change)
   end
   local diff = vim.split(vim.trim(res.stdout), "\n")
   local offset = 0
+  local dummy_linenr = 23
   for index, line in ipairs(diff) do
-    if parsers.parse_hunk(line) or vim.startswith(line, "Binary files") then
+    if parsers.parse_hunk(line, dummy_linenr) or vim.startswith(line, "Binary files") then
       offset = index
       break
     end

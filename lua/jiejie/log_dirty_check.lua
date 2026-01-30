@@ -21,7 +21,7 @@ local M = {}
 M.DIRTY_CONTENT = 2 ^ 0
 M.DIRTY_CURSOR = 2 ^ 1
 
-function M.dirty_check(ev)
+function M.dirty_check()
   if not vim.b.jiejie_dirty or vim.b.jiejie_dirty == 0 or not vim.b.jiejie_root then
     return
   end
@@ -29,9 +29,9 @@ function M.dirty_check(ev)
   local ctx = context.get_context(vim.b.jiejie_root)
   if M.dirty_check_content(bufid) then
     local curpos_current = vim.api.nvim_win_get_cursor(0)
-    commands.reload_log(ctx, function(ctx)
-      if M.dirty_check_cursor(bufid) and ctx.curpos then
-        vim.api.nvim_win_set_cursor(0, ctx.curpos)
+    commands.reload_log(ctx, function(_ctx)
+      if M.dirty_check_cursor(bufid) and _ctx.curpos then
+        vim.api.nvim_win_set_cursor(0, _ctx.curpos)
       else
         vim.api.nvim_win_set_cursor(0, curpos_current)
       end
