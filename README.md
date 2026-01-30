@@ -39,12 +39,9 @@ system. The design is heavily inspired by
 With Lazy, add this configuration to nvim:
 
 ```lua
-return {
+{
   -- https://github.com/jceb/jiejie.nvim.git
   "jceb/jiejie.nvim",
-  config = function()
-    require("jiejie").setup({})
-  end,
 }
 ```
 
