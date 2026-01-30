@@ -374,29 +374,29 @@ describe("jiejie parse_url", function()
   --
 end)
 
-describe("jiejie parse_bookmark", function()
+describe("jiejie parse_bookmark_or_tag", function()
   --
 
   it("When parsing an empty string, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_bookmark("")
+    local result = require("jiejie.parsers").parse_bookmark_or_tag("")
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing a bookmark without all separators, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_bookmark("main†false‡true")
+    local result = require("jiejie.parsers").parse_bookmark_or_tag("main†false‡true")
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing a bookmark without a name, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_bookmark("†false‡true⌠")
+    local result = require("jiejie.parsers").parse_bookmark_or_tag("†false‡true⌠")
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing a bookmark without a remote, the parser shall yield the object", function()
-    local result = require("jiejie.parsers").parse_bookmark("main†false‡true⌠⌡∫∬")
+    local result = require("jiejie.parsers").parse_bookmark_or_tag("main†false‡true⌠⌡∫∬")
     local expected = {
       name = "main",
       tracked = false,
@@ -406,7 +406,7 @@ describe("jiejie parse_bookmark", function()
   end)
 
   it("When parsing a bookmark with a remote, the parser shall yield the object", function()
-    local result = require("jiejie.parsers").parse_bookmark("main†false‡true⌠origin⌡id∫short_id∬description")
+    local result = require("jiejie.parsers").parse_bookmark_or_tag("main†false‡true⌠origin⌡id∫short_id∬description")
     local expected = {
       name = "main",
       tracked = false,
