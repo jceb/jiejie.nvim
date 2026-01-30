@@ -71,6 +71,7 @@ Diff maps ~
                                                                       *jiejie_c*
 Commit maps ~
 
+                                                               *jiejie_c<space>*
 c<space>                Populate command line with ":Jj commit ".
 
                                                                     *jiejie_cbc*
@@ -96,10 +97,12 @@ cbm                     Move bookmark to change under the cursor.
                                                                     *jiejie_cbr*
 cbr                     Rename bookmark at change under the cursor.
 
-                                                               *jiejie_c<space>*
                                                                      *jiejie_cc*
 cc                      Commit currently edited change and create a new
                         change.
+
+                                                                     *jiejie_cd*
+cd                      Duplicate change under the cursor .
 
                                                                      *jiejie_cn*
 cn                      Create a new change after the change under the cursor.

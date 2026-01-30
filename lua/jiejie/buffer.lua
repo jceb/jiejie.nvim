@@ -113,14 +113,13 @@ function M.with_target_change(fn, opts)
     local change_prompt = lopts.defualt_target and lopts.defualt_target ~= "" and (" (" .. lopts.defualt_target .. ")")
       or (not lopts.defualt_target and " (@-)")
       or ""
-    vim.ui.input({ prompt = "Target change" .. change_prompt .. ": " }, function(input)
-      if not input and not lopts.err_continue then
+    vim.ui.input({ prompt = "Target change" .. change_prompt .. ": " }, function(target)
+      if not target and not lopts.err_continue then
         if lopts.err_notify or lopts.err_notify == nil then
           vim.notify("Target change ID nil.", vim.log.levels.WARN)
         end
         return
       end
-      local target = input
       if lopts.defualt_target and (not target or target == "") then
         target = lopts.defualt_target
       end
@@ -992,6 +991,19 @@ function M.setup_buffer(ctx)
         { err_continue = true }
       )),
       desc = "Commit currently edited change and create a new change",
+    },
+    {
+      key = "cd",
+      fn = with_root_context(M.search_change(M.with_target_change(function(args)
+        commands.cli(args.ctx, "duplicate", {
+          args = { "-d", args.dst_change.id, args.src_change.id },
+          on_exit = function()
+            vim.notify("Duplicated change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end, { err_notify = false, defualt_target = "@" }))),
+      desc = "Squash current changes into the selecated change",
     },
     {
       key = "cn",

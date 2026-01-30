@@ -73,15 +73,16 @@ return {
 - [x] Commands: rebase
 - [x] Commands: bookmark
 - [x] Commands: tag
+- [x] Commands: duplicate
 
 Priority 1
 
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
-- [ ] Commands: split
-- [ ] Commands: duplicate
-- [ ] Commands: diff
 - [ ] Log: support toggling between different log views
+- [ ] Commands: split (current workaround: commit one file instead of the whole
+      change, then squash the other files that should be part of the commit)
+- [ ] Commands: diff
 
 Priority 2
 
