@@ -4,38 +4,13 @@ local log_diff = require("jiejie.log_diff")
 local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
 
---- Reload buffer or error
---- @param ctx Context context
---- @param cmd string Command name that failed
---- @param opts? {callback?: fun(out: vim.SystemCompleted)} Options
---- - callback Callback function is executed in a scheduled context
---- @return fun(out: vim.SystemCompleted)
-local function reload_or_error(ctx, cmd, opts)
-  --- @param out vim.SystemCompleted
-  return function(out)
-    local lopts = opts or {}
-    if out and out.code ~= 0 then
-      error("jj " .. cmd .. " failed with non-zero exit code: " .. out.code)
-    end
-    local log_dirty_check = require("jiejie.log_dirty_check")
-    log_dirty_check.dirty_mark_everything(ctx.buf)
-    log_dirty_check.do_dirty_check()
-    vim.schedule(function()
-      vim.cmd.checktime() -- align vim's buffer status with the file system
-      if lopts.callback then
-        lopts.callback(out)
-      end
-    end)
-  end
-end
-
 --- Start dummy editor in the background
 --- @param ctx Context context
 --- @param cmd string JJ command
 --- @param args? string[] List of additional arguments
---- @param opts? {force?: boolean, callback?: fun(out: vim.SystemCompleted)} Options
+--- @param opts? {force?: boolean, on_exit?: fun(out: vim.SystemCompleted)} Options
 --- - force Modify immutable change
---- - callback Modify immutable change
+--- - on_exit Modify immutable change
 local function start_dummy_editor(ctx, cmd, args, opts)
   local lopts = opts or {}
   local editor = jujutsu.create_dummy_editor()
@@ -62,13 +37,13 @@ local function start_dummy_editor(ctx, cmd, args, opts)
         local log_dirty_check = require("jiejie.log_dirty_check")
         log_dirty_check.dirty_mark_content(ctx.buf)
         log_dirty_check.do_dirty_check()
-      elseif not lopts.callback then
+      elseif not lopts.on_exit then
         vim.schedule(function()
           vim.notify("Modifying change failed, maybe it's immutable!", vim.log.levels.ERROR)
         end)
       end
-      if lopts.callback then
-        lopts.callback(out)
+      if lopts.on_exit then
+        lopts.on_exit(out)
       end
     end,
   })
@@ -89,12 +64,7 @@ local function start_dummy_editor(ctx, cmd, args, opts)
         -- Clejnup dummy editor
         local bufId = vim.api.nvim_win_get_buf(0)
         vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = bufId })
-        vim.api.nvim_create_autocmd({ "BufWipeout", "VimLeave" }, {
-          buffer = bufId,
-          callback = function()
-            editor.exit()
-          end,
-        })
+        vim.api.nvim_create_autocmd({ "BufWipeout", "VimLeave" }, { buffer = bufId, callback = editor.exit })
       end)
     end
   end)
@@ -102,6 +72,38 @@ end
 
 --- Commands that manipulate the log
 local M = {}
+
+--- Reload buffer or error
+--- @param ctx Context context
+--- @param cmd string Command name that failed
+--- @param opts? {err_notify?: boolean, err_continue?: boolean, on_exit?: fun(out: vim.SystemCompleted)} Options
+--- - on_exit Callback function is executed in a scheduled context
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
+--- @return fun(out: vim.SystemCompleted)
+function M.reload_or_error(ctx, cmd, opts)
+  --- @param out vim.SystemCompleted
+  return function(out)
+    local lopts = opts or {}
+    if out.code ~= 0 and not lopts.err_continue then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.schedule(function()
+          vim.notify("Command failed with non-zero exit code: " .. out.code .. "\n\t jj" .. cmd, vim.log.levels.ERROR)
+        end)
+        return
+      end
+    end
+    local log_dirty_check = require("jiejie.log_dirty_check")
+    log_dirty_check.dirty_mark_everything(ctx.buf)
+    log_dirty_check.do_dirty_check()
+    vim.schedule(function()
+      vim.cmd.checktime() -- align vim's buffer status with the file system
+      if lopts.on_exit then
+        lopts.on_exit(out)
+      end
+    end)
+  end
+end
 
 --- @class ChangeStatus
 M.CHANGE_STATUS = {
@@ -159,7 +161,7 @@ end
 --- Adjust the displayed number of revisions
 --- @param ctx Context context
 --- @param change Change Change data
---- @param opts? {file? ModifiedFile} Options
+--- @param opts? {file?: ModifiedFile} Options
 --- - file File name
 function M.toggle_diff(ctx, change, opts)
   local lopts = opts or {}
@@ -225,11 +227,15 @@ function M.change_abandon(ctx, change, opts)
   local args = { change.id }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
-    on_exit = reload_or_error(ctx, cmd, {
-      callback = function()
-        vim.notify("Change `" .. change.id_short .. "` abandoned", vim.log.levels.INFO)
-      end,
-    }),
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("Change `" .. change.id_short .. "` abandoned", vim.log.levels.INFO)
+        end,
+      })
+    ),
   })
 end
 
@@ -244,11 +250,15 @@ function M.change_new(ctx, change, opts)
   local args = { change.id }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
-    on_exit = reload_or_error(ctx, cmd, {
-      callback = function()
-        vim.notify("New change created", vim.log.levels.INFO)
-      end,
-    }),
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("New change created", vim.log.levels.INFO)
+        end,
+      })
+    ),
   })
 end
 
@@ -259,16 +269,18 @@ end
 function M.change_commit(ctx, opts)
   local lopts = opts or {}
   local cmd = "commit"
-  start_dummy_editor(
-    ctx,
-    cmd,
-    lopts.files or {},
-    { callback = reload_or_error(ctx, cmd, {
-      callback = function()
-        vim.notify("Change commited", vim.log.levels.INFO)
-      end,
-    }) }
-  )
+  local args = lopts.files or {}
+  start_dummy_editor(ctx, cmd, args, {
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("Change commited", vim.log.levels.INFO)
+        end,
+      })
+    ),
+  })
 end
 
 --- Squash changes
@@ -278,10 +290,12 @@ end
 --- - dst_change Destination change
 --- - files List of file names relative to the root of the repository
 --- - force Edit immutable change
---- @return table
 function M.change_squash(ctx, src_change, opts)
   local lopts = opts or {}
   local args = vim.list_extend({ lopts.dst_change and "-f" or "-r", src_change.id }, lopts.files or {})
+  if notify_immutable(src_change, { force = lopts.force }) then
+    return
+  end
   local dst = "it's parent"
   if lopts.dst_change then
     args = vim.list_extend(args, { "-t", lopts.dst_change.id })
@@ -290,13 +304,16 @@ function M.change_squash(ctx, src_change, opts)
   local cmd = "squash"
   start_dummy_editor(ctx, cmd, args, {
     force = lopts.force,
-    callback = reload_or_error(ctx, cmd, {
-      callback = function()
-        vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
-      end,
-    }),
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
+        end,
+      })
+    ),
   })
-  return true
 end
 
 --- Edit change
@@ -317,11 +334,15 @@ function M.change_edit(ctx, change, opts)
   local args = { change.id }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
-    on_exit = reload_or_error(ctx, args[1], {
-      callback = function()
-        vim.notify("Editing change " .. change.id_short, vim.log.levels.INFO)
-      end,
-    }),
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("Editing change " .. change.id_short, vim.log.levels.INFO)
+        end,
+      })
+    ),
   })
 end
 
@@ -363,11 +384,15 @@ function M.change_describe(ctx, change, opts)
           sys_opts = {
             stdin = new_description,
           },
-          on_exit = reload_or_error(ctx, cmd, {
-            callback = function()
-              vim.notify("Described change " .. change.id_short, vim.log.levels.INFO)
-            end,
-          }),
+          on_exit = M.reload_or_error(
+            ctx,
+            table.concat(vim.list_extend({ cmd }, args), " "),
+            vim.tbl_extend("force", lopts, {
+              on_exit = function()
+                vim.notify("Described change " .. change.id_short, vim.log.levels.INFO)
+              end,
+            })
+          ),
         })
       end)
     end)
@@ -389,11 +414,15 @@ function M.change_revert(ctx, change, opts)
   local args = { "-r", change.id, "-d", "@" }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
-    on_exit = reload_or_error(ctx, cmd, {
-      callback = function()
-        vim.notify("Reverted change " .. change.id_short, vim.log.levels.INFO)
-      end,
-    }),
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("Reverted change " .. change.id_short, vim.log.levels.INFO)
+        end,
+      })
+    ),
   })
   return true
 end
@@ -447,11 +476,15 @@ function M.file_restore(ctx, file, change, opts)
   local args = { "-f", "@-", file.filename }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
-    on_exit = reload_or_error(ctx, args[1], {
-      callback = function()
-        vim.notify("Restored file " .. file.filename, vim.log.levels.INFO)
-      end,
-    }),
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("Restored file " .. file.filename, vim.log.levels.INFO)
+        end,
+      })
+    ),
   })
   return true
 end
@@ -484,29 +517,34 @@ end
 
 --- Command executes jj commands, returns exit code
 --- @param ctx Context context
---- @param args string[] List of CLI arguments
---- @param opts? {callback?: fun(out: vim.SystemCompleted)} Options
---- - callback Callback function is executed in a scheduled context
+--- @param cmd string List of CLI arguments
+--- @param opts? {on_exit?: fun(out: vim.SystemCompleted), args: string[]} Options
+--- - on_exit Callback function is executed in a scheduled context
+--- - args string[] List of CLI arguments
 --- @return table
-function M.cli(ctx, args, opts)
+function M.cli(ctx, cmd, opts)
+  local lopts = opts or {}
   local output = ""
-  local output_collector = function(err, data)
+  local output_collector = function(_, data)
     if data then
       output = output .. "\n" .. data
     end
   end
-  return jujutsu.cli(ctx, args[1], {
-    args = vim.list_slice(args, 2),
+  return jujutsu.cli(ctx, cmd, {
+    args = lopts.args,
     sys_opts = {
       stdout = output_collector,
       stderr = output_collector,
     },
-    on_exit = function(out)
-      vim.schedule(function()
-        vim.notify(output, vim.log.levels.INFO)
-      end)
-      reload_or_error(ctx, args[1], opts)(out)
-    end,
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, lopts.args), " "),
+      vim.tbl_extend("keep", lopts, {
+        on_exit = vim.schedule_wrap(function()
+          vim.notify(output, vim.log.levels.INFO)
+        end),
+      })
+    ),
   })
 end
 
@@ -516,7 +554,7 @@ function M.setup()
     if #args.fargs == 0 then
       M.show_log(context.get_context(), args.smods.vertical)
     else
-      M.cli(context.get_context(), args.fargs)
+      M.cli(context.get_context(), args.fargs[1], { args = vim.list_slice(args.fargs, 2) })
     end
   end
   local cmd_jedit = function(args)

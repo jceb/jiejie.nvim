@@ -47,7 +47,7 @@ function M.cli(ctx, cmd, opts)
       vim.notify((out.stdout or "") .. "\n" .. (out.stderr or ""), vim.log.levels.ERROR)
     end
     if not lopts.error_on_failure or lopts.error_on_failure then
-      error("Command failed with non-zero exit code: " .. out.code)
+      error("Command failed with non-zero exit code: " .. out.code .. "\n\t" .. table.concat(command, " "))
     end
   end
   vim.schedule(function()

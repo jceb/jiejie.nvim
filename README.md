@@ -25,11 +25,13 @@ system. The design is heavily inspired by
   - Modify change description in editor (`de`) or quick edit first line (`dd`)
   - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)
-  - Squash change or file under the cursor (`ss`, `sS`)
+  - Squash change or file under the cursor (`cs`, `cS`)
   - Revert change under the cursor (`crc`)
   - Abandon change or file under the cursor (`X`)
   - Rebase change tree or individual change (`rr`, `ro`)
   - Revert last operation (`cU`)
+  - Bookmark management (`cbc`, `cbX`, `cbx`, `cbF`, `cbf`, `cbm`, `cbr`)
+  - Tag management (`ctc`, `ctm`, `ctX`, `ctx`)
 
 ## Installation
 
@@ -69,12 +71,11 @@ return {
 - [x] Commands: squash and commit for individual files
 - [x] Navigation: movement mappings for commits, files and hunks
 - [x] Commands: rebase
+- [x] Commands: bookmark
+- [x] Commands: tag
 
 Priority 1
 
-- [ ] Commands: tag
-- [ ] Commands: bookmark
-- [ ] Commands: rebase - immutable mappings
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Commands: split
@@ -94,6 +95,7 @@ Priority 2
       bindings
 - [ ] Key: display full summary of a change via K
 - [ ] Docs: make screen recordings of jiejie's usage
+- [ ] Commands: extract commands from buffer.lua and put them in commands.lua
 
 Priority 3
 

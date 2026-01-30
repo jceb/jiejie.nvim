@@ -127,11 +127,46 @@ function M.parse_url(url)
   }
 end
 
---- Parse a line to identify it as containing a diff hunk
+--- Parse a line to containing a diff hunk
 --- @param line string Line
 --- @return boolean
 function M.parse_hunk(line)
   return vim.startswith(line, "@@ ") and vim.endswith(line, " @@")
+end
+
+--- @class BookmarkTag
+--- @field name string Bookmark name
+--- @field tracked boolean Bookmark is tracking a remote bookmark
+--- @field present boolean Bookmark is active or has been deleted
+--- @field remote string? Name of remote
+--- @field id string change ID
+--- @field id_short string Short change ID
+--- @field description_first_line string First line of description
+
+--- Parse a line to containing a bookmark or tag
+--- @param line string Line
+--- @return BookmarkTag?
+function M.parse_bookmark_or_tag(line)
+  local match = vim.fn.matchlist(line, [[^\([^†]\+\)†\([^‡]\+\)‡\([^⌠]\+\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\(.*\)$]])
+  if #match == 0 then
+    return nil
+  end
+  local name = match[2]
+  local tracked = match[3] == "true"
+  local present = match[4] == "true"
+  local remote = match[5] ~= "" and match[5] or nil
+  local id = match[6] ~= "" and match[6] or nil
+  local id_short = match[7] ~= "" and match[7] or nil
+  local description_first_line = match[8] ~= "" and match[8] or nil
+  return {
+    name = name,
+    tracked = tracked,
+    present = present,
+    remote = remote,
+    id = id,
+    id_short = id_short,
+    description_first_line = description_first_line,
+  }
 end
 
 --- Join URL into a string

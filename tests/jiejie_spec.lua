@@ -373,3 +373,51 @@ describe("jiejie parse_url", function()
 
   --
 end)
+
+describe("jiejie parse_bookmark", function()
+  --
+
+  it("When parsing an empty string, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_bookmark("")
+    local expected = nil
+    eq(expected, result)
+  end)
+
+  it("When parsing a bookmark without all separators, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_bookmark("main†false‡true")
+    local expected = nil
+    eq(expected, result)
+  end)
+
+  it("When parsing a bookmark without a name, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_bookmark("†false‡true⌠")
+    local expected = nil
+    eq(expected, result)
+  end)
+
+  it("When parsing a bookmark without a remote, the parser shall yield the object", function()
+    local result = require("jiejie.parsers").parse_bookmark("main†false‡true⌠⌡∫∬")
+    local expected = {
+      name = "main",
+      tracked = false,
+      present = true,
+    }
+    eq(expected, result)
+  end)
+
+  it("When parsing a bookmark with a remote, the parser shall yield the object", function()
+    local result = require("jiejie.parsers").parse_bookmark("main†false‡true⌠origin⌡id∫short_id∬description")
+    local expected = {
+      name = "main",
+      tracked = false,
+      present = true,
+      remote = "origin",
+      id = "id",
+      id_short = "short_id",
+      description_first_line = "description",
+    }
+    eq(expected, result)
+  end)
+
+  --
+end)

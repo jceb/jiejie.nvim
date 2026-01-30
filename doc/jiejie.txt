@@ -71,9 +71,32 @@ Diff maps ~
                                                                       *jiejie_c*
 Commit maps ~
 
-                                                               *jiejie_c<space>*
 c<space>                Populate command line with ":Jj commit ".
 
+                                                                    *jiejie_cbc*
+cbc                     Create new bookmark at change under the cursor.
+
+                                                                    *jiejie_cbX*
+cbX                     Delete bookmark including remote boomark.
+
+                                                                    *jiejie_cbX*
+cbx                     Delete bookmark including remote boomark at change
+                        under the cursor.
+
+                                                                    *jiejie_cbx*
+cbF                     Forget bookmark locally keeping the remote intact.
+
+                                                                    *jiejie_cbx*
+cbf                     Forget bookmark locally keeping the remote intact at
+                        change under the cursor.
+
+                                                                    *jiejie_cbm*
+cbm                     Move bookmark to change under the cursor.
+
+                                                                    *jiejie_cbr*
+cbr                     Rename bookmark at change under the cursor.
+
+                                                               *jiejie_c<space>*
                                                                      *jiejie_cc*
 cc                      Commit currently edited change and create a new
                         change.
@@ -103,6 +126,18 @@ cS                      Squash current changes into the selecated change.
                                                                     *jiejie_!cS*
 !cS                     Squash current changes into the immutuable selecated
                         change.
+
+                                                                    *jiejie_ctc*
+ctc                     Set tag at change under the cursor.
+
+                                                                    *jiejie_ctc*
+ctm                     Move tag to change under the cursor.
+
+                                                                    *jiejie_ctX*
+ctX                     Delete tag.
+
+                                                                    *jiejie_ctx*
+ctx                     Delete tag at change under the cursor.
 
                                                                      *jiejie_dd*
 dd                      Edit first line of change description.

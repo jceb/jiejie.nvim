@@ -134,6 +134,141 @@ function M.with_target_change(fn, opts)
   end
 end
 
+--- Request a bookmark
+--- @param fn fun(args: {ctx: Context, src_change: Change, bookmark?: string, tag?: string}): boolean Callback that is called with Context
+--- and the extracted change information. The function is only called when a change id is found at the cursor position
+--- @param opts? {err_notify?: boolean, err_continue?: boolean,  prompt?: string, args_key?: string, tags?: boolean} Options
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
+--- - prompt Prompt string
+--- - tags Handle tags instead of bookmarks
+--- - args_key Argument key that the change is stored at
+--- @return function
+function M.with_bookmark_or_tag(fn, opts)
+  --- @param args? {ctx: Context, src_change?: Change, bookmarks?: BookmarkTag[], tags?: BookmarkTag[]} Arguments
+  --- - bookmarks Selection of bookmarks to choose from
+  --- - tags Selection of tags to choose from - opts.tags must be set for tags to be used
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    if not largs.ctx then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Context missing.", vim.log.levels.WARN)
+      end
+      return
+    end
+    local title = lopts.tags and "tag" or "bookmark"
+    local bts = lopts.tags and largs.tags or largs.bookmarks
+    local prompt = lopts.prompt or (bts and ("Select " .. title .. ": ") or ("Enter " .. title .. " name: "))
+    if bts then
+      vim.ui.select(bts, {
+        prompt = prompt,
+        format_item = function(item)
+          return item.name
+            .. (item.remote and ("@" .. item.remote .. " ") or "")
+            .. " ("
+            .. (item.id_short or "")
+            .. ") "
+            .. (item.description_first_line or "")
+        end,
+      }, function(bt, _)
+        if not bt and not lopts.err_continue then
+          if lopts.err_notify or lopts.err_notify == nil then
+            vim.notify("Selection failed.", vim.log.levels.WARN)
+          end
+          return
+        end
+        if not bt then
+          fn(largs)
+        else
+          fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bt.name }))
+        end
+      end)
+    else
+      vim.ui.input({ prompt = prompt }, function(bt)
+        if not bt and not lopts.err_continue then
+          if lopts.err_notify or lopts.err_notify == nil then
+            vim.notify("Input canceled.", vim.log.levels.WARN)
+          end
+          return
+        end
+        if bt == "" then
+          fn(largs)
+        else
+          fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bt }))
+        end
+      end)
+    end
+  end
+end
+
+--- Retrieve bookmarks or tags
+--- @param fn fun(args: {ctx: Context, src_change: Change, bookmarks?: string[], tags?: string[]}): boolean Callback that is called with Context
+--- and the extracted change information. The function is only called when a change id is found at the cursor position
+--- @param opts? {err_notify?: boolean, err_continue?: boolean, args_key?: string, _local?: boolean, remote?: boolean, tags?: boolean} Options
+--- - err_notify Send notification is change is not found
+--- - err_continue Continue execution callback execution on error
+--- - args_key Argument key that the change is stored at
+--- - tags List tags instead of bookmarks
+--- - _local List local bookmarks - if nil, list local bookmarks
+--- - remote List remote bookmarks - if nil, don't list remote bookmarks
+--- @return function
+function M.with_bookmarks_or_tags(fn, opts)
+  --- @param args? {ctx: Context, src_change: Change} Arguments
+  --- - src_change If change is provided, return only the bookmars relevant for this change
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    if not largs.ctx then
+      if lopts.err_notify or lopts.err_notify == nil then
+        vim.notify("Context missing.", vim.log.levels.WARN)
+      end
+      return
+    end
+    local jujutsu = require("jiejie.jujutsu")
+    local cmd = lopts.tags and "tag" or "bookmark"
+    local _args = {
+      "list",
+      "-T",
+      [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id().short()) ++ "∫" ++ if(normal_target, normal_target.commit_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
+    }
+    if largs.src_change then
+      _args = vim.list_extend(_args, { "-r", largs.src_change.id })
+    end
+    jujutsu.cli(largs.ctx, cmd, {
+      args = _args,
+      on_exit = vim.schedule_wrap(function(out)
+        local bts = {}
+        for _, line in ipairs(vim.split(out.stdout, "\n")) do
+          local bt = parsers.parse_bookmark_or_tag(line)
+          if bt and bt.present then
+            if lopts._local == false and not bt.remote or not lopts.remote and bt.remote then
+              -- noop
+            else
+              bts = vim.list_extend(bts, { bt })
+            end
+          end
+        end
+        if #bts == 0 and not lopts.err_continue then
+          if lopts.err_notify or lopts.err_notify == nil then
+            vim.notify("No " .. (lopts.tags and "tags" or "bookmarks") .. " found.", vim.log.levels.WARN)
+          end
+          return
+        end
+        if #bts == 0 then
+          fn(largs)
+        else
+          fn(vim.tbl_extend("force", largs, {
+            [lopts.args_key or (lopts.tags and "tags" or "bookmarks")] = bts,
+          }))
+        end
+      end),
+    })
+  end
+end
+
 --- Retrieve data about the file name that the cursor is on
 --- @param fn fun(args: {ctx: Context, file?: ModifiedFile}): boolean Callback that is called with Context and the extracted file name
 --- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
@@ -467,7 +602,7 @@ function M.focus(ctx, vertical)
   end
   local tabid = vim.api.nvim_get_current_tabpage()
   local wins = vim.api.nvim_tabpage_list_wins(tabid)
-  for _i, winid in ipairs(wins) do
+  for _, winid in ipairs(wins) do
     if vim.api.nvim_win_get_buf(winid) == ctx.buf then
       vim.api.nvim_tabpage_set_win(tabid, winid)
       return ctx
@@ -747,7 +882,101 @@ function M.setup_buffer(ctx)
       fn = function()
         vim.fn.feedkeys(":Jj commit ", "n")
       end,
-      desc = 'Populate command line with ":Jj squash "',
+      desc = 'Populate command line with ":Jj commit "',
+    },
+    {
+      key = "cbc",
+      fn = with_root_context(M.search_change(M.with_bookmark_or_tag(function(args)
+        commands.cli(args.ctx, "bookmark", {
+          args = { "create", "-r", args.src_change.id, args.bookmark },
+          on_exit = function()
+            vim.notify("Bookmark created: " .. args.bookmark, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end))),
+      desc = "Create new bookmark at change under the cursor",
+    },
+    {
+      key = "cbX",
+      fn = with_root_context(M.with_bookmarks_or_tags(M.search_change(M.with_bookmark_or_tag(function(args)
+        commands.cli(args.ctx, "bookmark", {
+          args = { "delete", args.bookmark },
+          on_exit = function()
+            vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)))),
+      desc = "Delete bookmark including remote boomark",
+    },
+    {
+      key = "cbx",
+      fn = with_root_context(M.search_change(M.with_bookmarks_or_tags(M.with_bookmark_or_tag(function(args)
+        commands.cli(args.ctx, "bookmark", {
+          args = { "delete", args.bookmark },
+          on_exit = function()
+            vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)))),
+      desc = "Delete bookmark including remote boomark at change under the cursor",
+    },
+    {
+      key = "cbF",
+      fn = with_root_context(M.with_bookmarks_or_tags(M.search_change(M.with_bookmark_or_tag(function(args)
+        commands.cli(args.ctx, "bookmark", {
+          args = { "forget", args.bookmark },
+          on_exit = function()
+            vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)))),
+      desc = "Forget bookmark locally keeping the remote intact",
+    },
+    {
+      key = "cbf",
+      fn = with_root_context(M.search_change(M.with_bookmarks_or_tags(M.with_bookmark_or_tag(function(args)
+        commands.cli(args.ctx, "bookmark", {
+          args = { "forget", args.bookmark },
+          on_exit = function()
+            vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)))),
+      desc = "Forget bookmark locally keeping the remote intact at change under the cursor",
+    },
+    {
+      key = "cbm",
+      fn = with_root_context(M.with_bookmarks_or_tags(M.search_change(M.with_bookmark_or_tag(function(args)
+        commands.cli(args.ctx, "bookmark", {
+          args = { "move", args.bookmark, "-t", args.src_change.id },
+          on_exit = function()
+            vim.notify("Bookmark " .. args.bookmark .. " moved to change " .. args.src_change.id_short, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)))),
+      desc = "Move bookmark to change under the cursor",
+    },
+    {
+      key = "cbr",
+      fn = with_root_context(M.search_change(M.with_bookmarks_or_tags(M.with_bookmark_or_tag(function(args)
+        M.with_bookmark_or_tag(function(_args)
+          commands.cli(args.ctx, "bookmark", {
+            args = { "rename", args.bookmark, _args.bookmark },
+            on_exit = function()
+              vim.notify("Bookmark renamed: " .. args.bookmark, vim.log.levels.INFO)
+            end,
+          })
+          return true
+        end, { prompt = "Enter new name: " })({ ctx = args.ctx })
+        return true
+      end)))),
+      desc = "Rename bookmark at change under the cursor",
     },
     {
       key = "cc",
@@ -792,6 +1021,7 @@ function M.setup_buffer(ctx)
       key = "s<space>",
       fn = with_root_context(M.search_change(function(args)
         vim.fn.feedkeys(":Jj squash -f " .. args.src_change.id_short .. " ", "n")
+        return true
       end)),
       desc = 'Populate command line with ":Jj squash "',
     },
@@ -844,6 +1074,67 @@ function M.setup_buffer(ctx)
       desc = "Squash current changes into the immutuable selecated change",
     },
     {
+      key = "ctc",
+      fn = with_root_context(M.search_change(M.with_bookmark_or_tag(function(args)
+        commands.cli(args.ctx, "tag", {
+          args = { "set", "-r", args.src_change.id, args.tag },
+          on_exit = function()
+            vim.notify("Tag created: " .. args.tag, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end, { tags = true }))),
+      desc = "Create new tag at change under the cursor",
+    },
+    {
+      key = "ctm",
+      fn = with_root_context(M.with_bookmarks_or_tags(
+        M.search_change(M.with_bookmark_or_tag(function(args)
+          commands.cli(args.ctx, "tag", {
+            args = { "set", "-r", args.src_change.id, "--allow-move", args.tag },
+            on_exit = function()
+              vim.notify("Tag " .. args.tag .. " moved to change " .. args.src_change.id_short, vim.log.levels.INFO)
+            end,
+          })
+          return true
+        end, { tags = true })),
+        { tags = true }
+      )),
+      desc = "Delete tag",
+    },
+    {
+      key = "ctX",
+      fn = with_root_context(M.with_bookmarks_or_tags(
+        M.search_change(M.with_bookmark_or_tag(function(args)
+          commands.cli(args.ctx, "tag", {
+            args = { "delete", args.tag },
+            on_exit = function()
+              vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
+            end,
+          })
+          return true
+        end, { tags = true })),
+        { tags = true }
+      )),
+      desc = "Delete tag",
+    },
+    {
+      key = "ctx",
+      fn = with_root_context(M.with_bookmarks_or_tags(
+        M.search_change(M.with_bookmark_or_tag(function(args)
+          commands.cli(args.ctx, "tag", {
+            args = { "delete", args.tag },
+            on_exit = function()
+              vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
+            end,
+          })
+          return true
+        end, { tags = true })),
+        { tags = true }
+      )),
+      desc = "Delete tag at change under the cursor",
+    },
+    {
       key = "de",
       fn = with_root_context(M.search_change(function(args)
         commands.change_describe(args.ctx, args.src_change)
@@ -878,7 +1169,12 @@ function M.setup_buffer(ctx)
     {
       key = "cU",
       fn = with_root_context(function(args)
-        commands.cli(args.ctx, { "op", "revert" })
+        commands.cli(args.ctx, "op", {
+          args = { "revert" },
+          on_exit = function()
+            vim.notify("Operation reverted.", vim.log.levels.INFO)
+          end,
+        })
         return true
       end),
       desc = "Revert last operation",
@@ -923,14 +1219,16 @@ function M.setup_buffer(ctx)
       key = "r<space>",
       fn = with_root_context(M.search_change(function(args)
         vim.fn.feedkeys(":Jj rebase -s " .. args.src_change.id_short .. " ", "n")
+        return true
       end)),
-      desc = 'Populate command line with ":Jj squash "',
+      desc = 'Populate command line with ":Jj rebase "',
     },
     {
       key = "rr",
       fn = with_root_context(M.search_change(M.with_target_change(function(args)
-        commands.cli(args.ctx, { "rebase", "-s", args.src_change.id, "-d", args.dst_change.id }, {
-          callback = function()
+        commands.cli(args.ctx, "rebase", {
+          args = { "-s", args.src_change.id, "-d", args.dst_change.id },
+          on_exit = function()
             vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
@@ -941,8 +1239,9 @@ function M.setup_buffer(ctx)
     {
       key = "!rr",
       fn = with_root_context(M.search_change(M.with_target_change(function(args)
-        commands.cli(args.ctx, M.with_direct_force({ "rebase", "-s", args.src_change.id, "-d", args.dst_change.id }), {
-          callback = function()
+        commands.cli(args.ctx, "rebase", {
+          args = M.with_direct_force({ "-s", args.src_change.id, "-d", args.dst_change.id }),
+          on_exit = function()
             vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
@@ -953,8 +1252,9 @@ function M.setup_buffer(ctx)
     {
       key = "ro",
       fn = with_root_context(M.search_change(M.with_target_change(function(args)
-        commands.cli(args.ctx, { "rebase", "-r", args.src_change.id, "-d", args.dst_change.id }, {
-          callback = function()
+        commands.cli(args.ctx, "rebase", {
+          args = { "-r", args.src_change.id, "-d", args.dst_change.id },
+          on_exit = function()
             vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
@@ -965,8 +1265,9 @@ function M.setup_buffer(ctx)
     {
       key = "!ro",
       fn = with_root_context(M.search_change(M.with_target_change(function(args)
-        commands.cli(args.ctx, M.with_direct_force({ "rebase", "-r", args.src_change.id, "-d", args.dst_change.id }), {
-          callback = function()
+        commands.cli(args.ctx, "rebase", {
+          args = M.with_direct_force({ "-r", args.src_change.id, "-d", args.dst_change.id }),
+          on_exit = function()
             vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
@@ -979,7 +1280,12 @@ function M.setup_buffer(ctx)
     {
       key = "gp",
       fn = with_root_context(function(args)
-        commands.cli(args.ctx, { "git", "fetch" })
+        commands.cli(args.ctx, "git", {
+          args = { "fetch" },
+          on_exit = function()
+            vim.notify("Changes fetched.", vim.log.levels.INFO)
+          end,
+        })
         return true
       end),
       desc = "Fetch changes from remote",
@@ -987,7 +1293,12 @@ function M.setup_buffer(ctx)
     {
       key = "gP",
       fn = with_root_context(function(args)
-        commands.cli(args.ctx, { "git", "push" })
+        commands.cli(args.ctx, "git", {
+          args = { "push" },
+          on_exit = function()
+            vim.notify("Changes pushed.", vim.log.levels.INFO)
+          end,
+        })
         return true
       end),
       desc = "Push changes to remote",
@@ -1028,7 +1339,7 @@ function M.setup_buffer(ctx)
       desc = "Decrease the number of displayed revisions in log",
     },
   }
-  for _i, value in ipairs(nmaps) do
+  for _, value in ipairs(nmaps) do
     local plug = "<Plug>(jiejie-" .. value.key .. ")"
     vim.keymap.set("n", value.key, plug, { desc = value.desc, nowait = true, buffer = true })
     vim.keymap.set("n", plug, value.fn, { desc = value.desc, buffer = true })
