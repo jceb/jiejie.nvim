@@ -55,9 +55,10 @@ end
 --- Retrieve data about the change that the cursor is on
 --- @param fn fun(args: {ctx: Context, src_change?: Change}): boolean Callback that is called with Context and the extracted change
 ---           information. The function is only called when a change id is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- @param opts? {err_notify?: boolean, err_continue?: boolean, args_key?: string} Options
 --- - err_notify Send notification is change is not found
 --- - err_continue Continue execution callback execution on error
+--- - args_key Argument key that the change is stored at
 --- @return function
 function M.with_change_at_position(fn, opts)
   --- @param args? {ctx: Context} Arguments
@@ -85,7 +86,7 @@ function M.with_change_at_position(fn, opts)
         vim.notify("No change data found.", vim.log.levels.WARN)
       end
     else
-      return fn(vim.tbl_extend("force", largs, { src_change = change }))
+      return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "src_change"] = change }))
     end
   end
 end
@@ -338,6 +339,7 @@ function M.search_change(fn, opts)
     local linenr = (lopts.linenr_from_file and largs.file and largs.file.linenr or vim.api.nvim_win_get_cursor(winid)[1]) + (lopts.linenr_offset or 0)
     local change
     if lopts.search_downwards then
+      ---@diagnostic disable-next-line: param-type-mismatch
       for idx, line in ipairs(vim.fn.getbufline(largs.ctx.buf, linenr, "$")) do
         change = parsers.parse_change(line, linenr + idx - 1)
         if change then
@@ -364,7 +366,7 @@ function M.search_change(fn, opts)
 end
 
 --- Search diff hunk that position
---- @param fn fun(args: {ctx: Context, file?: ModifiedFile, hunk_linenr: number}): boolean Callback that is called with Context
+--- @param fn fun(args: {ctx: Context, file?: ModifiedFile, hunk: Hunk}): boolean Callback that is called with Context
 --- and the extracted change information. The function is only called when a filename is found at the cursor position
 --- @param opts? {err_notify?: boolean, err_continue?: boolean, search_downwards?: boolean, linenr?: number, linenr_offset?: number, skip_past_change?: boolean, args_key?: string} Options
 --- - err_notify Send notification is change is not found
@@ -393,11 +395,13 @@ function M.search_hunk(fn, opts)
       return
     end
     -- starting point for search, current lnie + offset
-    local linenr = (lopts.linenr or vim.api.nvim_win_get_cursor(winid)[1]) + (lopts.linenr_offset or 0)
+    local cursor_line = vim.api.nvim_win_get_cursor(winid)[1]
+    local linenr = (lopts.linenr or cursor_line) + (lopts.linenr_offset or 0)
     local hunk
     if lopts.search_downwards then
+      ---@diagnostic disable-next-line: param-type-mismatch
       for idx, line in ipairs(vim.fn.getbufline(largs.ctx.buf, linenr, "$")) do
-        hunk = parsers.parse_hunk(line) and linenr + idx - 1
+        hunk = parsers.parse_hunk(line, 0)
         if hunk then
           break
         end
@@ -411,9 +415,13 @@ function M.search_hunk(fn, opts)
         end
       end
     else
+      local uncount_removed_lines = 0
       while linenr > 0 do
         local line = vim.fn.getbufoneline(largs.ctx.buf, linenr)
-        hunk = parsers.parse_hunk(line) and linenr
+        if vim.startswith(line, "-") then
+          uncount_removed_lines = uncount_removed_lines + 1
+        end
+        hunk = parsers.parse_hunk(line, cursor_line - linenr - 1 - uncount_removed_lines)
         if hunk then
           break
         end
@@ -472,6 +480,7 @@ function M.search_file(fn, opts)
     local linenr = (lopts.linenr or vim.api.nvim_win_get_cursor(winid)[1]) + (lopts.linenr_offset or 0)
     local file
     if lopts.search_downwards then
+      ---@diagnostic disable-next-line: param-type-mismatch
       for idx, line in ipairs(vim.fn.getbufline(largs.ctx.buf, linenr, "$")) do
         file = parsers.parse_filename(line, linenr + idx - 1)
         if file then
@@ -658,36 +667,58 @@ function M.setup_buffer(ctx)
     -- Navigation maps {{{1
     {
       key = "<CR>",
-      fn = with_root_context(function(_args)
-        if
-          not M.with_change_at_position(function(args)
-            commands.change_edit(args.ctx, args.src_change)
-            return true
-          end)({ ctx = _args.ctx })
-        then
-          M.search_file(M.search_change(function(args)
-            commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true })
-            return true
-          end))({ ctx = _args.ctx })
-        end
-      end),
+      fn = with_root_context(M.with_change_at_position(
+        M.search_hunk(
+          M.search_file(
+            M.search_change(function(args)
+              ---@diagnostic disable-next-line: undefined-field
+              if args.pos_change then
+                commands.change_edit(args.ctx, args.src_change)
+              elseif args.file then
+                -- if no change is at the current position of the cursor, then a file name must have been found
+                ---@diagnostic disable-next-line: undefined-field
+                commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
+              else
+                vim.schedule(function()
+                  vim.notify("No file or change found under the curor", vim.log.levels.WARN)
+                end)
+              end
+              return true
+            end),
+            { err_continue = true }
+          ),
+          { err_continue = true }
+        ),
+        { err_continue = true, args_key = "pos_change" }
+      )),
       desc = "Edit change or file under the cursor",
     },
     {
       key = "!<CR>",
-      fn = with_root_context(function(_args)
-        if
-          not M.with_change_at_position(function(args)
-            commands.change_edit(args.ctx, args.src_change, M.with_direct_force())
-            return true
-          end)({ ctx = _args.ctx })
-        then
-          M.search_file(M.search_change(function(args)
-            commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true })
-            return true
-          end))({ ctx = _args.ctx })
-        end
-      end),
+      fn = with_root_context(M.with_change_at_position(
+        M.search_hunk(
+          M.search_file(
+            M.search_change(function(args)
+              ---@diagnostic disable-next-line: undefined-field
+              if args.pos_change then
+                commands.change_edit(args.ctx, args.src_change, M.with_direct_force())
+              elseif args.file then
+                -- if no change is at the current position of the cursor, then a file name must have been found
+                ---@diagnostic disable-next-line: undefined-field
+                commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
+              else
+                vim.schedule(function()
+                  vim.notify("No file or change found under the curor", vim.log.levels.WARN)
+                end)
+              end
+              return true
+            end),
+            { err_continue = true }
+          ),
+          { err_continue = true }
+        ),
+        { err_continue = true, args_key = "pos_change" }
+      )),
       desc = "Edit immutable change or file under the cursor",
     },
     {
@@ -725,14 +756,22 @@ function M.setup_buffer(ctx)
                   local count = vim.v.count
                   local _winid = vim.api.nvim_get_current_win()
                   local linenr
+                  ---@diagnostic disable-next-line: undefined-field
                   if args.cur_file and args.cur_change then
+                    ---@diagnostic disable-next-line: undefined-field
                     if not log_diff.diff_shown(args.cur_file, args.cur_change) then
+                      ---@diagnostic disable-next-line: undefined-field
                       log_diff.diff_show(args.ctx, args.cur_file, args.cur_change)
+                      ---@diagnostic disable-next-line: undefined-field
                       linenr = args.cur_file.linenr + 1
-                    elseif args.hunk and args.hunk > args.cur_file.linenr then
-                      if args.file and args.hunk < args.file.linenr then
-                        if args.src_change and args.hunk < args.src_change.linenr then
-                          linenr = args.hunk
+                    ---@diagnostic disable-next-line: undefined-field
+                    elseif args.hunk and args.hunk.linenr > args.cur_file.linenr then
+                      ---@diagnostic disable-next-line: undefined-field
+                      if args.file and args.hunk.linenr < args.file.linenr then
+                        ---@diagnostic disable-next-line: undefined-field
+                        if args.src_change and args.hunk.linenr < args.src_change.linenr then
+                          ---@diagnostic disable-next-line: undefined-field
+                          linenr = args.hunk.linenr
                         end
                       end
                     end
@@ -769,10 +808,13 @@ function M.setup_buffer(ctx)
               M.search_change(function(args)
                 local count = vim.v.count
                 local _winid = vim.api.nvim_get_current_win()
+                ---@diagnostic disable-next-line: undefined-field
                 local cur_change_linenr = args.cur_change and args.cur_change.linenr or 1
                 local linenr = 1
+                ---@diagnostic disable-next-line: undefined-field
                 if not args.cur_file then
                   -- Cursor is on a change, jump to next change
+                  ---@diagnostic disable-next-line: undefined-field
                   linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
                 else
                   -- Cursor is on a file
@@ -821,8 +863,10 @@ function M.setup_buffer(ctx)
                 local _winid = vim.api.nvim_get_current_win()
                 local linenr = 1
                 local src_change_linenr = args.src_change and args.src_change.linenr or 1
+                ---@diagnostic disable-next-line: undefined-field
                 if not args.cur_file then
                   -- Cursor is on a change, jump to next change
+                  ---@diagnostic disable-next-line: undefined-field
                   linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
                 else
                   -- Cursor is on a file
@@ -1063,6 +1107,7 @@ function M.setup_buffer(ctx)
       key = "cS",
       fn = with_root_context(M.search_file(
         M.search_change(M.with_target_change(function(args)
+          ---@diagnostic disable-next-line: undefined-field
           commands.change_squash(args.ctx, args.src_change, { dst_change = args.dst_change, files = { args.file and args.file.filename or nil } })
           return true
         end, { err_notify = false })),
@@ -1077,6 +1122,7 @@ function M.setup_buffer(ctx)
           commands.change_squash(
             args.ctx,
             args.src_change,
+            ---@diagnostic disable-next-line: undefined-field
             M.with_direct_force({ dst_change = args.dst_change, files = { args.file and args.file.filename or nil } })
           )
           return true

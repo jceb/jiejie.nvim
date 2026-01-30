@@ -169,6 +169,7 @@ function M.toggle_diff(ctx, change, opts)
   if lopts.file then
     files = vim.list_extend(files, { lopts.file })
   else
+    ---@diagnostic disable-next-line: param-type-mismatch
     for idx, line in ipairs(vim.fn.getbufline(ctx.buf, change.linenr + 1, "$")) do
       local f = parsers.parse_filename(line, change.linenr + idx)
       if f then
@@ -431,7 +432,7 @@ end
 --- @param ctx Context context
 --- @param file ModifiedFile File name
 --- @param change Change Change to edit file at
---- @param opts? {previous_win?: boolean, edit_cmd?: fun(filename: string)}
+--- @param opts? {previous_win?: boolean, edit_cmd?: fun(filename: string), hunk?: Hunk}
 --- - previous_win: Navigate to previous window or split a new window before edting file, when current buffer is the log buffer
 --- - edit_cmd: Function that's called for editing file
 --- @return boolean?
@@ -457,6 +458,28 @@ function M.file_edit(ctx, file, change, opts)
     vim.cmd.new()
   end
   lopts.edit_cmd(filename)
+  if lopts.hunk then
+    -- When hunk is set, the cursor needs to be positioned relatively on the exact line from the hunk
+    -- Due to the use of BufReadCmd for Jiejie file, we're not able to set the cursor position here - the file just
+    -- hasn't loaded yet. Therefore, create a temporary autocommand that will do the job
+    local _bufid = vim.api.nvim_get_current_buf()
+    ---@diagnostic disable-next-line: param-type-mismatch
+    local cursor_line = lopts.hunk.start_line + lopts.hunk.cursor_offset
+    -- local lines = #(vim.fn.getbufline(_bufid, 1, "$"))
+    -- if lines >= cursor_line then
+    if not vim.startswith(filename, "jiejie://") then
+      vim.api.nvim_win_set_cursor(vim.api.nvim_get_current_win(), { cursor_line, 0 })
+    else
+      local id
+      id = vim.api.nvim_create_autocmd("BufReadPost", {
+        buffer = _bufid,
+        callback = function(ev)
+          vim.api.nvim_del_autocmd(id)
+          vim.api.nvim_win_set_cursor(vim.api.nvim_get_current_win(), { cursor_line, 0 })
+        end,
+      })
+    end
+  end
   return true
 end
 
@@ -587,8 +610,10 @@ function M.setup()
       path = vim.fn.trim(vim.fn.strpart(object.filename, #ctx.root), "/", 1)
     end
     -- hacky construction of the exact data that's required for file_edit
+    ---@diagnostic disable-next-line: missing-fields
     M.file_edit(ctx, { filename = path }, {
       id = object.change_id and object.change_id or "@",
+      ---@diagnostic disable-next-line: assign-type-mismatch
       status = object.change_id and object.change_id ~= "@" and M.CHANGE_STATUS.IMMUTABLE or M.CHANGE_STATUS.CURRENT,
     })
   end

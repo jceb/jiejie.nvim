@@ -78,8 +78,6 @@ return {
 
 Priority 1
 
-- [ ] Navigation: pressing <CR> on a hunk should jump to the exact position in
-      the buffer
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Log: support toggling between different log views
