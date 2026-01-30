@@ -78,29 +78,29 @@ return {
 
 Priority 1
 
+- [ ] Navigation: pressing <CR> on a hunk should jump to the exact position in
+      the buffer
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Log: support toggling between different log views
-- [ ] Commands: split (current workaround: commit one file instead of the whole
-      change, then squash the other files that should be part of the commit)
-- [ ] Commands: diff
 
 Priority 2
 
-- [ ] Commands: Jedit for commits and directories
-- [ ] Navigation: pressing <CR> on a hunk should jump to the exact position in
-      the buffer
 - [ ] Commands: keep diff expansion when reloading the log
-- [ ] Commands: worktree
 - [ ] Configuration: make mappings configurable
 - [ ] Commands: support visual mode for squash, commit, split and restore key
       bindings
-- [ ] Key: display full summary of a change via K
-- [ ] Docs: make screen recordings of jiejie's usage
-- [ ] Commands: extract commands from buffer.lua and put them in commands.lua
+- [ ] Commands: worktree
+- [ ] Commands: diff
 
 Priority 3
 
+- [ ] API: extract commands from buffer.lua and put them in commands.lua
+- [ ] Commands: Jedit for commits and directories
+- [ ] Commands: split (current workaround: commit one file instead of the whole
+      change, then squash the other files that should be part of the commit)
+- [ ] Docs: make screen recordings of jiejie's usage
+- [ ] Key: display full summary of a change via K
 - [ ] Refactor: follow lua's style of returning errors
 - [ ] Key: pressing X on a hunk should restore it
 - [ ] Commands: blame
