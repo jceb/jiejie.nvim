@@ -71,6 +71,9 @@ Diff maps ~
                                                                       *jiejie_c*
 Commit maps ~
 
+                                                               *jiejie_c<space>*
+c<space>                Populate command line with ":Jj commit ".
+
                                                                      *jiejie_cc*
 cc                      Commit currently edited change and create a new
                         change.
@@ -84,6 +87,9 @@ cn                      Create a new change after the change under the cursor.
 
                                                                     *jiejie_crc*
 crc                     Revert the commit under the cursor.
+
+                                                               *jiejie_s<space>*
+s<space>                Populate command line with ":Jj squash ".
 
                                                                      *jiejie_cs*
 cs                      Squash current changes into it's parent.
@@ -123,6 +129,9 @@ X                       Abandon change or restore file from parent change.
                                                                       *jiejie_r*
 Rebase maps ~
 
+                                                               *jiejie_r<space>*
+r<space>                Populate command line with ":Jj rebase ".
+
                                                                      *jiejie_rr*
 rr                      Rebase the change under the cursor, together with its
                         descendants.
@@ -154,8 +163,8 @@ Miscellaneous maps ~
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.
 
-                                                                      *jiejie_r*
-r                       Reload log.
+                                                                      *jiejie_R*
+R                       Reload log.
 
                                                                   *jiejie_<C-a>*
 <C-a>                   Increase the number of displayed revisions in log.

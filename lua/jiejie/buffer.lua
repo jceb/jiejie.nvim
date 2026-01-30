@@ -743,6 +743,13 @@ function M.setup_buffer(ctx)
 
     -- Commit maps {{{1
     {
+      key = "c<space>",
+      fn = function()
+        vim.fn.feedkeys(":Jj commit ", "n")
+      end,
+      desc = 'Populate command line with ":Jj squash "',
+    },
+    {
       key = "cc",
       fn = with_root_context(M.search_file(
         M.search_change(function(args)
@@ -780,6 +787,13 @@ function M.setup_buffer(ctx)
         return true
       end)),
       desc = "Revert the commit under the cursor",
+    },
+    {
+      key = "s<space>",
+      fn = with_root_context(M.search_change(function(args)
+        vim.fn.feedkeys(":Jj squash -f " .. args.src_change.id_short .. " ", "n")
+      end)),
+      desc = 'Populate command line with ":Jj squash "',
     },
     {
       key = "cs",
@@ -905,6 +919,13 @@ function M.setup_buffer(ctx)
     },
 
     -- Rebase maps {{{1
+    {
+      key = "r<space>",
+      fn = with_root_context(M.search_change(function(args)
+        vim.fn.feedkeys(":Jj rebase -s " .. args.src_change.id_short .. " ", "n")
+      end)),
+      desc = 'Populate command line with ":Jj squash "',
+    },
     {
       key = "rr",
       fn = with_root_context(M.search_change(M.with_target_change(function(args)

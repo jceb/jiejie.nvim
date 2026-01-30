@@ -23,8 +23,10 @@ system. The design is heavily inspired by
   - Edit change (`<CR>`)
   - Pull and push changes to git (`gp`, `gP`)
   - Modify change description in editor (`de`) or quick edit first line (`dd`)
+  - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)
-  - Squash change or file under the cursor (`cs`, `cS`)
+  - Squash change or file under the cursor (`ss`, `sS`)
+  - Revert change under the cursor (`crc`)
   - Abandon change or file under the cursor (`X`)
   - Rebase change tree or individual change (`rr`, `ro`)
   - Revert last operation (`cU`)
@@ -79,22 +81,26 @@ Priority 1
 - [ ] Commands: duplicate
 - [ ] Commands: diff
 - [ ] Docs: make screen recordings of jiejie's usage
-- [ ] Key: display full summary of a change via K
+- [ ] Log: support toggling between different log views
+- [ ] Commands: ignore diff errors for binary files
 
 Priority 2
 
-- [ ] Key: pressing <CR> on a hunk should jump to the exact position in the
-      buffer
+- [ ] Commands: Jedit for commits and directories
+- [ ] Navigation: pressing <CR> on a hunk should jump to the exact position in
+      the buffer
 - [ ] Commands: keep diff expansion when reloading the log
 - [ ] Commands: worktree
 - [ ] Configuration: make mappings configurable
 - [ ] Commands: support visual mode for squash, commit, split and restore key
       bindings
+- [ ] Key: display full summary of a change via K
 
 Priority 3
 
 - [ ] Refactor: follow lua's style of returning errors
 - [ ] Key: pressing X on a hunk should restore it
+- [ ] Commands: blame
 - [ ] Commands: absorb
 - [ ] Commands: diffedit
 - [ ] Commands: show full change
