@@ -590,13 +590,13 @@ end
 --- @return Context
 function M.focus(ctx, vertical)
   ctx.buf = M.is_valid(ctx.buf)
+  local filename = parsers.join_url({
+    root = ctx.root,
+    revision = "repo",
+    path = "index",
+  })
   if ctx.buf == nil then
     -- If buffer doesn't exist, open a new one
-    local filename = parsers.join_url({
-      root = ctx.root,
-      revision = "repo",
-      path = "index",
-    })
     if vertical then
       vim.cmd.vs(filename)
     else
@@ -617,9 +617,9 @@ function M.focus(ctx, vertical)
     end
   end
   if vertical then
-    vim.cmd.vs(ctx.buf)
+    vim.cmd.vs(filename)
   else
-    vim.cmd.sp(ctx.buf)
+    vim.cmd.sp(filename)
   end
   M.setup_buffer(ctx)
   return ctx
