@@ -1,9 +1,6 @@
 local M = {}
 
---- Setup the plugin
-function M.setup()
-  require("jiejie.context").setup()
-  require("jiejie.commands").setup()
-end
+--- Configure the plugin
+function M.setup() end
 
 return M
