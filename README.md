@@ -8,8 +8,7 @@ system. The design is heavily inspired by
 
 ## Features
 
-- Handling very close to
-  [tope's fugitive](https://github.com/tpope/vim-fugitive)
+- UX very close to [tope's fugitive](https://github.com/tpope/vim-fugitive)
   - Toggle inline diff (`=`)
   - Jump to file (`<CR>`, `o`, `gO`, `O`)
   - Edit old revisions of a file (`:Jedit [revision]:[file]`)
@@ -78,6 +77,7 @@ Priority 1
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Log: support toggling between different log views
+- [ ] Commands: diff
 
 Priority 2
 
@@ -86,7 +86,6 @@ Priority 2
 - [ ] Commands: support visual mode for squash, commit, split and restore key
       bindings
 - [ ] Commands: worktree
-- [ ] Commands: diff
 
 Priority 3
 
