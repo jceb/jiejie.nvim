@@ -132,13 +132,15 @@ end
 --- @field start_lines number Number of lines before the modification
 --- @field end_line number End line of hunk
 --- @field end_lines number Number of lines after the modification
+--- @field linenr number Line number in log buffer that contains the hunk
 --- @field cursor_offset number Cursor offset within the hunk - should always 0 for downward search since the cursor is not within the next hunk
 
 --- Parse a line to containing a diff hunk
 --- @param line string Line
+--- @param linenr number Line number in log buffer that contains the hunk
 --- @param cursor_offset number Line number in log buffer that contains the hunk
 --- @return Hunk?
-function M.parse_hunk(line, cursor_offset)
+function M.parse_hunk(line, linenr, cursor_offset)
   local match = vim.fn.matchlist(line, [[^@@ -\([0-9]\+\),\([0-9]\+\) +\([0-9]\+\),\([0-9]\+\) @@$]])
   if #match == 0 then
     return nil
@@ -152,6 +154,7 @@ function M.parse_hunk(line, cursor_offset)
     start_lines = start_lines,
     end_line = end_line,
     end_lines = end_lines,
+    linenr = linenr,
     cursor_offset = cursor_offset,
   }
 end

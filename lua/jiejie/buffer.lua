@@ -401,7 +401,7 @@ function M.search_hunk(fn, opts)
     if lopts.search_downwards then
       ---@diagnostic disable-next-line: param-type-mismatch
       for idx, line in ipairs(vim.fn.getbufline(largs.ctx.buf, linenr, "$")) do
-        hunk = parsers.parse_hunk(line, 0)
+        hunk = parsers.parse_hunk(line, linenr + idx - 1, 0)
         if hunk then
           break
         end
@@ -421,7 +421,7 @@ function M.search_hunk(fn, opts)
         if vim.startswith(line, "-") then
           uncount_removed_lines = uncount_removed_lines + 1
         end
-        hunk = parsers.parse_hunk(line, cursor_line - linenr - 1 - uncount_removed_lines)
+        hunk = parsers.parse_hunk(line, linenr, cursor_line - linenr - 1 - uncount_removed_lines)
         if hunk then
           break
         end

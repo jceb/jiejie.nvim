@@ -342,37 +342,38 @@ describe("jiejie parse_url", function()
   --
 
   it("When parsing an empty string, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_hunk("", 23)
+    local result = require("jiejie.parsers").parse_hunk("", 23, 0)
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing a line that looks like a hunk but isn't, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_hunk("@@ ", 23)
+    local result = require("jiejie.parsers").parse_hunk("@@ ", 23, 0)
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing a line that looks like a hunk but isn't, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_hunk("@@ xx @", 23)
+    local result = require("jiejie.parsers").parse_hunk("@@ -55,9 +55,10 @", 23, 0)
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing a line that looks like a hunk but isn't, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_hunk("@ xx @@", 23)
+    local result = require("jiejie.parsers").parse_hunk("@ -55,9 +55,10 @@", 23, 0)
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing a hunk, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_hunk("@@ -55,9 +55,10 @@", 23)
+    local result = require("jiejie.parsers").parse_hunk("@@ -55,9 +55,10 @@", 23, 0)
     local expected = {
       start_line = 55,
       start_lines = 9,
       end_line = 55,
       end_lines = 10,
       linenr = 23,
+      cursor_offset = 0,
     }
     eq(expected, result)
   end)
