@@ -1,4 +1,5 @@
 local jujutsu = require("jiejie.jujutsu")
+local parsers = require("jiejie.parsers")
 
 --- Set file as unexpanded
 --- @param change_id string ChangeID
@@ -59,11 +60,15 @@ function M.diff_show(ctx, file, change)
   end
   local cmd = "diff"
   local args = { "--git", "-r", change.id, file.filename }
-  local res = jujutsu.cli(ctx, cmd, { args = args })
+  local res = jujutsu.cli(ctx, cmd, { args = args, notify_on_failure = false, error_on_failure = false })
+  if res.code ~= 0 then
+    vim.notify("Diff failed for " .. file.filename, vim.log.levels.WARN)
+    return
+  end
   local diff = vim.split(vim.trim(res.stdout), "\n")
   local offset = 0
   for index, line in ipairs(diff) do
-    if vim.startswith(line, "@@") then
+    if parsers.parse_hunk(line) or vim.startswith(line, "Binary files") then
       offset = index
       break
     end

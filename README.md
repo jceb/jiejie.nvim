@@ -80,9 +80,7 @@ Priority 1
 - [ ] Commands: split
 - [ ] Commands: duplicate
 - [ ] Commands: diff
-- [ ] Docs: make screen recordings of jiejie's usage
 - [ ] Log: support toggling between different log views
-- [ ] Commands: ignore diff errors for binary files
 
 Priority 2
 
@@ -95,6 +93,7 @@ Priority 2
 - [ ] Commands: support visual mode for squash, commit, split and restore key
       bindings
 - [ ] Key: display full summary of a change via K
+- [ ] Docs: make screen recordings of jiejie's usage
 
 Priority 3
 
