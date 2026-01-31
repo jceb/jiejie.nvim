@@ -118,16 +118,20 @@ crc                     Revert the commit under the cursor.
 s<space>                Populate command line with ":Jj squash ".
 
                                                                      *jiejie_cs*
-cs                      Squash current changes into it's parent.
+cs                      Squash current changes into it's parent or into the
+                        change under the cursor if the cursor is not on the
+                        currently edited changed.
 
                                                                     *jiejie_!cs*
-!cs                     Squash current changes into it's immutable parent.
+!cs                     Squash current changes into it's immutable parent or
+                        into the change under the cursor if the cursor is not
+                        on the currently edited changed.
 
                                                                      *jiejie_cS*
-cS                      Squash current changes into the selecated change.
+cS                      Squash current changes into the selected change.
 
                                                                     *jiejie_!cS*
-!cS                     Squash current changes into the immutuable selecated
+!cS                     Squash current changes into the immutuable selected
                         change.
 
                                                                     *jiejie_ctc*

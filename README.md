@@ -26,7 +26,7 @@ system. The design is heavily inspired by
   - Modify change description in editor (`de`) or quick edit first line (`dd`)
   - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)
-  - Squash change or file under the cursor (`cs`, `cS`)
+  - Squash change or file into parent or into change under cursor (`cs`, `cS`)
   - Duplicate change under the cursor (`cd`)
   - Revert change under the cursor (`crc`)
   - Abandon change or file under the cursor (`X`)

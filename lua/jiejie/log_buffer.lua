@@ -566,23 +566,49 @@ function M.setup_buffer(ctx)
       key = "cs",
       fn = with_root_context(helpers.search_file(
         helpers.search_change(function(args)
-          commands.change_squash(args.ctx, args.src_change, { files = { args.file and args.file.filename or nil } })
+          local src_change, dst_change
+          local src_is_current_change = args.src_change.status == commands.CHANGE_STATUS.CURRENT
+          if not src_is_current_change then
+            src_change = { id = "@", id_short = "@" }
+            dst_change = args.src_change
+          else
+            src_change = args.src_change
+          end
+          commands.change_squash(
+            args.ctx,
+            ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
+            src_change,
+            { files = { src_is_current_change and args.file and args.file.filename or nil }, dst_change = dst_change }
+          )
           return true
         end),
         { err_notify = true, err_continue = true }
       )),
-      desc = "Squash current changes into it's parent",
+      desc = "Squash current changes into it's parent or into the change under the cursor if the cursor is not on the currently edited changed",
     },
     {
       key = "!cs",
       fn = with_root_context(helpers.search_file(
         helpers.search_change(function(args)
-          commands.change_squash(args.ctx, args.src_change, helpers.with_direct_force({ files = { args.file and args.file.filename or nil } }))
+          local src_change, dst_change
+          local src_is_current_change = args.src_change.status == commands.CHANGE_STATUS.CURRENT
+          if not src_is_current_change then
+            src_change = { id = "@", id_short = "@" }
+            dst_change = args.src_change
+          else
+            src_change = args.src_change
+          end
+          commands.change_squash(
+            args.ctx,
+            ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
+            src_change,
+            helpers.with_direct_force({ files = { src_is_current_change and args.file and args.file.filename or nil }, dst_change = dst_change })
+          )
           return true
         end),
-        { err_notify = false, err_continue = true }
+        { err_notify = true, err_continue = true }
       )),
-      desc = "Squash current changes into it's immutable parent",
+      desc = "Squash current changes into it's immutable parent or into the change under the cursor if the cursor is not on the currently edited changed",
     },
     {
       key = "cS",
