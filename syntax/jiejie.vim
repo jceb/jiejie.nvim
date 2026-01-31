@@ -10,7 +10,10 @@ syn include @jiejieDiff syntax/diff.vim
 
 syn region jiejieHeadSection start=/^[A-Za-z ]\+:/ end=/^$/ fold
 syn match jiejieHeader /^[A-Za-z ]\+:/ contained containedin=jiejieHeadSection nextgroup=jiejieHeaderValue skipwhite
-syn match jiejieHeaderValue /.\+/ contained
+syn match jiejieHeaderValue /[^†]*/ contained nextgroup=jiejieHeaderValueEmphasis
+syn match jiejieHeaderValueEmphasis /†/ contained conceal nextgroup=jiejieHeaderValueEmphasized
+syn match jiejieHeaderValueEmphasized /[^‡]\+/ contained nextgroup=jiejieHeaderValueReset
+syn match jiejieHeaderValueReset /‡/ contained conceal nextgroup=jiejieHeaderValue
 
 syn match jiejieElided /^\~  .*$/
 
@@ -55,6 +58,7 @@ syn match jiejieAuthorEmail /.\+/ contained
 
 hi def link jiejieHeader Identifier
 hi def link jiejieHeaderValue Special
+hi def link jiejieHeaderValueEmphasized Debug
 
 hi def link jiejieChangeEmpty String
 hi def link jiejieChangeMessage Normal

@@ -17,6 +17,7 @@ system. The design is heavily inspired by
   - Wraper for `jj` CLI (`:J` or `:Jj`)
 - Log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
+  - Set log to different views (`g1`, `g2`, `g...`)
   - Navigation between changes, files and hunks (`[[`, `]]`, `i`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
   - Close buffer (`q`, `gq`)
@@ -76,10 +77,10 @@ With Lazy, add this configuration to nvim:
 - [x] Commands: tag
 - [x] Commands: duplicate
 - [x] Key: display full summary of a change via K
+- [x] Log: support toggling between different log views
 
 Priority 1
 
-- [ ] Log: support toggling between different log views
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Commands: diff

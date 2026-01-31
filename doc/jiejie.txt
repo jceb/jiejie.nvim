@@ -205,14 +205,18 @@ gP                      Push changes to git remote.
                                                               *jiejie-misc-maps*
 Miscellaneous maps ~
 
-                                                            *jiejie_gq* *jiejie_q*
-gq                      Close the summary window.
-
                                                                       *jiejie_.*
 .                       Start a |:| command line with the file under the
                         cursor prepopulated.
+
+                                                           *jiejie_g1* *jiejie_g2*
+g1, g2, g...            Set log view.
+
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.
+
+                                                            *jiejie_gq* *jiejie_q*
+gq                      Close the summary window.
 
                                                                       *jiejie_R*
 R                       Reload log.
