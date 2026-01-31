@@ -88,7 +88,7 @@ function M.reload_or_error(ctx, cmd, opts)
     if out.code ~= 0 and not lopts.err_continue then
       if lopts.err_notify or lopts.err_notify == nil then
         vim.schedule(function()
-          vim.notify("Command failed with non-zero exit code: " .. out.code .. "\n\t jj" .. cmd, vim.log.levels.ERROR)
+          vim.notify("Command failed with non-zero exit code: " .. out.code .. "\n\tjj " .. cmd, vim.log.levels.ERROR)
         end)
         return
       end
