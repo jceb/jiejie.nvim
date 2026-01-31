@@ -479,7 +479,7 @@ function M.object_edit(ctx, file, change, opts)
   -- like this isn't implemented by vim.cmd
   -- local args = {}
   -- if lopts.hunk then
-  --   local cursor_line = lopts.hunk.start_line + lopts.hunk.cursor_offset
+  --   local cursor_line = lopts.hunk.end_line + lopts.hunk.cursor_offset
   --   args = vim.list_extend(args, { "+" .. cursor_line })
   -- end
   -- args = vim.list_extend(args, { filename })
@@ -491,7 +491,7 @@ function M.object_edit(ctx, file, change, opts)
     -- hasn't loaded yet. Therefore, create a temporary autocommand that will do the job
     local _bufid = vim.api.nvim_get_current_buf()
     ---@diagnostic disable-next-line: param-type-mismatch
-    local cursor_line = lopts.hunk.start_line + lopts.hunk.cursor_offset
+    local cursor_line = lopts.hunk.end_line + lopts.hunk.cursor_offset
     -- local lines = #(vim.fn.getbufline(_bufid, 1, "$"))
     -- if lines >= cursor_line then
     if not vim.startswith(filename, "jiejie://") then
