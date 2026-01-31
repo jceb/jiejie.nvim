@@ -74,7 +74,7 @@ function M.diff_show(ctx, file, change)
       break
     end
   end
-  local buffer = require("jiejie.buffer")
+  local buffer = require("jiejie.log_buffer")
   local data = { unpack(diff, offset) }
   buffer.buf_set_lines(ctx, data, file.linenr, file.linenr)
   set_expanded({ change_id = change.id, filename = file.filename, length = #data })
@@ -89,7 +89,7 @@ function M.diff_hide(ctx, file, change)
   if not expanded then
     return
   end
-  local buffer = require("jiejie.buffer")
+  local buffer = require("jiejie.log_buffer")
   buffer.buf_set_lines(ctx, {}, file.linenr, file.linenr + expanded.length)
   unset_expanded(change.id, file.filename)
   return true

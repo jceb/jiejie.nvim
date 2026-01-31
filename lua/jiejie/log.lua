@@ -1,4 +1,4 @@
-local buffer = require("jiejie.buffer")
+local buffer = require("jiejie.log_buffer")
 local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
 local jujutsu = require("jiejie.jujutsu")

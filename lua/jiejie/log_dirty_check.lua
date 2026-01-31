@@ -1,15 +1,15 @@
-local buffer = require("jiejie.buffer")
+local helpers = require("jiejie.log_buffer_helpers")
 local commands = require("jiejie.commands")
 local context = require("jiejie.context")
 
 local function is_dirty(buf, key)
-  if buffer.is_valid(buf) then
+  if helpers.is_valid(buf) then
     return bit.band(vim.b.jiejie_dirty or 0, key) > 0
   end
 end
 
 local function set_dirty(buf, key)
-  if buffer.is_valid(buf) then
+  if helpers.is_valid(buf) then
     vim.b.jiejie_dirty = bit.bor(vim.b.jiejie_dirty or 0, key)
     return true
   end
@@ -55,14 +55,14 @@ function M.dirty_check_cursor(buf)
 end
 
 function M.get_dirty_cursor(buf)
-  if buffer.is_valid(buf) then
+  if helpers.is_valid(buf) then
     return vim.api.nvim_buf_get_var(buf, "jiejie_dirty_cursor") or { 1, 1 }
   end
   return { 1, 1 }
 end
 
 function M.dirty_clear(buf)
-  if buffer.is_valid(buf) then
+  if helpers.is_valid(buf) then
     vim.api.nvim_buf_set_var(buf, "jiejie_dirty", 0)
     vim.api.nvim_buf_set_var(buf, "jiejie_dirty_cursor", nil)
   end

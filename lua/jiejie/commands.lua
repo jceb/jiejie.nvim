@@ -212,7 +212,7 @@ end
 --- @return Context
 function M.show_log(ctx, opts)
   local lopts = opts or {}
-  local buffer = require("jiejie.buffer")
+  local buffer = require("jiejie.log_buffer")
   buffer.focus(ctx, lopts.vertical or false)
   return ctx
 end
