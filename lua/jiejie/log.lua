@@ -47,29 +47,38 @@ M.load = function(ctx, callback)
   })
 end
 
---- Load/reload file contents
+--- Load/reload object contents
 --- @param ctx Context context
 --- @param url JiejieURL File url
 --- @param callback fun(ctx: Context) Asynchronous callback
-M.load_file = function(ctx, url, callback)
+M.load_object = function(ctx, url, callback)
+  local cmd, args, filetype
   if not url.path then
-    error("Path missing in URL:" .. parsers.join_url(url))
+    cmd = "show"
+    args = {
+      "-r",
+      url.revision,
+      "-s",
+      "--git",
+    }
+    filetype = "jiejie_change"
+  else
+    cmd = "file"
+    args = {
+      "show",
+      "-r",
+      url.revision,
+      url.path,
+    }
   end
-  local cmd = "file"
-  local args = {
-    "show",
-    "-r",
-    url.revision,
-    url.path,
-  }
   jujutsu.cli(ctx, cmd, {
     args = args,
     on_exit = vim.schedule_wrap(function(res)
       if res.code ~= 0 then
-        error("Error getting file contents:\n" .. res.stderr)
+        error("Error getting object contents:\n" .. res.stderr)
       end
       local data = vim.split(res.stdout, "\n")
-      buffer.render_file(ctx, data)
+      buffer.render_file(ctx, data, { filetype = filetype })
       if callback then
         callback(ctx)
       end
@@ -84,7 +93,7 @@ function M.setup(id)
     pattern = "jiejie://*",
     group = id,
     callback = function(ev)
-      -- Loader function for files of type jiejie
+      -- Loader function for objects of type jiejie
       vim.cmd.doau("BufReadPre")
       local url = parsers.parse_url(ev.file)
       if not url then
@@ -100,7 +109,7 @@ function M.setup(id)
         end)
       else
         vim.bo[ev.buf].buftype = "nofile"
-        M.load_file({ root = url.root, buf = ev.buf, curpos = nil }, url, function()
+        M.load_object({ root = url.root, buf = ev.buf, curpos = nil }, url, function()
           vim.cmd.doau("BufReadPost")
         end)
       end

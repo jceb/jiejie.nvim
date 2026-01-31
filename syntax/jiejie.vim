@@ -8,7 +8,7 @@ syn spell notoplevel
 
 syn include @jiejieDiff syntax/diff.vim
 
-syn region jiejieHeadSection start=/^[A-Za-z]\+:/ end=/^$/ fold
+syn region jiejieHeadSection start=/^[A-Za-z ]\+:/ end=/^$/ fold
 syn match jiejieHeader /^[A-Za-z ]\+:/ contained containedin=jiejieHeadSection nextgroup=jiejieHeaderValue skipwhite
 syn match jiejieHeaderValue /.\+/ contained
 
@@ -29,7 +29,7 @@ syn match jiejieFileAdded /A\ze / contained containedin=jiejieFileSection nextgr
 syn match jiejieFileRenamed /R\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileCopied /C\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFilename /.*$/ contained nextgroup=jiejieHunkSection skipnl
-syn region jiejieHunkSection start=/^\%(@@\+ -\)\@=/ end=/^\%([╮├─╯│@×◆◇○][╮├─╯│  ]\)\@=/ contains=diffLine,diffRemoved,diffAdded,diffNoEOL contained fold
+syn region jiejieHunkSection start=/^\%(@@\+ -\|Binary files \)\@=/ end=/^\%([╮├─╯│@×◆◇○][╮├─╯│  ]\)\@=/ contains=diffLine,diffRemoved,diffAdded,diffNoEOL,diffBDiffer contained fold
 
 syn match jiejieEmptyChangeSeparator /†/ contained conceal nextgroup=jiejieChangeEmpty skipwhite
 syn match jiejieMessageSeparator /‡/ contained conceal nextgroup=jiejieChangeMessageEmpty,jiejieChangeMessage skipwhite
@@ -54,7 +54,7 @@ syn match jiejieChangeId /[^∵]\+/ contained conceal nextgroup=jiejieAuthorEmai
 syn match jiejieAuthorEmail /.\+/ contained
 
 hi def link jiejieHeader Identifier
-hi def link jiejieHeaderValue Identifier
+hi def link jiejieHeaderValue Special
 
 hi def link jiejieChangeEmpty String
 hi def link jiejieChangeMessage Normal

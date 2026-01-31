@@ -56,6 +56,9 @@ O                       Open the file or |jiejie-object| under the cursor in a
 i                       Jump to the next file or hunk, expanding inline diffs
                         automatically.
 
+                                                                      *jiejie_K*
+K                       Open change under the cursor.
+
                                                                      *jiejie_[[*
 [[                      Jump [count] sections backward.
 

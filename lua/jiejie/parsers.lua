@@ -112,7 +112,7 @@ function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     return nil
   end
-  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)\%(/\(.\+\)\)\?$]])
+  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)\%(/\(.\+\)$\|$\)\?]])
   if #match == 0 then
     return nil
   end

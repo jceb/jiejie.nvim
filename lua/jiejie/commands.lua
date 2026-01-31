@@ -429,35 +429,61 @@ function M.change_revert(ctx, change, opts)
   return true
 end
 
---- Edit file
+--- Edit file or jiejie object
 --- @param ctx Context context
---- @param file ModifiedFile File name
+--- @param file? ModifiedFile File name
 --- @param change Change Change to edit file at
 --- @param opts? {previous_win?: boolean, edit_cmd?: fun(filename: string), hunk?: Hunk}
 --- - previous_win: Navigate to previous window or split a new window before edting file, when current buffer is the log buffer
 --- - edit_cmd: Function that's called for editing file
 --- @return boolean?
-function M.file_edit(ctx, file, change, opts)
+function M.object_edit(ctx, file, change, opts)
   local lopts = opts or {}
   lopts.edit_cmd = lopts.edit_cmd or vim.cmd.e
-  local filename = vim.fs.joinpath(ctx.root, file.filename)
-  if change.status ~= M.CHANGE_STATUS.CURRENT then
+  local filename = vim.fs.joinpath(ctx.root, file and file.filename or "")
+  if not file or change.status ~= M.CHANGE_STATUS.CURRENT then
     filename = parsers.join_url({
       root = ctx.root,
       revision = change.id,
-      path = file.filename,
+      path = file and file.filename or nil,
     })
   end
   local winid = vim.api.nvim_get_current_win()
   local winid_new
   local bufid = vim.api.nvim_get_current_buf()
   if lopts.previous_win and bufid == ctx.buf then
+    -- try to navigate to the last accessed window. If it is the preview window, try to find the first other window. If
+    -- it it does'nt exist, cause a new window to be created
     vim.cmd.wincmd("p")
     winid_new = vim.api.nvim_get_current_win()
+    if vim.wo[winid_new][0].previewwindow then
+      local winids = vim.api.nvim_tabpage_list_wins(0)
+      local found
+      for _, _winid in ipairs(winids) do
+        if _winid ~= winid_new and _winid ~= winid then
+          vim.api.nvim_tabpage_set_win(0, _winid)
+          winid_new = _winid
+          found = true
+          break
+        end
+      end
+      if not found then
+        winid_new = winid
+      end
+    end
   end
   if winid_new == winid then
     vim.cmd.new()
   end
+  -- It would be great if +cmd could be passed to the edit command to make vim position the cursor. However, it seems
+  -- like this isn't implemented by vim.cmd
+  -- local args = {}
+  -- if lopts.hunk then
+  --   local cursor_line = lopts.hunk.start_line + lopts.hunk.cursor_offset
+  --   args = vim.list_extend(args, { "+" .. cursor_line })
+  -- end
+  -- args = vim.list_extend(args, { filename })
+  -- lopts.edit_cmd({ args = args })
   lopts.edit_cmd(filename)
   if lopts.hunk then
     -- When hunk is set, the cursor needs to be positioned relatively on the exact line from the hunk
@@ -610,9 +636,9 @@ function M.setup()
     if not path then
       path = vim.fn.trim(vim.fn.strpart(object.filename, #ctx.root), "/", 1)
     end
-    -- hacky construction of the exact data that's required for file_edit
+    -- hacky construction of the exact data that's required for object_edit
     ---@diagnostic disable-next-line: missing-fields
-    M.file_edit(ctx, { filename = path }, {
+    M.object_edit(ctx, { filename = path }, {
       id = object.change_id and object.change_id or "@",
       ---@diagnostic disable-next-line: assign-type-mismatch
       status = object.change_id and object.change_id ~= "@" and M.CHANGE_STATUS.IMMUTABLE or M.CHANGE_STATUS.CURRENT,

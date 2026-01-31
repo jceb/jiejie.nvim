@@ -320,6 +320,19 @@ describe("jiejie parse_url", function()
     eq(expected, result)
   end)
 
+  it(
+    "When parsing a URL that doesn't contain a file path but a trailing slash, the parser shall yield  the url, expand the root path but avoid path",
+    function()
+      local result = require("jiejie.parsers").parse_url("jiejie://./.jj/revision/")
+      local expected = {
+        scheme = "jiejie://",
+        root = vim.fn.getcwd(),
+        revision = "revision",
+      }
+      eq(expected, result)
+    end
+  )
+
   it("When parsing a URL that contains all required elements, the parser shall yield the url and expand the root path", function()
     local result = require("jiejie.parsers").parse_url("jiejie://./.jj/revision/path/xy")
     local expected = {
@@ -345,7 +358,7 @@ describe("jiejie parse_url", function()
   --
 end)
 
-describe("jiejie parse_url", function()
+describe("jiejie parse_hunk", function()
   --
 
   it("When parsing an empty string, the parser shall yield nil", function()

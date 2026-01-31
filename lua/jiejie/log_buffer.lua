@@ -54,7 +54,9 @@ end
 --- Render file contents
 --- @param ctx Context context
 --- @param data string[] jj log output to display
-function M.render_file(ctx, data)
+--- @param opts? {filetype?: string} Options
+function M.render_file(ctx, data, opts)
+  local lopts = opts or {}
   vim.bo[ctx.buf].modifiable = true
   vim.bo[ctx.buf].readonly = false
   if data[#data] == "" then
@@ -63,6 +65,9 @@ function M.render_file(ctx, data)
   vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, data)
   vim.bo[ctx.buf].readonly = true
   vim.bo[ctx.buf].modifiable = false
+  if lopts.filetype then
+    vim.bo[ctx.buf].filetype = lopts.filetype
+  end
 end
 
 --- Focus buffer in current tab
@@ -158,7 +163,7 @@ function M.setup_buffer(ctx)
               elseif args.file then
                 -- if no change is at the current position of the cursor, then a file name must have been found
                 ---@diagnostic disable-next-line: undefined-field
-                commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
+                commands.object_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
               else
                 vim.schedule(function()
                   vim.notify("No file or change found under the curor", vim.log.levels.WARN)
@@ -186,7 +191,7 @@ function M.setup_buffer(ctx)
               elseif args.file then
                 -- if no change is at the current position of the cursor, then a file name must have been found
                 ---@diagnostic disable-next-line: undefined-field
-                commands.file_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
+                commands.object_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
               else
                 vim.schedule(function()
                   vim.notify("No file or change found under the curor", vim.log.levels.WARN)
@@ -205,7 +210,7 @@ function M.setup_buffer(ctx)
     {
       key = "o",
       fn = with_root_context(helpers.search_file(helpers.search_change(function(args)
-        commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.sp })
+        commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.sp })
         return true
       end))),
       desc = "Open the file or jiejie-object under the cursor in a new split",
@@ -213,7 +218,7 @@ function M.setup_buffer(ctx)
     {
       key = "gO",
       fn = with_root_context(helpers.search_file(helpers.search_change(function(args)
-        commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.vnew })
+        commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.vnew })
         return true
       end))),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
@@ -221,7 +226,7 @@ function M.setup_buffer(ctx)
     {
       key = "O",
       fn = with_root_context(helpers.search_file(helpers.search_change(function(args)
-        commands.file_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.tabnew })
+        commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.tabnew })
         return true
       end))),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
@@ -279,6 +284,14 @@ function M.setup_buffer(ctx)
         )
       ),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
+    },
+    {
+      key = "K",
+      fn = with_root_context(helpers.search_change(function(args)
+        commands.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit })
+        return true
+      end)),
+      desc = "Open change under the cursor",
     },
     {
       key = "[[",
@@ -889,6 +902,7 @@ function M.setup_buffer(ctx)
       fn = with_root_context(helpers.search_file(function(args)
         local home = vim.api.nvim_replace_termcodes("<Home>", true, false, true)
         vim.api.nvim_feedkeys(": ./" .. vim.fn.fnameescape(args.file.filename) .. home, "n", false)
+        return true
       end)),
       desc = "Start a : command line with the file under the cursor prepopulated",
     },

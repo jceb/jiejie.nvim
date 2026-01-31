@@ -10,8 +10,10 @@ system. The design is heavily inspired by
 
 - UX very close to [tope's fugitive](https://github.com/tpope/vim-fugitive)
   - Toggle inline diff (`=`)
-  - Jump to file (`<CR>`, `o`, `gO`, `O`)
-  - Edit old revisions of a file (`:Jedit [revision]:[file]`)
+  - Edit file (`<CR>`, `o`, `gO`, `O`)
+  - Open revision of a file (`:Jedit [revision]:[file]`, or by selection the
+    file in the log summary via `<CR>`, `o`, `gO`, `O`)
+  - Open change (`:Jedit [revision]`, `K`)
   - Wraper for `jj` CLI (`:J` or `:Jj`)
 - Log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
@@ -73,6 +75,7 @@ With Lazy, add this configuration to nvim:
 - [x] Commands: bookmark
 - [x] Commands: tag
 - [x] Commands: duplicate
+- [x] Key: display full summary of a change via K
 
 Priority 1
 
@@ -83,7 +86,7 @@ Priority 1
 
 Priority 2
 
-- [ ] Key: display full summary of a change via K
+- [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
 - [ ] Commands: keep diff expansion when reloading the log
 - [ ] Configuration: make mappings configurable
 - [ ] Commands: support visual mode for squash, commit, split and restore key
