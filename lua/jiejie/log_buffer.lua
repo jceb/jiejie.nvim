@@ -845,6 +845,28 @@ function M.setup_buffer(ctx)
 
     -- Miscellaneous maps {{{1
     {
+      key = "gq",
+      fn = function()
+        vim.api.nvim_win_close(0, true)
+      end,
+      desc = "Close the summary window",
+    },
+    {
+      key = "q",
+      fn = function()
+        vim.api.nvim_win_close(0, true)
+      end,
+      desc = "Close the summary window",
+    },
+    {
+      key = ".",
+      fn = with_root_context(helpers.search_file(function(args)
+        local home = vim.api.nvim_replace_termcodes("<Home>", true, false, true)
+        vim.api.nvim_feedkeys(": ./" .. vim.fn.fnameescape(args.file.filename) .. home, "n", false)
+      end)),
+      desc = "Start a : command line with the file under the cursor prepopulated",
+    },
+    {
       key = "g?",
       fn = commands.show_help,
       desc = "Show help",

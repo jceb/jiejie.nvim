@@ -174,12 +174,12 @@ r<space>                Populate command line with ":Jj rebase ".
 rr                      Rebase the change under the cursor, together with its
                         descendants.
 
-                                                                    *jiejie_~!rr*
-!rr                      Rebase the change under the cursor, together with its
+                                                                   *jiejie_~!rr*
+!rr                     Rebase the change under the cursor, together with its
                         descendants.
 
                                                                     *jiejie_!ro*
-!ro                      Rebase only change under the cursor, without its
+!ro                     Rebase only change under the cursor, without its
                         descendants.
 
                                                                      *jiejie_ro*
@@ -198,6 +198,12 @@ gP                      Push changes to git remote.
                                                               *jiejie-misc-maps*
 Miscellaneous maps ~
 
+                                                            *jiejie_gq* *jiejie_q*
+gq                      Close the summary window.
+
+                                                                      *jiejie_.*
+.                       Start a |:| command line with the file under the
+                        cursor prepopulated.
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.
 
@@ -209,8 +215,6 @@ R                       Reload log.
 
                                                                   *jiejie_<C-x>*
 <C-x>                   Decrease the number of displayed revisions in log.
-
-                                                                    *fugitive_c*
 
 SPECIFYING OBJECTS                               *jiejie-object* *jiejie-revision*
 

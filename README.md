@@ -17,6 +17,8 @@ system. The design is heavily inspired by
   - Includes the list of modified files alongside the log
   - Navigation between changes, files and hunks (`[[`, `]]`, `i`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
+  - Close buffer (`q`, `gq`)
+  - Prepopulate a : command with the file under the cursor (`.`)
 - Modify changes from the log buffer
   - Add `!` prefix to mappings for modification of immutable changes
   - Edit change (`<CR>`)
@@ -74,13 +76,14 @@ With Lazy, add this configuration to nvim:
 
 Priority 1
 
+- [ ] Log: support toggling between different log views
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
-- [ ] Log: support toggling between different log views
 - [ ] Commands: diff
 
 Priority 2
 
+- [ ] Key: display full summary of a change via K
 - [ ] Commands: keep diff expansion when reloading the log
 - [ ] Configuration: make mappings configurable
 - [ ] Commands: support visual mode for squash, commit, split and restore key
@@ -94,7 +97,6 @@ Priority 3
 - [ ] Commands: split (current workaround: commit one file instead of the whole
       change, then squash the other files that should be part of the commit)
 - [ ] Docs: make screen recordings of jiejie's usage
-- [ ] Key: display full summary of a change via K
 - [ ] Refactor: follow lua's style of returning errors
 - [ ] Key: pressing X on a hunk should restore it
 - [ ] Commands: blame
@@ -108,6 +110,7 @@ Priority 3
 - [ ] Commands: evolog
 - [ ] New feature: operations log support
 - [ ] New Feature: completion for Jj command
+- [ ] Statusline: provide status line integration
 
 ## References
 
