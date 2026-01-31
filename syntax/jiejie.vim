@@ -39,6 +39,7 @@ syn match jiejieGitHeadSeparator /∫/ contained conceal nextgroup=jiejieGitHead
 syn match jiejieConflictSeparator /∬/ contained conceal nextgroup=jiejieConflict
 syn match jiejieImmutableSeparator /∮/ contained conceal nextgroup=jiejieImmutable
 syn match jiejieChangeIdSeparator /∴/ contained conceal nextgroup=jiejieChangeId
+syn match jiejieAuthorEmailSeparator /∵/ contained conceal nextgroup=jiejieAuthorEmail
 
 syn match jiejieChangeIdShort /[a-z]\+\t/ contained nextgroup=jiejieEmptyChangeSeparator
 syn match jiejieChangeEmpty /\((empty) \)\?/ contained nextgroup=jiejieMessageSeparator
@@ -49,7 +50,8 @@ syn match jiejieTag /[^∫]*/ contained nextgroup=jiejieGitHeadSeparator
 syn match jiejieGitHead /\( git_head()\)\?/ contained nextgroup=jiejieConflictSeparator
 syn match jiejieConflict /\( conflict\)\?/ contained nextgroup=jiejieImmutableSeparator
 syn match jiejieImmutable /\( immutable\)\?/ contained conceal nextgroup=jiejieChangeIdSeparator
-syn match jiejieChangeId /.\+/ contained conceal
+syn match jiejieChangeId /[^∵]\+/ contained conceal nextgroup=jiejieAuthorEmailSeparator
+syn match jiejieAuthorEmail /.\+/ contained
 
 hi def link jiejieHeader Identifier
 hi def link jiejieHeaderValue Identifier
@@ -76,6 +78,7 @@ hi def link jiejieChangeIdShort Identifier
 hi def link jiejieBookmark Constant
 hi def link jiejieTag Tag
 hi def link jiejieConflict Error
+hi def link jiejieAuthorEmail Special
 
 " " Debugging
 " hi def link jiejieEmptyChangeSeparator Error
@@ -87,5 +90,6 @@ hi def link jiejieConflict Error
 " hi def link jiejieConflictSeparator NonText
 " hi def link jiejieImmutableSeparator NonText
 " hi def link jiejieChangeIdSeparator NonText
+" hi def link jiejieAuthorEmailSeparator NonText
 
 let b:current_syntax = "jiejie"

@@ -139,6 +139,7 @@ end
 --- @field git_head boolean Git head is on this change
 --- @field conflict boolean Change is in a state of conflict
 --- @field immutable boolean Change is immutable
+--- @field email string Author's email address
 --- @field linenr number Line number in log buffer that contains change
 
 --- @class ModificationType

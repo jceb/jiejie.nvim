@@ -17,7 +17,8 @@ describe("jiejie parse_change", function()
   end)
 
   it("When parsing an empty change, the parser shall yield the correct status and id", function()
-    local result = require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴twqqkoqtxpxvypunpwqvyyrxnyxyzqtw", 23)
+    local result =
+      require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴twqqkoqtxpxvypunpwqvyyrxnyxyzqtw∵test@localhost", 23)
     local expected = {
       status = "○",
       id = "twqqkoqtxpxvypunpwqvyyrxnyxyzqtw",
@@ -29,13 +30,15 @@ describe("jiejie parse_change", function()
       git_head = false,
       conflict = false,
       immutable = false,
+      email = "test@localhost",
       linenr = 23,
     }
     eq(expected, result)
   end)
 
   it("When parsing a change with no description, the parser shall yield the correct status and id", function()
-    local result = require("jiejie.parsers").parse_change("│ ○  tp	†‡(no description set)⌠⌡∫∬∮∴tpxnqwvtqmstolzlosssvrvspxlqnxwx", 23)
+    local result =
+      require("jiejie.parsers").parse_change("│ ○  tp	†‡(no description set)⌠⌡∫∬∮∴tpxnqwvtqmstolzlosssvrvspxlqnxwx∵test@localhost", 23)
     local expected = {
       status = "○",
       id = "tpxnqwvtqmstolzlosssvrvspxlqnxwx",
@@ -47,13 +50,15 @@ describe("jiejie parse_change", function()
       git_head = false,
       conflict = false,
       immutable = false,
+      email = "test@localhost",
       linenr = 23,
     }
     eq(expected, result)
   end)
 
   it("When parsing an empty change with no description, the parser shall yield the correct status and id", function()
-    local result = require("jiejie.parsers").parse_change("@  x	†(empty) ‡(no description set)⌠⌡∫∬∮∴xozstosssuwtrousmqqtqvlvyvrwzvot", 23)
+    local result =
+      require("jiejie.parsers").parse_change("@  x	†(empty) ‡(no description set)⌠⌡∫∬∮∴xozstosssuwtrousmqqtqvlvyvrwzvot∵test@localhost", 23)
     local expected = {
       status = "@",
       id = "xozstosssuwtrousmqqtqvlvyvrwzvot",
@@ -65,6 +70,7 @@ describe("jiejie parse_change", function()
       git_head = false,
       conflict = false,
       immutable = false,
+      email = "test@localhost",
       linenr = 23,
     }
     eq(expected, result)
@@ -72,7 +78,7 @@ describe("jiejie parse_change", function()
 
   it("When parsing an empty root change, the parser shall yield the correct status and id", function()
     local result = require("jiejie.parsers").parse_change(
-      "◆  p	†‡docs: add priorities to roadmap⌠ main⌡∫ git_head()∬∮ immutable∴pynyrqkzpllmxlmpvvvwttzosvktvvkx",
+      "◆  p	†‡docs: add priorities to roadmap⌠ main⌡∫ git_head()∬∮ immutable∴pynyrqkzpllmxlmpvvvwttzosvktvvkx∵test@localhost",
       23
     )
     local expected = {
@@ -86,6 +92,7 @@ describe("jiejie parse_change", function()
       git_head = true,
       conflict = false,
       immutable = true,
+      email = "test@localhost",
       linenr = 23,
     }
     eq(expected, result)

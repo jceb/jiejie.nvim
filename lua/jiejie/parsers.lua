@@ -15,7 +15,7 @@ function M.parse_change(line, linenr)
   if #match == 0 then
     return nil
   end
-  local match2 = vim.fn.matchlist(match[10], [[^[^∮]*∮\([^∴]*\)∴\([a-z]\+\)]])
+  local match2 = vim.fn.matchlist(match[10], [[^[^∮]*∮\([^∴]*\)∴\([^∵]\+\)∵\(.\+\)]])
   if #match2 == 0 then
     return nil
   end
@@ -31,6 +31,7 @@ function M.parse_change(line, linenr)
   local conflict = match[9] == " conflict"
   local immutable = match2[2] == " immutable"
   local id = match2[3]
+  local email = match2[4]
   if not status or not id_short or not id then
     return nil
   end
@@ -45,6 +46,7 @@ function M.parse_change(line, linenr)
     git_head = git_head,
     conflict = conflict,
     immutable = immutable,
+    email = email,
     linenr = linenr,
   }
 end
