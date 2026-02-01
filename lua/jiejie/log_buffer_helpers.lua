@@ -15,15 +15,15 @@ local M = {}
 --- @field cur_file? ModifiedFile Modified file
 --- @field hunk? Hunk Hunk that has been found
 --- @field bookmark? string Bookmark
---- @field bookmarks? string[] Selection of bookmarks to choose from
+--- @field bookmarks? BookmarkTag[] Selection of bookmarks to choose from
 --- @field tag? string Tag
---- @field tags? string[] Selection of tags to choose from - opts.tags must be set for tags to be used
+--- @field tags? BookmarkTag[] Selection of tags to choose from - opts.tags must be set for tags to be used
 --- @field force? boolean Sets force
 
 --- @class WithOpts
----@field err_notify? boolean Send notification is change is not found
----@field err_continue? boolean Continue execution callback execution on error
----@field args_key? string Argument key that the change is stored at
+--- @field err_notify? boolean Send notification is change is not found
+--- @field err_continue? boolean Continue execution callback execution on error
+--- @field args_key? string Argument key that the change is stored at
 
 --- Adjust the displayed number of revisions
 --- @param fn fun(args?: WithArgs): boolean Callback function

@@ -117,7 +117,7 @@ function M.parse_url(url)
     return nil
   end
   local root = jujutsu.get_root(match[3])
-  local repo_stats = vim.uv.fs_stat(root)
+  local repo_stats = root and vim.uv.fs_stat(root)
   if not repo_stats or repo_stats.type ~= "directory" then
     error("Error: path does not point to a directory: " .. root)
   end

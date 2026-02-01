@@ -13,9 +13,12 @@ local M = {}
 
 --- Get an existing repository context, or create a empty one one
 --- @param root? string Root directory of repository
---- @return Context
+--- @return Context?
 function M.get_context(root)
   local root_local = root or jujutsu.get_root(root)
+  if not root_local then
+    return
+  end
   if root_local and vim.g.jiejie_contexts[root_local] then
     return vim.g.jiejie_contexts[root_local]
   end

@@ -127,9 +127,11 @@ end
 
 --- Returns jj's root directory
 --- @param directory? string Dirtory to start look at. If not present, start looking in the directory of the currently
+--- @param err_notify? boolean Send notification is change is not found
+--- @param err_continue? boolean Continue execution callback execution on error
 --- open file
---- @return string
-function M.get_root(directory)
+--- @return string?
+function M.get_root(directory, err_notify, err_continue)
   local cwd = directory or vim.fn.expand("%:p:h")
   local repo_stats = vim.uv.fs_stat(cwd)
   if repo_stats == nil or repo_stats.type ~= "directory" then
@@ -141,10 +143,13 @@ function M.get_root(directory)
       cwd = cwd,
     })
     :wait()
-  if res.code ~= 0 then
-    error("Error finding workspace:\n" .. res.stderr)
+  if res.code ~= 0 and not err_continue then
+    if err_notify then
+      error("Error finding workspace:\n" .. res.stderr)
+    end
+  else
+    return vim.trim(res.stdout)
   end
-  return vim.trim(res.stdout)
 end
 
 return M

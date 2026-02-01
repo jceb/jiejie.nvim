@@ -78,11 +78,10 @@ With Lazy, add this configuration to nvim:
 - [x] Commands: duplicate
 - [x] Key: display full summary of a change via K
 - [x] Log: support toggling between different log views
+- [x] New Feature: Automatically detect changes in files/buffers and reload logs
 
 Priority 1
 
-- [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
-      reloads when they change
 - [ ] Commands: diff
 - [ ] Commands: merge / new with multiple ancestors
 - [ ] Fix: restore and squash currently don't work for commits with multiple

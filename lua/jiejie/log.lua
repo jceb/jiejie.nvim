@@ -108,6 +108,45 @@ end
 --- Setup log model
 --- @param id number Auto-command group ID
 function M.setup(id)
+  vim.api.nvim_create_autocmd("ShellCmdPost", {
+    pattern = "*",
+    group = id,
+    callback = function()
+      vim.cmd.checktime()
+      local ctx = context.get_context()
+      if ctx and ctx.buf then
+        local log_dirty_check = require("jiejie.log_dirty_check")
+        log_dirty_check.dirty_mark_content(ctx.buf)
+      end
+    end,
+  })
+  vim.api.nvim_create_autocmd("BufWritePost", {
+    pattern = "*",
+    group = id,
+    callback = function(ev)
+      if vim.b.jiejie_check == false then
+        return
+      end
+      local file_stats = vim.uv.fs_stat(ev.file)
+      if file_stats then
+        vim.cmd.checktime()
+        if not vim.b.jiejie_check then
+          vim.b.jiejie_check = true
+          vim.b.jiejie_root = jujutsu.get_root(vim.fn.fnamemodify(ev.file, ":h"))
+          if not vim.b.jiejie_root then
+            vim.b.jiejie_check = false
+          end
+        end
+        local ctx = context.get_context(vim.b.jiejie_root)
+        if ctx and ctx.buf then
+          local log_dirty_check = require("jiejie.log_dirty_check")
+          log_dirty_check.dirty_mark_content(ctx.buf)
+        end
+      else
+        vim.b.jiejie_check = false
+      end
+    end,
+  })
   vim.api.nvim_create_autocmd("BufReadCmd", {
     pattern = "jiejie://*",
     group = id,
@@ -120,6 +159,9 @@ function M.setup(id)
       end
       if url.revision == "repo" and url.path == "index" then
         local ctx = context.get_context(url.root)
+        if not ctx then
+          return
+        end
         ctx.buf = ctx.buf or ev.buf
         M.load(ctx, function(_ctx)
           context.set_context(_ctx)

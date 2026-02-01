@@ -4,13 +4,13 @@ local context = require("jiejie.context")
 
 local function is_dirty(buf, key)
   if helpers.is_valid(buf) then
-    return bit.band(vim.b.jiejie_dirty or 0, key) > 0
+    return bit.band(vim.b[buf].jiejie_dirty or 0, key) > 0
   end
 end
 
 local function set_dirty(buf, key)
   if helpers.is_valid(buf) then
-    vim.b.jiejie_dirty = bit.bor(vim.b.jiejie_dirty or 0, key)
+    vim.b[buf].jiejie_dirty = bit.bor(vim.b[buf].jiejie_dirty or 0, key)
     return true
   end
 end
@@ -27,6 +27,9 @@ function M.dirty_check()
   end
   local bufid = vim.api.nvim_get_current_buf()
   local ctx = context.get_context(vim.b.jiejie_root)
+  if not ctx then
+    return
+  end
   if M.dirty_check_content(bufid) then
     local curpos_current = vim.api.nvim_win_get_cursor(0)
     commands.reload_log(ctx, function(_ctx)
@@ -105,7 +108,7 @@ end
 --- @param ctx Context context
 --- @return Context
 function M.setup_buffer(ctx)
-  vim.b.jiejie_dirty = 0
+  vim.b[ctx.buf].jiejie_dirty = 0
   vim.api.nvim_create_autocmd({ "BufEnter", "FocusGained" }, {
     buffer = ctx.buf,
     callback = M.dirty_check,
