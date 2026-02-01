@@ -128,7 +128,7 @@ local function notify_immutable(change, opts)
   local lopts = opts or {}
   if change.status ~= M.CHANGE_STATUS.CURRENT and change.immutable and not lopts.force then
     vim.notify("Change `" .. change.id_short .. "` is immutable, use force to modify it!", vim.log.levels.ERROR)
-    return true
+    return false
   end
   return false
 end
@@ -545,6 +545,7 @@ function M.file_restore(ctx, file, change, opts)
   local lopts = opts or {}
   if change.status ~= M.CHANGE_STATUS.CURRENT then
     vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
+    return false
   end
   local cmd = "restore"
   local args = { "-f", "@-", file.filename }
