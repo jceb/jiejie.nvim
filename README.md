@@ -2,13 +2,13 @@
 
 Neovim plugin that adds support for the Jujutsu source control management
 system. The design is heavily inspired by
-[fugitive.vim](https://github.com/tpope/vim-fugitive).
+[vim-fugitive](https://github.com/tpope/vim-fugitive).
 
 ![jiejie](./jiejie.png)
 
 ## Features
 
-- UX very close to [tope's fugitive](https://github.com/tpope/vim-fugitive)
+- UX very close to [tope's vim-fugitive](https://github.com/tpope/vim-fugitive)
   - Toggle inline diff (`=`)
   - Edit file (`<CR>`, `o`, `gO`, `O`)
   - Open revision of a file (`:Jedit [revision]:[file]`, or by selection the
@@ -34,7 +34,7 @@ system. The design is heavily inspired by
   - Revert change under the cursor (`crc`)
   - Abandon change or file under the cursor (`X`)
   - Rebase change tree or individual change (`rr`, `ro`)
-  - Revert last operation (`cU`)
+  - Undo last operation (`cU`)
   - Bookmark management (`cbc`, `cbX`, `cbx`, `cbF`, `cbf`, `cbm`, `cbr`)
   - Tag management (`ctc`, `ctm`, `ctX`, `ctx`)
 
@@ -84,30 +84,28 @@ Priority 1
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Commands: diff
+- [ ] Commands: merge / new with multiple anscestors
 
 Priority 2
 
+- [ ] API: extract commands from buffer.lua and put them in commands.lua
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
 - [ ] Commands: keep diff expansion when reloading the log
-- [ ] Configuration: make mappings configurable
-- [ ] Commands: support visual mode for squash, commit, split and restore key
-      bindings
-- [ ] Commands: worktree
+- [ ] Key: Adjust all bindings to vim.ui.select from the currently visible
+      change IDs or enter a custom ID, where needed
+- [ ] Key: pressing `X` on a hunk should restore it
 
 Priority 3
 
-- [ ] API: extract commands from buffer.lua and put them in commands.lua
 - [ ] Commands: Jedit for commits and directories
 - [ ] Commands: split (current workaround: commit one file instead of the whole
       change, then squash the other files that should be part of the commit)
 - [ ] Docs: make screen recordings of jiejie's usage
 - [ ] Refactor: follow lua's style of returning errors
-- [ ] Key: pressing X on a hunk should restore it
 - [ ] Commands: blame
 - [ ] Commands: absorb
 - [ ] Commands: diffedit
 - [ ] Commands: show full change
-- [ ] Commands: undo / redo
 - [ ] Commands: parallelize
 - [ ] Commands: metaedit
 - [ ] Commands: interdiff
@@ -115,11 +113,19 @@ Priority 3
 - [ ] New feature: operations log support
 - [ ] New Feature: completion for Jj command
 - [ ] Statusline: provide status line integration
+- [ ] Commands: work tree / workspace - not sure what to support here
+- [ ] Commands: :Jclog/:Jllog for loading the commit history into the
+      quickfix/location list
+- [ ] Commands: :Jgrep for loading the commit history into the quickfix list
+- [ ] Commands: :Jcd / Jlcd change directory relative to the repository :cd /
+      :lcd
+- [ ] Commands: :JBrowse open file in browser
+- [ ] Commands: support visual mode for squash, commit, split and restore key
+      bindings
+- [ ] Configuration: make mappings configurable
 
 ## References
 
-Other jujutsu related plugins:
-
-- [https://github.com/NicolasGB/jj.nvim](https://github.com/NicolasGB/jj.nvim)
-- [https://github.com/sivansh11/jj](https://github.com/sivansh11/jj)
-- [https://github.com/yannvanhalewyn/jujutsu.nvim](https://github.com/yannvanhalewyn/jujutsu.nvim)
+- [Jujutsu documentation](https://docs.jj-vcs.dev/latest/)
+- [Jujutsu's Wiki - Neovim integration](https://github.com/jj-vcs/jj/wiki/Vim,-Neovim)
+- [Jujutsu Tutorial by Steve Klabnik](https://steveklabnik.github.io/jujutsu-tutorial/)
