@@ -4,73 +4,82 @@ local parsers = require("jiejie.parsers")
 --- Opeations that help with extracting data from the log buffer
 local M = {}
 
+--- @class WithArgs
+--- @field ctx Context Context
+--- @field count? number Count if supplied to key press
+--- @field cur_change? Change Current change
+--- @field pos_change? Change Change at position
+--- @field src_change? Change Source change
+--- @field dst_change? Change Destination change
+--- @field file? ModifiedFile Modified file
+--- @field cur_file? ModifiedFile Modified file
+--- @field hunk? Hunk Hunk that has been found
+--- @field bookmark? string Bookmark
+--- @field bookmarks? string[] Selection of bookmarks to choose from
+--- @field tag? string Tag
+--- @field tags? string[] Selection of tags to choose from - opts.tags must be set for tags to be used
+--- @field force? boolean Sets force
+
+--- @class WithOpts
+---@field err_notify? boolean Send notification is change is not found
+---@field err_continue? boolean Continue execution callback execution on error
+---@field args_key? string Argument key that the change is stored at
+
 --- Adjust the displayed number of revisions
---- @param fn fun(args: {ctx: Context, count: number}): boolean Callback function
---- @param negate? boolean Negate count or pass it on as received
-function M.with_count(fn, negate)
-  --- @param args? {} Arguments
-  --- @return boolean?
-  return function(args)
-    local largs = args or {}
-    local count = vim.v.count ~= 0 and vim.v.count or 1
-    return fn(vim.tbl_extend("force", largs, { count = (negate and -1 or 1) * count }))
-  end
-end
-
---- Add force to arguments
---- @param fn fun(args: {force: boolean}): boolean Callback function
---- - force Add force = true to argument list
---- @return function
-function M.with_force(fn)
-  --- @param args? {} Arguments
-  --- @return boolean?
-  return function(args)
-    local largs = args or {}
-    return fn(vim.tbl_extend("force", largs, { force = true }))
-  end
-end
-
---- Add force to arguments
---- @param args? {} Arguments
---- @return {}
-function M.with_direct_force(args)
-  local largs = args or {}
-  return vim.tbl_extend("force", largs, { force = true })
-end
-
---- Provide repository context
---- @param root string Root directory of repository
---- @param fn fun(args: {ctx: Context}): boolean Callback function
---- @return function
-function M.with_context(root, fn)
-  --- @param args? {} Arguments
-  --- @return boolean?
-  return function(args)
-    local largs = args or {}
-    return fn(vim.tbl_extend("force", largs, { ctx = context.get_context(root) }))
-  end
-end
-
---- Retrieve data about the change that the cursor is on
---- @param fn fun(args: {ctx: Context, src_change?: Change}): boolean Callback that is called with Context and the extracted change
----           information. The function is only called when a change id is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean, args_key?: string} Options
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
---- - args_key Argument key that the change is stored at
---- @return function
-function M.with_change_at_position(fn, opts)
-  --- @param args? {ctx: Context} Arguments
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts | {negate?: boolean} Options
+--- - negate Negate count or pass it on as received
+function M.with_count(fn, opts)
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    local count = vim.v.count ~= 0 and vim.v.count or 1
+    return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "count"] = (lopts.negate and -1 or 1) * count }))
+  end
+end
+
+--- Add force to arguments
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts Options
+--- @return function
+function M.with_force(fn, opts)
+  --- @param args? WithArgs Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "force"] = true }))
+  end
+end
+
+--- Provide repository context
+--- @param root string Root directory of repository
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts Options
+--- @return function
+function M.with_context(root, fn, opts)
+  --- @param args? WithArgs Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "ctx"] = context.get_context(root) }))
+  end
+end
+
+--- Retrieve data about the change that the cursor is on
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts Options
+--- @return function
+function M.with_change_at_position(fn, opts)
+  --- @param args? WithArgs Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    assert(largs.ctx, "Context not provided: ctx")
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= largs.ctx.buf then
@@ -91,25 +100,17 @@ function M.with_change_at_position(fn, opts)
 end
 
 --- Request a target change ID
---- @param fn fun(args: {ctx: Context, src_change: Change, dst_change?: Change}): boolean Callback that is called with Context
---- and the extracted change information. The function is only called when a change id is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean, defualt_target?: string} Options
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts | {defualt_target?: string} Options
 --- - defualt_target Default target change
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
 --- @return function
 function M.with_target_change(fn, opts)
-  --- @param args? {ctx: Context, src_change: Change} Arguments
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    assert(largs.ctx, "Context not provided: ctx")
     local change_prompt = lopts.defualt_target and lopts.defualt_target ~= "" and (" (" .. lopts.defualt_target .. ")")
       or (not lopts.defualt_target and " (@-)")
       or ""
@@ -134,29 +135,18 @@ function M.with_target_change(fn, opts)
 end
 
 --- Request a bookmark
---- @param fn fun(args: {ctx: Context, src_change: Change, bookmark?: string, tag?: string}): boolean Callback that is called with Context
---- and the extracted change information. The function is only called when a change id is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean,  prompt?: string, args_key?: string, tags?: boolean} Options
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts | {prompt?: string, tags?: boolean} Options
 --- - prompt Prompt string
 --- - tags Handle tags instead of bookmarks
---- - args_key Argument key that the change is stored at
 --- @return function
 function M.with_bookmark_or_tag(fn, opts)
-  --- @param args? {ctx: Context, src_change?: Change, bookmarks?: BookmarkTag[], tags?: BookmarkTag[]} Arguments
-  --- - bookmarks Selection of bookmarks to choose from
-  --- - tags Selection of tags to choose from - opts.tags must be set for tags to be used
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    assert(largs.ctx, "Context not provided: ctx")
     local title = lopts.tags and "tag" or "bookmark"
     local bts = lopts.tags and largs.tags or largs.bookmarks
     local prompt = lopts.prompt or (bts and ("Select " .. title .. ": ") or ("Enter " .. title .. " name: "))
@@ -203,29 +193,19 @@ function M.with_bookmark_or_tag(fn, opts)
 end
 
 --- Retrieve bookmarks or tags
---- @param fn fun(args: {ctx: Context, src_change: Change, bookmarks?: string[], tags?: string[]}): boolean Callback that is called with Context
---- and the extracted change information. The function is only called when a change id is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean, args_key?: string, _local?: boolean, remote?: boolean, tags?: boolean} Options
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
---- - args_key Argument key that the change is stored at
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts | {_local?: boolean, remote?: boolean, tags?: boolean} Options
 --- - tags List tags instead of bookmarks
 --- - _local List local bookmarks - if nil, list local bookmarks
 --- - remote List remote bookmarks - if nil, don't list remote bookmarks
 --- @return function
 function M.with_bookmarks_or_tags(fn, opts)
-  --- @param args? {ctx: Context, src_change: Change} Arguments
-  --- - src_change If change is provided, return only the bookmars relevant for this change
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    assert(largs.ctx, "Context not provided: ctx")
     local jujutsu = require("jiejie.jujutsu")
     local cmd = lopts.tags and "tag" or "bookmark"
     local _args = {
@@ -269,23 +249,18 @@ function M.with_bookmarks_or_tags(fn, opts)
 end
 
 --- Retrieve data about the file name that the cursor is on
---- @param fn fun(args: {ctx: Context, file?: ModifiedFile}): boolean Callback that is called with Context and the extracted file name
---- @param opts? {err_notify?: boolean, err_continue?: boolean} Options
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts Options
 --- - err_notify Send notification is change is not found
 --- - err_continue Continue execution callback execution on error
 --- @return function
 function M.with_file_at_position(fn, opts)
-  --- @param args? {ctx: Context} Arguments
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    assert(largs.ctx, "Context not provided: ctx")
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= largs.ctx.buf then
@@ -306,28 +281,19 @@ function M.with_file_at_position(fn, opts)
 end
 
 --- Search change that position
---- @param fn fun(args: {ctx: Context, file?: ModifiedFile, src_change?: Change}): boolean Callback that is called with Context
---- and the extracted change information. The function is only called when a change id is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean, search_downwards?: boolean, linenr_from_file?: boolean, linenr_offset?: number, args_key?: string} Options
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts | {search_downwards?: boolean, linenr_from_file?: boolean, linenr_offset?: number} Options
 --- - search_downwards Search downwards, instead of upwards
 --- - linenr_from_file Line number the search should start from, if not provided, the cursor position is used
 --- - linenr_offset Offset that is added to line numer, e.g. 1 to start search in the next / previous line
---- - args_key Argument key that the change is stored at
 --- @return function
 function M.search_change(fn, opts)
-  --- @param args? {ctx: Context, file?: ModifiedFile} Arguments
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    assert(largs.ctx, "Context not provided: ctx")
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= largs.ctx.buf then
@@ -365,28 +331,19 @@ function M.search_change(fn, opts)
 end
 
 --- Search diff hunk that position
---- @param fn fun(args: {ctx: Context, file?: ModifiedFile, hunk: Hunk}): boolean Callback that is called with Context
---- and the extracted change information. The function is only called when a filename is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean, search_downwards?: boolean, linenr?: number, linenr_offset?: number, skip_past_change?: boolean, args_key?: string} Options
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts | {search_downwards?: boolean, linenr?: number, linenr_offset?: number, skip_past_change?: boolean} Options
 --- - search_downwards Search downwards, instead of upwards
 --- - linenr Line number the search should start from, if not provided, the cursor position is used
 --- - linenr_offset Offset that is added to line numer, e.g. 1 to start search in the next / previous line
---- - args_key Argument key that the change is stored at
 --- @return function
 function M.search_hunk(fn, opts)
-  --- @param args? {ctx: Context} Arguments
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    assert(largs.ctx, "Context not provided: ctx")
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= largs.ctx.buf then
@@ -446,29 +403,21 @@ function M.search_hunk(fn, opts)
 end
 
 --- Search filename that position
---- @param fn fun(args: {ctx: Context, file?: ModifiedFile, src_change?: Change}): boolean Callback that is called with Context
+--- @param fn fun(args?: WithArgs): boolean Callback function
 --- and the extracted change information. The function is only called when a filename is found at the cursor position
---- @param opts? {err_notify?: boolean, err_continue?: boolean, search_downwards?: boolean, linenr?: number, linenr_offset?: number, skip_past_change?: boolean, args_key?: string} Options
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
+--- @param opts? WithOpts | {search_downwards?: boolean, linenr?: number, linenr_offset?: number, skip_past_change?: boolean} Options
 --- - search_downwards Search downwards, instead of upwards
 --- - linenr Line number the search should start from, if not provided, the cursor position is used
 --- - linenr_offset Offset that is added to line numer, e.g. 1 to start search in the next / previous line
 --- - skip_past_change Skip search past the next change
---- - args_key Argument key that the change is stored at
 --- @return function
 function M.search_file(fn, opts)
-  --- @param args? {ctx: Context} Arguments
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    if not largs.ctx then
-      if lopts.err_notify or lopts.err_notify == nil then
-        vim.notify("Context missing.", vim.log.levels.WARN)
-      end
-      return
-    end
+    assert(largs.ctx, "Context not provided: ctx")
     local winid = vim.api.nvim_get_current_win()
     local bufid = vim.api.nvim_win_get_buf(winid)
     if bufid ~= largs.ctx.buf then

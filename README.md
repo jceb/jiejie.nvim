@@ -84,7 +84,9 @@ Priority 1
 - [ ] New Feature: Detect all files/buffers in a jj repository and trigger log
       reloads when they change
 - [ ] Commands: diff
-- [ ] Commands: merge / new with multiple anscestors
+- [ ] Commands: merge / new with multiple ancestors
+- [ ] Fix: restore and squash currently don't work for commits with multiple
+      ancestors
 
 Priority 2
 

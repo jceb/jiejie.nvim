@@ -12,6 +12,8 @@ local timer = require("jiejie.timer")
 --- - force Modify immutable change
 --- - on_exit Modify immutable change
 local function start_dummy_editor(ctx, cmd, args, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(cmd, "Command not provided: cmd")
   local lopts = opts or {}
   local editor = jujutsu.create_dummy_editor()
   local exec = jujutsu.cli(ctx, cmd, {
@@ -84,6 +86,8 @@ local M = {}
 function M.reload_or_error(ctx, cmd, opts)
   --- @param out vim.SystemCompleted
   return function(out)
+    assert(ctx, "Context not provided: ctx")
+    assert(cmd, "Command not provided: cmd")
     local lopts = opts or {}
     if out.code ~= 0 and not lopts.err_continue then
       if lopts.err_notify or lopts.err_notify == nil then
@@ -120,6 +124,7 @@ M.CHANGE_STATUS = {
 --- - force Edit immutable change
 --- @return boolean
 local function notify_immutable(change, opts)
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   if change.status ~= M.CHANGE_STATUS.CURRENT and change.immutable and not lopts.force then
     vim.notify("Change `" .. change.id_short .. "` is immutable, use force to modify it!", vim.log.levels.ERROR)
@@ -165,6 +170,8 @@ end
 --- @param opts? {file?: ModifiedFile} Options
 --- - file File name
 function M.toggle_diff(ctx, change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   local files = {}
   if lopts.file then
@@ -212,6 +219,7 @@ end
 --- - vertical If a new window needs to be created, split it vertically?
 --- @return Context
 function M.show_log(ctx, opts)
+  assert(ctx, "Context not provided: ctx")
   local lopts = opts or {}
   local buffer = require("jiejie.log_buffer")
   buffer.focus(ctx, lopts.vertical or false)
@@ -224,6 +232,8 @@ end
 --- @param opts? {force?: boolean} Options
 --- - force Edit immutable change
 function M.change_abandon(ctx, change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   local cmd = "abandon"
   local args = { change.id }
@@ -269,6 +279,7 @@ end
 --- @param opts? {files?: string[]} Options
 --- - files List of file names relative to the root of the repository
 function M.change_commit(ctx, opts)
+  assert(ctx, "Context not provided: ctx")
   local lopts = opts or {}
   local cmd = "commit"
   local args = lopts.files or {}
@@ -293,6 +304,8 @@ end
 --- - files List of file names relative to the root of the repository
 --- - force Edit immutable change
 function M.change_squash(ctx, src_change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(src_change, "Change not provided: src_change")
   local lopts = opts or {}
   local args = vim.list_extend({ lopts.dst_change and "-f" or "-r", src_change.id }, lopts.files or {})
   if notify_immutable(src_change, { force = lopts.force }) then
@@ -324,6 +337,8 @@ end
 --- @param opts? {force?: boolean} Options
 --- - force Edit immutable change
 function M.change_edit(ctx, change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   if change.status == M.CHANGE_STATUS.CURRENT then
     vim.notify("Already editing change `" .. change.id_short .. "`", vim.log.levels.INFO)
@@ -356,6 +371,8 @@ end
 --- - firstline: Edit just the first line
 --- @return boolean?
 function M.change_describe(ctx, change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   if notify_immutable(change, { force = lopts.force }) then
     return
@@ -411,6 +428,8 @@ end
 --- - force Edit immutable change
 --- @return boolean?
 function M.change_revert(ctx, change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   local cmd = "revert"
   local args = { "-r", change.id, "-d", "@" }
@@ -438,6 +457,8 @@ end
 --- - edit_cmd: Function that's called for editing file
 --- @return boolean?
 function M.object_edit(ctx, file, change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   lopts.edit_cmd = lopts.edit_cmd or vim.cmd.e
   local filename = vim.fs.joinpath(ctx.root, file and file.filename or "")
@@ -518,6 +539,9 @@ end
 --- - force Change immutable
 --- @return boolean?
 function M.file_restore(ctx, file, change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(file, "File not provided: file")
+  assert(change, "Change not provided: change")
   local lopts = opts or {}
   if change.status ~= M.CHANGE_STATUS.CURRENT then
     vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
@@ -544,6 +568,7 @@ end
 --- @param callback fun(ctx: Context?) Asynchronous callback
 --- @return boolean?
 function M.reload_log(ctx, callback)
+  assert(ctx, "Context not provided: ctx")
   if vim.api.nvim_get_current_buf() ~= ctx.buf then
     callback(nil)
   end
@@ -556,6 +581,7 @@ end
 --- @param opts? {adjustment?: number} Options
 --- - adjustment Adjust the number of displayed log revisions by this amount
 function M.log_revisions_adjust(ctx, opts)
+  assert(ctx, "Context not provided: ctx")
   local lopts = opts or {}
   local log_revisions = (ctx.log_revisions or 10) + lopts.adjustment
   ctx.log_revisions = log_revisions > 0 and log_revisions or 1
@@ -573,6 +599,8 @@ end
 --- - args string[] List of CLI arguments
 --- @return table
 function M.cli(ctx, cmd, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(cmd, "Command not provided: cmd")
   local lopts = opts or {}
   local output = ""
   local output_collector = function(_, data)

@@ -107,6 +107,10 @@ cc                      Commit currently edited change and create a new
                                                                      *jiejie_cd*
 cd                      Duplicate change under the cursor.
 
+                                                                    *jiejie_!cd*
+!cd                     Duplicate change under the cursor, ignoring
+                        immutablily settings.
+
                                                                      *jiejie_cn*
 cn                      Create a new change after the change under the cursor.
 

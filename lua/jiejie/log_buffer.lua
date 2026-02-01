@@ -2,6 +2,7 @@ local parsers = require("jiejie.parsers")
 local log_diff = require("jiejie.log_diff")
 local helpers = require("jiejie.log_buffer_helpers")
 local log_view = require("jiejie.log_view")
+local jujutsu = require("jiejie.jujutsu")
 
 --- Opeations that manipulate the buffer / window
 local M = {}
@@ -144,26 +145,20 @@ function M.setup_buffer(ctx)
     vim.keymap.set("", key, "<Nop>", { buffer = true })
   end
   local commands = require("jiejie.commands")
-  local with_root_context = function(fn)
-    return helpers.with_context(ctx.root, fn)
-  end
-  --- @type table<number, {key: string, fn: fun(), desc: string}>
+  --- @type table<number, {key: string, fn: fun(), desc: string, with_force: boolean}>
   local nmaps = {
     --
 
     -- Navigation maps {{{1
     {
       key = "<CR>",
-      fn = with_root_context(helpers.with_change_at_position(
+      fn = helpers.with_change_at_position(
         helpers.search_hunk(
           helpers.search_file(
             helpers.search_change(function(args)
-              ---@diagnostic disable-next-line: undefined-field
               if args.pos_change then
-                commands.change_edit(args.ctx, args.src_change)
+                commands.change_edit(args.ctx, args.pos_change, { force = args.force })
               elseif args.file then
-                -- if no change is at the current position of the cursor, then a file name must have been found
-                ---@diagnostic disable-next-line: undefined-field
                 commands.object_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
               else
                 vim.schedule(function()
@@ -177,226 +172,180 @@ function M.setup_buffer(ctx)
           { err_continue = true }
         ),
         { err_continue = true, args_key = "pos_change" }
-      )),
+      ),
+      with_force = true,
       desc = "Edit change or file under the cursor",
     },
     {
-      key = "!<CR>",
-      fn = with_root_context(helpers.with_change_at_position(
-        helpers.search_hunk(
-          helpers.search_file(
-            helpers.search_change(function(args)
-              ---@diagnostic disable-next-line: undefined-field
-              if args.pos_change then
-                commands.change_edit(args.ctx, args.src_change, helpers.with_direct_force())
-              elseif args.file then
-                -- if no change is at the current position of the cursor, then a file name must have been found
-                ---@diagnostic disable-next-line: undefined-field
-                commands.object_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
-              else
-                vim.schedule(function()
-                  vim.notify("No file or change found under the curor", vim.log.levels.WARN)
-                end)
-              end
-              return true
-            end),
-            { err_continue = true }
-          ),
-          { err_continue = true }
-        ),
-        { err_continue = true, args_key = "pos_change" }
-      )),
-      desc = "Edit immutable change or file under the cursor",
-    },
-    {
       key = "o",
-      fn = with_root_context(helpers.search_file(helpers.search_change(function(args)
+      fn = helpers.search_file(helpers.search_change(function(args)
         commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.sp })
         return true
-      end))),
+      end)),
       desc = "Open the file or jiejie-object under the cursor in a new split",
     },
     {
       key = "gO",
-      fn = with_root_context(helpers.search_file(helpers.search_change(function(args)
+      fn = helpers.search_file(helpers.search_change(function(args)
         commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.vnew })
         return true
-      end))),
+      end)),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
     },
     {
       key = "O",
-      fn = with_root_context(helpers.search_file(helpers.search_change(function(args)
+      fn = helpers.search_file(helpers.search_change(function(args)
         commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.tabnew })
         return true
-      end))),
+      end)),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
     },
     {
       key = "i",
-      fn = with_root_context(
-        helpers.search_file(
-          helpers.search_change(
-            helpers.search_hunk(
-              helpers.search_file(
-                helpers.search_change(function(args)
-                  local count = vim.v.count
-                  local _winid = vim.api.nvim_get_current_win()
-                  local linenr
-                  ---@diagnostic disable-next-line: undefined-field
-                  if args.cur_file and args.cur_change then
-                    ---@diagnostic disable-next-line: undefined-field
-                    if not log_diff.diff_shown(args.cur_file, args.cur_change) then
-                      ---@diagnostic disable-next-line: undefined-field
-                      log_diff.diff_show(args.ctx, args.cur_file, args.cur_change)
-                      ---@diagnostic disable-next-line: undefined-field
-                      linenr = args.cur_file.linenr + 1
-                    ---@diagnostic disable-next-line: undefined-field
-                    elseif args.hunk and args.hunk.linenr > args.cur_file.linenr then
-                      ---@diagnostic disable-next-line: undefined-field
-                      if args.file and args.hunk.linenr < args.file.linenr then
-                        ---@diagnostic disable-next-line: undefined-field
-                        if args.src_change and args.hunk.linenr < args.src_change.linenr then
-                          ---@diagnostic disable-next-line: undefined-field
-                          linenr = args.hunk.linenr
-                        end
+      fn = helpers.search_file(
+        helpers.search_change(
+          helpers.search_hunk(
+            helpers.search_file(
+              helpers.search_change(function(args)
+                local count = vim.v.count
+                local _winid = vim.api.nvim_get_current_win()
+                local linenr
+                if args.cur_file and args.cur_change then
+                  if not log_diff.diff_shown(args.cur_file, args.cur_change) then
+                    log_diff.diff_show(args.ctx, args.cur_file, args.cur_change)
+                    linenr = args.cur_file.linenr + 1
+                  elseif args.hunk and args.hunk.linenr > args.cur_file.linenr then
+                    if args.file and args.hunk.linenr < args.file.linenr then
+                      if args.src_change and args.hunk.linenr < args.src_change.linenr then
+                        linenr = args.hunk.linenr
                       end
                     end
                   end
-                  if not linenr then
-                    linenr = math.min(args.file and args.file.linenr or math.huge, args.src_change and args.src_change.linenr or math.huge)
+                end
+                if not linenr then
+                  linenr = math.min(args.file and args.file.linenr or math.huge, args.src_change and args.src_change.linenr or math.huge)
+                end
+                local pos = { linenr, 0 }
+                if pos[1] ~= math.huge then
+                  vim.api.nvim_win_set_cursor(_winid, pos)
+                  if count > 1 then
+                    vim.fn.feedkeys((count - 1) .. "i")
                   end
-                  local pos = { linenr, 0 }
-                  if pos[1] ~= math.huge then
-                    vim.api.nvim_win_set_cursor(_winid, pos)
-                    if count > 1 then
-                      vim.fn.feedkeys((count - 1) .. "i")
-                    end
-                  end
-                  return true
-                end, { search_downwards = true, err_continue = true, linenr_offset = 1 }),
-                { search_downwards = true, err_continue = true, linenr_offset = 1, skip_past_change = true }
-              ),
-              { search_downwards = true, err_continue = true, linenr_offset = 1 }
+                end
+                return true
+              end, { search_downwards = true, err_continue = true, linenr_offset = 1 }),
+              { search_downwards = true, err_continue = true, linenr_offset = 1, skip_past_change = true }
             ),
-            { args_key = "cur_change", err_continue = true }
+            { search_downwards = true, err_continue = true, linenr_offset = 1 }
           ),
-          { args_key = "cur_file", err_continue = true }
-        )
+          { args_key = "cur_change", err_continue = true }
+        ),
+        { args_key = "cur_file", err_continue = true }
       ),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
     },
     {
       key = "K",
-      fn = with_root_context(helpers.search_change(function(args)
+      fn = helpers.search_change(function(args)
         commands.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit })
         return true
-      end)),
+      end),
       desc = "Open change under the cursor",
     },
     {
       key = "[[",
-      fn = with_root_context(
-        helpers.search_file(
-          helpers.search_change(
-            helpers.search_file(
-              helpers.search_change(function(args)
-                local count = vim.v.count
-                local _winid = vim.api.nvim_get_current_win()
-                ---@diagnostic disable-next-line: undefined-field
-                local cur_change_linenr = args.cur_change and args.cur_change.linenr or 1
-                local linenr = 1
-                ---@diagnostic disable-next-line: undefined-field
-                if not args.cur_file then
-                  -- Cursor is on a change, jump to next change
-                  ---@diagnostic disable-next-line: undefined-field
-                  linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
-                else
-                  -- Cursor is on a file
-                  if args.file then
-                    if args.file.linenr > cur_change_linenr then
-                      -- File is within the current change
-                      linenr = args.file.linenr
-                    else
-                      -- File is in the next change, jump to the current change
-                      linenr = cur_change_linenr
-                    end
+      fn = helpers.search_file(
+        helpers.search_change(
+          helpers.search_file(
+            helpers.search_change(function(args)
+              local count = vim.v.count
+              local _winid = vim.api.nvim_get_current_win()
+              local cur_change_linenr = args.cur_change and args.cur_change.linenr or 1
+              local linenr = 1
+              if not args.cur_file then
+                -- Cursor is on a change, jump to next change
+                linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
+              else
+                -- Cursor is on a file
+                if args.file then
+                  if args.file.linenr > cur_change_linenr then
+                    -- File is within the current change
+                    linenr = args.file.linenr
                   else
                     -- File is in the next change, jump to the current change
                     linenr = cur_change_linenr
                   end
+                else
+                  -- File is in the next change, jump to the current change
+                  linenr = cur_change_linenr
                 end
-                local pos = { linenr, 0 }
-                vim.api.nvim_win_set_cursor(_winid, pos)
-                if count > 1 then
-                  vim.fn.feedkeys((count - 1) .. "[[")
-                end
-                return true
-              end, {
-                linenr_from_file = true,
-                -- could be -1, if no next file is discovered, we could skip past the actual heading
-                linenr_offset = -1,
-                err_continue = true,
-              }),
-              { linenr_offset = -1, skip_past_change = true, err_continue = true }
-            ),
-            { args_key = "cur_change", err_continue = true }
+              end
+              local pos = { linenr, 0 }
+              vim.api.nvim_win_set_cursor(_winid, pos)
+              if count > 1 then
+                vim.fn.feedkeys((count - 1) .. "[[")
+              end
+              return true
+            end, {
+              linenr_from_file = true,
+              -- could be -1, if no next file is discovered, we could skip past the actual heading
+              linenr_offset = -1,
+              err_continue = true,
+            }),
+            { linenr_offset = -1, skip_past_change = true, err_continue = true }
           ),
-          { args_key = "cur_file", err_continue = true }
-        )
+          { args_key = "cur_change", err_continue = true }
+        ),
+        { args_key = "cur_file", err_continue = true }
       ),
       desc = "Jump [count] sections backward",
     },
     {
       key = "]]",
-      fn = with_root_context(
-        helpers.search_file(
-          helpers.search_change(
-            helpers.search_file(
-              helpers.search_change(function(args)
-                local count = vim.v.count
-                local _winid = vim.api.nvim_get_current_win()
-                local linenr = 1
-                local src_change_linenr = args.src_change and args.src_change.linenr or 1
-                ---@diagnostic disable-next-line: undefined-field
-                if not args.cur_file then
-                  -- Cursor is on a change, jump to next change
-                  ---@diagnostic disable-next-line: undefined-field
-                  linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
-                else
-                  -- Cursor is on a file
-                  if args.file then
-                    if args.file.linenr < src_change_linenr then
-                      -- File is within the current change
-                      linenr = args.file.linenr
-                    else
-                      -- File is in the next change, jump to the next change
-                      linenr = src_change_linenr
-                    end
+      fn = helpers.search_file(
+        helpers.search_change(
+          helpers.search_file(
+            helpers.search_change(function(args)
+              local count = vim.v.count
+              local _winid = vim.api.nvim_get_current_win()
+              local linenr = 1
+              local src_change_linenr = args.src_change and args.src_change.linenr or 1
+              if not args.cur_file then
+                -- Cursor is on a change, jump to next change
+                linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
+              else
+                -- Cursor is on a file
+                if args.file then
+                  if args.file.linenr < src_change_linenr then
+                    -- File is within the current change
+                    linenr = args.file.linenr
                   else
                     -- File is in the next change, jump to the next change
                     linenr = src_change_linenr
                   end
+                else
+                  -- File is in the next change, jump to the next change
+                  linenr = src_change_linenr
                 end
-                local pos = { linenr, 0 }
-                vim.api.nvim_win_set_cursor(_winid, pos)
-                if count > 1 then
-                  vim.fn.feedkeys((count - 1) .. "]]")
-                end
-                return true
-              end, {
-                search_downwards = true,
-                linenr_from_file = false,
-                -- could be 1, if no next file is discovered, we could skip past the actual heading
-                linenr_offset = 1,
-                err_continue = true,
-              }),
-              { search_downwards = true, linenr_offset = 1, skip_past_change = true, err_continue = true }
-            ),
-            { args_key = "cur_change", err_continue = true }
+              end
+              local pos = { linenr, 0 }
+              vim.api.nvim_win_set_cursor(_winid, pos)
+              if count > 1 then
+                vim.fn.feedkeys((count - 1) .. "]]")
+              end
+              return true
+            end, {
+              search_downwards = true,
+              linenr_from_file = false,
+              -- could be 1, if no next file is discovered, we could skip past the actual heading
+              linenr_offset = 1,
+              err_continue = true,
+            }),
+            { search_downwards = true, linenr_offset = 1, skip_past_change = true, err_continue = true }
           ),
-          { args_key = "cur_file", err_continue = true }
-        )
+          { args_key = "cur_change", err_continue = true }
+        ),
+        { args_key = "cur_file", err_continue = true }
       ),
       desc = "Jump [count] sections forward",
     },
@@ -404,13 +353,13 @@ function M.setup_buffer(ctx)
     -- Diff maps {{{1
     {
       key = "=",
-      fn = with_root_context(helpers.search_file(
+      fn = helpers.search_file(
         helpers.search_change(function(args)
           commands.toggle_diff(args.ctx, args.src_change, { file = args.file })
           return true
         end),
         { err_continue = true }
-      )),
+      ),
       desc = "Toggle an inline diff of the change or file under the cursor",
     },
 
@@ -424,7 +373,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "cbc",
-      fn = with_root_context(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
           args = { "create", "-r", args.src_change.id, args.bookmark },
           on_exit = function()
@@ -432,12 +381,12 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end))),
+      end)),
       desc = "Create new bookmark at change under the cursor",
     },
     {
       key = "cbX",
-      fn = with_root_context(helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
           args = { "delete", args.bookmark },
           on_exit = function()
@@ -445,12 +394,12 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end)))),
+      end))),
       desc = "Delete bookmark including remote boomark",
     },
     {
       key = "cbx",
-      fn = with_root_context(helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
           args = { "delete", args.bookmark },
           on_exit = function()
@@ -458,12 +407,12 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end)))),
+      end))),
       desc = "Delete bookmark including remote boomark at change under the cursor",
     },
     {
       key = "cbF",
-      fn = with_root_context(helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
           args = { "forget", args.bookmark },
           on_exit = function()
@@ -471,12 +420,12 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end)))),
+      end))),
       desc = "Forget bookmark locally keeping the remote intact",
     },
     {
       key = "cbf",
-      fn = with_root_context(helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
           args = { "forget", args.bookmark },
           on_exit = function()
@@ -484,12 +433,12 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end)))),
+      end))),
       desc = "Forget bookmark locally keeping the remote intact at change under the cursor",
     },
     {
       key = "cbm",
-      fn = with_root_context(helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
           args = { "move", args.bookmark, "-t", args.src_change.id },
           on_exit = function()
@@ -497,12 +446,12 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end)))),
+      end))),
       desc = "Move bookmark to change under the cursor",
     },
     {
       key = "cbr",
-      fn = with_root_context(helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
         helpers.with_bookmark_or_tag(function(_args)
           commands.cli(args.ctx, "bookmark", {
             args = { "rename", args.bookmark, _args.bookmark },
@@ -513,12 +462,12 @@ function M.setup_buffer(ctx)
           return true
         end, { prompt = "Enter new name: " })({ ctx = args.ctx })
         return true
-      end)))),
+      end))),
       desc = "Rename bookmark at change under the cursor",
     },
     {
       key = "cc",
-      fn = with_root_context(helpers.search_file(
+      fn = helpers.search_file(
         helpers.search_change(function(args)
           if args.src_change.status ~= commands.CHANGE_STATUS.CURRENT then
             vim.notify("Commit not possible, curser is not on the currently edited change", vim.log.levels.ERROR)
@@ -528,57 +477,51 @@ function M.setup_buffer(ctx)
           return true
         end),
         { err_continue = true }
-      )),
+      ),
       desc = "Commit currently edited change and create a new change",
     },
     {
       key = "cd",
-      fn = with_root_context(helpers.search_change(helpers.with_target_change(function(args)
+      fn = helpers.search_change(helpers.with_target_change(function(args)
         commands.cli(args.ctx, "duplicate", {
-          args = { "-d", args.dst_change.id, args.src_change.id },
+          args = jujutsu.ignore_immtuable({ "-d", args.dst_change.id, args.src_change.id }, { force = args.force }),
           on_exit = function()
             vim.notify("Duplicated change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
         return true
-      end, { err_notify = false, defualt_target = "@" }))),
-      desc = "Squash current changes into the selecated change",
+      end, { err_notify = false, defualt_target = "@" })),
+      with_force = true,
+      desc = "Duplicate change under the cursor",
     },
     {
       key = "cn",
-      fn = with_root_context(helpers.search_change(function(args)
-        commands.change_new(args.ctx, args.src_change)
+      fn = helpers.search_change(function(args)
+        commands.change_new(args.ctx, args.src_change, { force = args.force })
         return true
-      end)),
-      desc = "Create a new change after the change under the cursor",
-    },
-    {
-      key = "!cn",
-      fn = with_root_context(helpers.search_change(function(args)
-        commands.change_new(args.ctx, args.src_change, helpers.with_direct_force())
-        return true
-      end)),
+      end),
+      with_force = true,
       desc = "Create a new change after the change under the cursor",
     },
     {
       key = "crc",
-      fn = with_root_context(helpers.search_change(function(args)
+      fn = helpers.search_change(function(args)
         commands.change_revert(args.ctx, args.src_change)
         return true
-      end)),
+      end),
       desc = "Revert the commit under the cursor",
     },
     {
       key = "s<space>",
-      fn = with_root_context(helpers.search_change(function(args)
+      fn = helpers.search_change(function(args)
         vim.fn.feedkeys(":Jj squash -f " .. args.src_change.id_short .. " ", "n")
         return true
-      end)),
+      end),
       desc = 'Populate command line with ":Jj squash "',
     },
     {
       key = "cs",
-      fn = with_root_context(helpers.search_file(
+      fn = helpers.search_file(
         helpers.search_change(function(args)
           local src_change, dst_change
           local src_is_current_change = args.src_change.status == commands.CHANGE_STATUS.CURRENT
@@ -592,69 +535,34 @@ function M.setup_buffer(ctx)
             args.ctx,
             ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
             src_change,
-            { files = { src_is_current_change and args.file and args.file.filename or nil }, dst_change = dst_change }
+            { files = { src_is_current_change and args.file and args.file.filename or nil }, dst_change = dst_change, force = args.force }
           )
           return true
         end),
         { err_notify = true, err_continue = true }
-      )),
+      ),
+      with_force = true,
       desc = "Squash current changes into it's parent or into the change under the cursor if the cursor is not on the currently edited changed",
     },
     {
-      key = "!cs",
-      fn = with_root_context(helpers.search_file(
-        helpers.search_change(function(args)
-          local src_change, dst_change
-          local src_is_current_change = args.src_change.status == commands.CHANGE_STATUS.CURRENT
-          if not src_is_current_change then
-            src_change = { id = "@", id_short = "@" }
-            dst_change = args.src_change
-          else
-            src_change = args.src_change
-          end
-          commands.change_squash(
-            args.ctx,
-            ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
-            src_change,
-            helpers.with_direct_force({ files = { src_is_current_change and args.file and args.file.filename or nil }, dst_change = dst_change })
-          )
-          return true
-        end),
-        { err_notify = true, err_continue = true }
-      )),
-      desc = "Squash current changes into it's immutable parent or into the change under the cursor if the cursor is not on the currently edited changed",
-    },
-    {
       key = "cS",
-      fn = with_root_context(helpers.search_file(
-        helpers.search_change(helpers.with_target_change(function(args)
-          ---@diagnostic disable-next-line: undefined-field
-          commands.change_squash(args.ctx, args.src_change, { dst_change = args.dst_change, files = { args.file and args.file.filename or nil } })
-          return true
-        end, { err_notify = false })),
-        { err_notify = false, err_continue = true }
-      )),
-      desc = "Squash current changes into the selecated change",
-    },
-    {
-      key = "!cS",
-      fn = with_root_context(helpers.search_file(
+      fn = helpers.search_file(
         helpers.search_change(helpers.with_target_change(function(args)
           commands.change_squash(
             args.ctx,
             args.src_change,
-            ---@diagnostic disable-next-line: undefined-field
-            helpers.with_direct_force({ dst_change = args.dst_change, files = { args.file and args.file.filename or nil } })
+            { dst_change = args.dst_change, files = { args.file and args.file.filename or nil }, force = args.force }
           )
           return true
-        end, { err_notify = false, err_continue = true })),
+        end, { err_notify = false })),
         { err_notify = false, err_continue = true }
-      )),
-      desc = "Squash current changes into the immutuable selecated change",
+      ),
+      with_force = true,
+      desc = "Squash current changes into the selecated change",
     },
     {
       key = "ctc",
-      fn = with_root_context(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
+      fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "tag", {
           args = { "set", "-r", args.src_change.id, args.tag },
           on_exit = function()
@@ -662,12 +570,12 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end, { tags = true }))),
+      end, { tags = true })),
       desc = "Create new tag at change under the cursor",
     },
     {
       key = "ctm",
-      fn = with_root_context(helpers.with_bookmarks_or_tags(
+      fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
           commands.cli(args.ctx, "tag", {
             args = { "set", "-r", args.src_change.id, "--allow-move", args.tag },
@@ -678,12 +586,12 @@ function M.setup_buffer(ctx)
           return true
         end, { tags = true })),
         { tags = true }
-      )),
+      ),
       desc = "Delete tag",
     },
     {
       key = "ctX",
-      fn = with_root_context(helpers.with_bookmarks_or_tags(
+      fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
           commands.cli(args.ctx, "tag", {
             args = { "delete", args.tag },
@@ -694,12 +602,12 @@ function M.setup_buffer(ctx)
           return true
         end, { tags = true })),
         { tags = true }
-      )),
+      ),
       desc = "Delete tag",
     },
     {
       key = "ctx",
-      fn = with_root_context(helpers.with_bookmarks_or_tags(
+      fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
           commands.cli(args.ctx, "tag", {
             args = { "delete", args.tag },
@@ -710,44 +618,31 @@ function M.setup_buffer(ctx)
           return true
         end, { tags = true })),
         { tags = true }
-      )),
+      ),
       desc = "Delete tag at change under the cursor",
     },
     {
       key = "de",
-      fn = with_root_context(helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change)
+      fn = helpers.search_change(function(args)
+        commands.change_describe(args.ctx, args.src_change, { force = args.force })
         return true
-      end)),
+      end),
+      with_force = true,
       desc = "Edit change description",
     },
     {
-      key = "!de",
-      fn = with_root_context(helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change, helpers.with_direct_force())
-        return true
-      end)),
-      desc = "Edit immutable change description",
-    },
-    {
       key = "dd",
-      fn = with_root_context(helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change, { firstline = true })
+      fn = helpers.search_change(function(args)
+        commands.change_describe(args.ctx, args.src_change, { firstline = true, force = args.force })
         return true
-      end)),
+      end),
+      with_force = true,
       desc = "Edit first line of change description",
     },
     {
-      key = "!dd",
-      fn = with_root_context(helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change, helpers.with_direct_force({ firstline = true }))
-        return true
-      end)),
-      desc = "Edit first line of an immutable change description",
-    },
-    {
       key = "cU",
-      fn = with_root_context(function(args)
+      --- @type fun(args?: WithArgs): boolean Callback function
+      fn = function(args)
         commands.cli(args.ctx, "op", {
           args = { "revert" },
           on_exit = function()
@@ -755,110 +650,76 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end),
+      end,
       desc = "Revert last operation",
     },
     {
       key = "X",
-      fn = with_root_context(function(_args)
-        if
-          not helpers.with_change_at_position(function(args)
-            commands.change_abandon(args.ctx, args.src_change)
+      fn = helpers.with_change_at_position(
+        helpers.search_file(
+          helpers.search_change(function(args)
+            if args.pos_change then
+              commands.change_abandon(args.ctx, args.pos_change, { force = args.force })
+            elseif args.file then
+              commands.file_restore(args.ctx, args.file, args.src_change, { force = args.force })
+            else
+              vim.schedule(function()
+                vim.notify("No file or change found under the curor", vim.log.levels.WARN)
+              end)
+            end
             return true
-          end, { err_notify = false })({ ctx = _args.ctx })
-        then
-          helpers.search_file(helpers.search_change(function(args)
-            commands.file_restore(args.ctx, args.file, args.src_change)
-            return true
-          end))({ ctx = _args.ctx })
-        end
-      end),
+          end),
+          { err_continue = true }
+        ),
+        { err_continue = true, args_key = "pos_change" }
+      ),
+      with_force = true,
       desc = "Abandon change or restore file from parent change",
-    },
-    {
-      key = "!X",
-      fn = with_root_context(function(_args)
-        if
-          not helpers.with_change_at_position(function(args)
-            commands.change_abandon(args.ctx, args.src_change, helpers.with_direct_force())
-            return true
-          end, { err_notify = false })({ ctx = _args.ctx })
-        then
-          helpers.search_file(helpers.search_change(function(args)
-            commands.file_restore(args.ctx, args.file, args.src_change, helpers.with_direct_force())
-            return true
-          end))({ ctx = _args.ctx })
-        end
-      end),
-      desc = "Abandon immutuable change or restore file from parent change",
     },
 
     -- Rebase maps {{{1
     {
       key = "r<space>",
-      fn = with_root_context(helpers.search_change(function(args)
+      fn = helpers.search_change(function(args)
         vim.fn.feedkeys(":Jj rebase -s " .. args.src_change.id_short .. " ", "n")
         return true
-      end)),
+      end),
       desc = 'Populate command line with ":Jj rebase "',
     },
     {
       key = "rr",
-      fn = with_root_context(helpers.search_change(helpers.with_target_change(function(args)
+      fn = helpers.search_change(helpers.with_target_change(function(args)
         commands.cli(args.ctx, "rebase", {
-          args = { "-s", args.src_change.id, "-d", args.dst_change.id },
+          args = jujutsu.ignore_immtuable({ "-s", args.src_change.id, "-d", args.dst_change.id }, { force = args.force }),
           on_exit = function()
             vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
         return true
-      end, { defualt_target = "" }))),
-      desc = "Rebase the change under the cursor, together with its descendants",
-    },
-    {
-      key = "!rr",
-      fn = with_root_context(helpers.search_change(helpers.with_target_change(function(args)
-        commands.cli(args.ctx, "rebase", {
-          args = helpers.with_direct_force({ "-s", args.src_change.id, "-d", args.dst_change.id }),
-          on_exit = function()
-            vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end, { defualt_target = "" }))),
+      end, { defualt_target = "" })),
+      with_force = true,
       desc = "Rebase the change under the cursor, together with its descendants",
     },
     {
       key = "ro",
-      fn = with_root_context(helpers.search_change(helpers.with_target_change(function(args)
+      fn = helpers.search_change(helpers.with_target_change(function(args)
         commands.cli(args.ctx, "rebase", {
-          args = { "-r", args.src_change.id, "-d", args.dst_change.id },
+          args = jujutsu.ignore_immtuable({ "-r", args.src_change.id, "-d", args.dst_change.id }, { force = args.force }),
           on_exit = function()
             vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
           end,
         })
         return true
-      end, { defualt_target = "" }))),
-      desc = "Rebase only change under the cursor, without its descendants",
-    },
-    {
-      key = "!ro",
-      fn = with_root_context(helpers.search_change(helpers.with_target_change(function(args)
-        commands.cli(args.ctx, "rebase", {
-          args = helpers.with_direct_force({ "-r", args.src_change.id, "-d", args.dst_change.id }),
-          on_exit = function()
-            vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end, { defualt_target = "" }))),
+      end, { defualt_target = "" })),
+      with_force = true,
       desc = "Rebase only change under the cursor, without its descendants",
     },
 
     -- Git maps {{{1
     {
       key = "gp",
-      fn = with_root_context(function(args)
+      --- @type fun(args?: WithArgs): boolean Callback function
+      fn = function(args)
         commands.cli(args.ctx, "git", {
           args = { "fetch" },
           on_exit = function()
@@ -866,12 +727,13 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end),
+      end,
       desc = "Fetch changes from remote",
     },
     {
       key = "gP",
-      fn = with_root_context(function(args)
+      --- @type fun(args?: WithArgs): boolean Callback function
+      fn = function(args)
         commands.cli(args.ctx, "git", {
           args = { "push" },
           on_exit = function()
@@ -879,7 +741,7 @@ function M.setup_buffer(ctx)
           end,
         })
         return true
-      end),
+      end,
       desc = "Push changes to remote",
     },
 
@@ -900,11 +762,11 @@ function M.setup_buffer(ctx)
     },
     {
       key = ".",
-      fn = with_root_context(helpers.search_file(function(args)
+      fn = helpers.search_file(function(args)
         local home = vim.api.nvim_replace_termcodes("<Home>", true, false, true)
         vim.api.nvim_feedkeys(": ./" .. vim.fn.fnameescape(args.file.filename) .. home, "n", false)
         return true
-      end)),
+      end),
       desc = "Start a : command line with the file under the cursor prepopulated",
     },
     {
@@ -914,51 +776,63 @@ function M.setup_buffer(ctx)
     },
     {
       key = "R",
-      fn = with_root_context(function(args)
+      --- @type fun(args?: WithArgs): boolean Callback function
+      fn = function(args)
         local _winid = vim.api.nvim_get_current_win()
         local pos = vim.api.nvim_win_get_cursor(_winid)
         commands.reload_log(args.ctx, function()
           vim.notify("Log reloaded", vim.log.levels.INFO)
           vim.api.nvim_win_set_cursor(_winid, pos)
         end)
-      end),
+        return true
+      end,
       desc = "Reload log",
     },
     {
       key = "<C-a>",
-      fn = with_root_context(helpers.with_count(function(args)
+      fn = helpers.with_count(function(args)
         commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
         return true
-      end)),
+      end),
       desc = "Increase the number of displayed revisions in log",
     },
     {
       key = "<C-x>",
-      fn = with_root_context(helpers.with_count(function(args)
+      fn = helpers.with_count(function(args)
         commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
         return true
-      end, true)),
+      end, { negate = true }),
       desc = "Decrease the number of displayed revisions in log",
     },
   }
   local log_dirty_check = require("jiejie.log_dirty_check")
   local set_log_view = {
     fn = function(view_id)
-      return with_root_context(function(args)
+      return function(args)
         log_view.set_log_view(log_view.LOG_VIEWS[view_id])
         log_dirty_check.dirty_mark_content(args.ctx.buf)
         log_dirty_check.do_dirty_check()
-      end)
+        return true
+      end
     end,
     desc = "Set log view",
   }
   for i = 1, #log_view.LOG_VIEWS, 1 do
     table.insert(nmaps, vim.tbl_extend("force", set_log_view, { key = "g" .. i, fn = set_log_view.fn(i) }))
   end
+  --- @param fn fun(args?: WithArgs): boolean Callback function
+  --- @param opts? WithOpts Options
+  local with_root_context = function(fn, opts)
+    return helpers.with_context(ctx.root, fn, opts)
+  end
   for _, value in ipairs(nmaps) do
     local plug = "<Plug>(jiejie-" .. value.key .. ")"
     vim.keymap.set("n", value.key, plug, { desc = value.desc, nowait = true, buffer = true })
-    vim.keymap.set("n", plug, value.fn, { desc = value.desc, buffer = true })
+    vim.keymap.set("n", plug, with_root_context(value.fn), { desc = value.desc, buffer = true })
+    if value.with_force then
+      vim.keymap.set("n", "!" .. value.key, plug, { desc = value.desc, nowait = true, buffer = true })
+      vim.keymap.set("n", plug, helpers.with_force(with_root_context(value.fn)), { desc = "Ignoring immutuability. " .. value.desc, buffer = true })
+    end
   end
   require("jiejie.log_diff").setup_buffer(ctx)
   require("jiejie.log_dirty_check").setup_buffer(ctx)
