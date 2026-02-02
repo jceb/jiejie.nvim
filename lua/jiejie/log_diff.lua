@@ -69,7 +69,16 @@ function M.diff_show(ctx, file, change)
   local offset = 0
   local dummy_linenr = 23
   for index, line in ipairs(diff) do
-    if parsers.parse_hunk(line, dummy_linenr, 0) or vim.startswith(line, "Binary files") then
+    if
+      parsers.parse_hunk(line, dummy_linenr, 0)
+      or not (
+        vim.startswith(line, "diff --git")
+        or vim.startswith(line, "--- a")
+        or vim.startswith(line, "+++ b")
+        or vim.startswith(line, "index ")
+        or vim.startswith(line, "new file mode")
+      )
+    then
       offset = index
       break
     end
