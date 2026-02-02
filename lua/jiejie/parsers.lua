@@ -10,12 +10,13 @@ local M = {}
 function M.parse_change(line, linenr)
   local match = vim.fn.matchlist(
     line,
-    [[^[╮├─╯│ ]*\([@×◆◇○]\)[╮├─╯│ ]*  \([a-z]\+\)\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)]]
+    [[^[╮├─╯│ ]*\([@×◆◇○]\)[╮├─╯│ ]*  \([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
   )
   if #match == 0 then
     return nil
   end
-  local match2 = vim.fn.matchlist(match[10], [[^[^∮]*∮\([^∴]*\)∴\([^∵]\+\)∵\(.\+\)]])
+  local match2 =
+    vim.fn.matchlist(match[10], [[^[^∮]*∮\([^∴]*\)∴\([^∵]\+\)∵\([^∶]*\)∶\([^∷]*\)∷\([a-z0-9]\+\)∼\([^∾]*\)∾\([0-9]\+\)$]])
   if #match2 == 0 then
     return nil
   end
@@ -32,7 +33,11 @@ function M.parse_change(line, linenr)
   local immutable = match2[2] == " immutable"
   local id = match2[3]
   local email = match2[4]
-  if not status or not id_short or not id then
+  local divergent = match2[5] == " divergent"
+  local commit_id = match2[6]
+  local current_working_copy = match2[7] == " current working copy"
+  local parents = tonumber(match2[8])
+  if status == "" or id_short == "" or id == "" or commit_id == "" then
     return nil
   end
   return {
@@ -48,6 +53,10 @@ function M.parse_change(line, linenr)
     immutable = immutable,
     email = email,
     linenr = linenr,
+    divergent = divergent,
+    commit_id = commit_id,
+    current_working_copy = current_working_copy,
+    parents = parents,
   }
 end
 

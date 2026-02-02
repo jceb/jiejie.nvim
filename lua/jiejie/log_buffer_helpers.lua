@@ -1,5 +1,6 @@
 local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
+local commands = require("jiejie.commands")
 
 --- Opeations that help with extracting data from the log buffer
 local M = {}
@@ -214,7 +215,7 @@ function M.with_bookmarks_or_tags(fn, opts)
       [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id().short()) ++ "∫" ++ if(normal_target, normal_target.commit_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
     }
     if largs.src_change then
-      _args = vim.list_extend(_args, { "-r", largs.src_change.id })
+      _args = vim.list_extend(_args, { "-r", commands.get_change_id(largs.src_change) })
     end
     jujutsu.cli(largs.ctx, cmd, {
       args = _args,

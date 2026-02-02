@@ -5,20 +5,22 @@ describe("jiejie parse_change", function()
   --
 
   it("When parsing an the data that doesn't have a change id, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴", 23)
+    local result = require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴∵∶∷∼∾", 23)
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing an the data that has an empty string have a change id, the parser shall yield nil", function()
-    local result = require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴ ", 23)
+    local result = require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴ ∵∶∷∼∾", 23)
     local expected = nil
     eq(expected, result)
   end)
 
   it("When parsing an empty change, the parser shall yield the correct status and id", function()
-    local result =
-      require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴twqqkoqtxpxvypunpwqvyyrxnyxyzqtw∵test@localhost", 23)
+    local result = require("jiejie.parsers").parse_change(
+      "│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴twqqkoqtxpxvypunpwqvyyrxnyxyzqtw∵test@localhost∶∷commitid123∼∾1",
+      23
+    )
     local expected = {
       status = "○",
       id = "twqqkoqtxpxvypunpwqvyyrxnyxyzqtw",
@@ -32,13 +34,19 @@ describe("jiejie parse_change", function()
       immutable = false,
       email = "test@localhost",
       linenr = 23,
+      divergent = false,
+      commit_id = "commitid123",
+      current_working_copy = false,
+      parents = 1,
     }
     eq(expected, result)
   end)
 
   it("When parsing a change with no description, the parser shall yield the correct status and id", function()
-    local result =
-      require("jiejie.parsers").parse_change("│ ○  tp	†‡(no description set)⌠⌡∫∬∮∴tpxnqwvtqmstolzlosssvrvspxlqnxwx∵test@localhost", 23)
+    local result = require("jiejie.parsers").parse_change(
+      "│ ○  tp??	†‡(no description set)⌠⌡∫∬∮∴tpxnqwvtqmstolzlosssvrvspxlqnxwx∵test@localhost∶ divergent∷commitid123∼ current working copy∾2",
+      23
+    )
     local expected = {
       status = "○",
       id = "tpxnqwvtqmstolzlosssvrvspxlqnxwx",
@@ -52,13 +60,19 @@ describe("jiejie parse_change", function()
       immutable = false,
       email = "test@localhost",
       linenr = 23,
+      divergent = true,
+      commit_id = "commitid123",
+      current_working_copy = true,
+      parents = 2,
     }
     eq(expected, result)
   end)
 
   it("When parsing an empty change with no description, the parser shall yield the correct status and id", function()
-    local result =
-      require("jiejie.parsers").parse_change("@  x	†(empty) ‡(no description set)⌠⌡∫∬∮∴xozstosssuwtrousmqqtqvlvyvrwzvot∵test@localhost", 23)
+    local result = require("jiejie.parsers").parse_change(
+      "@  x??	†(empty) ‡(no description set)⌠⌡∫∬∮∴xozstosssuwtrousmqqtqvlvyvrwzvot∵test@localhost∶ divergent∷commitid123∼ current working copy∾2",
+      23
+    )
     local expected = {
       status = "@",
       id = "xozstosssuwtrousmqqtqvlvyvrwzvot",
@@ -72,13 +86,17 @@ describe("jiejie parse_change", function()
       immutable = false,
       email = "test@localhost",
       linenr = 23,
+      divergent = true,
+      commit_id = "commitid123",
+      current_working_copy = true,
+      parents = 2,
     }
     eq(expected, result)
   end)
 
   it("When parsing an empty root change, the parser shall yield the correct status and id", function()
     local result = require("jiejie.parsers").parse_change(
-      "◆  p	†‡docs: add priorities to roadmap⌠ main⌡∫ git_head()∬∮ immutable∴pynyrqkzpllmxlmpvvvwttzosvktvvkx∵test@localhost",
+      "◆  p	†‡docs: add priorities to roadmap⌠ main⌡∫ git_head()∬∮ immutable∴pynyrqkzpllmxlmpvvvwttzosvktvvkx∵test@localhost∶∷commitid123∼ current working copy∾2",
       23
     )
     local expected = {
@@ -94,6 +112,10 @@ describe("jiejie parse_change", function()
       immutable = true,
       email = "test@localhost",
       linenr = 23,
+      divergent = false,
+      commit_id = "commitid123",
+      current_working_copy = true,
+      parents = 2,
     }
     eq(expected, result)
   end)

@@ -75,6 +75,14 @@ end
 --- Commands that manipulate the log
 local M = {}
 
+--- Get the correct change ID if case the commit diverges
+--- @param change Change Change
+--- @param short? boolean Whether to return the short ID
+function M.get_change_id(change, short)
+  assert(change, "Change not provided: change")
+  return change.divergent and change.commit_id or (short and change.id_short or change.id)
+end
+
 --- Reload buffer or error
 --- @param ctx Context context
 --- @param cmd string Command name that failed
@@ -126,8 +134,8 @@ M.CHANGE_STATUS = {
 local function notify_immutable(change, opts)
   assert(change, "Change not provided: change")
   local lopts = opts or {}
-  if change.status ~= M.CHANGE_STATUS.CURRENT and change.immutable and not lopts.force then
-    vim.notify("Change `" .. change.id_short .. "` is immutable, use force to modify it!", vim.log.levels.ERROR)
+  if not change.current_working_copy and change.immutable and not lopts.force then
+    vim.notify("Change `" .. M.get_change_id(change, true) .. "` is immutable, use force to modify it!", vim.log.levels.ERROR)
     return false
   end
   return false
@@ -135,7 +143,7 @@ end
 
 --- @class Change
 --- @field status ChangeStatus Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
---- @field id string change ID
+--- @field id string Change ID
 --- @field id_short string Short change ID
 --- @field empty boolean It's an empty change
 --- @field description_first_line string First line of description
@@ -146,6 +154,10 @@ end
 --- @field immutable boolean Change is immutable
 --- @field email string Author's email address
 --- @field linenr number Line number in log buffer that contains change
+--- @field divergent boolean Change ID corresponds to multiple commits
+--- @field commit_id string Commit ID
+--- @field current_working_copy boolean True for the working-copy commit that matches the current commit
+--- @field parents number Number of parent commits
 
 --- @class ModificationType
 M.MODIFICATION_TYPE = {
@@ -236,7 +248,7 @@ function M.change_abandon(ctx, change, opts)
   assert(change, "Change not provided: change")
   local lopts = opts or {}
   local cmd = "abandon"
-  local args = { change.id }
+  local args = { M.get_change_id(change) }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = M.reload_or_error(
@@ -244,7 +256,7 @@ function M.change_abandon(ctx, change, opts)
       table.concat(vim.list_extend({ cmd }, args), " "),
       vim.tbl_extend("force", lopts, {
         on_exit = function()
-          vim.notify("Change `" .. change.id_short .. "` abandoned", vim.log.levels.INFO)
+          vim.notify("Change `" .. M.get_change_id(change, true) .. "` abandoned", vim.log.levels.INFO)
         end,
       })
     ),
@@ -259,7 +271,7 @@ end
 function M.change_new(ctx, change, opts)
   local lopts = opts or {}
   local cmd = "new"
-  local args = { change.id }
+  local args = { M.get_change_id(change) }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = M.reload_or_error(
@@ -307,14 +319,14 @@ function M.change_squash(ctx, src_change, opts)
   assert(ctx, "Context not provided: ctx")
   assert(src_change, "Change not provided: src_change")
   local lopts = opts or {}
-  local args = vim.list_extend({ lopts.dst_change and "-f" or "-r", src_change.id }, lopts.files or {})
+  local args = vim.list_extend({ lopts.dst_change and "-f" or "-r", M.get_change_id(src_change) }, lopts.files or {})
   if notify_immutable(src_change, { force = lopts.force }) then
     return
   end
   local dst = "it's parent"
   if lopts.dst_change then
-    args = vim.list_extend(args, { "-t", lopts.dst_change.id })
-    dst = lopts.dst_change.id_short
+    args = vim.list_extend(args, { "-t", M.get_change_id(lopts.dst_change) })
+    dst = M.get_change_id(lopts.dst_change, true)
   end
   local cmd = "squash"
   start_dummy_editor(ctx, cmd, args, {
@@ -324,7 +336,7 @@ function M.change_squash(ctx, src_change, opts)
       table.concat(vim.list_extend({ cmd }, args), " "),
       vim.tbl_extend("force", lopts, {
         on_exit = function()
-          vim.notify("Squashed change " .. src_change.id_short .. " into " .. dst, vim.log.levels.INFO)
+          vim.notify("Squashed change " .. M.get_change_id(src_change) .. " into " .. dst, vim.log.levels.INFO)
         end,
       })
     ),
@@ -340,15 +352,15 @@ function M.change_edit(ctx, change, opts)
   assert(ctx, "Context not provided: ctx")
   assert(change, "Change not provided: change")
   local lopts = opts or {}
-  if change.status == M.CHANGE_STATUS.CURRENT then
-    vim.notify("Already editing change `" .. change.id_short .. "`", vim.log.levels.INFO)
+  if change.current_working_copy then
+    vim.notify("Already editing change `" .. M.get_change_id(change, true) .. "`", vim.log.levels.INFO)
     return
   end
   if notify_immutable(change, { force = lopts.force }) then
     return
   end
   local cmd = "edit"
-  local args = { change.id }
+  local args = { M.get_change_id(change) }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = M.reload_or_error(
@@ -356,7 +368,7 @@ function M.change_edit(ctx, change, opts)
       table.concat(vim.list_extend({ cmd }, args), " "),
       vim.tbl_extend("force", lopts, {
         on_exit = function()
-          vim.notify("Editing change " .. change.id_short, vim.log.levels.INFO)
+          vim.notify("Editing change " .. M.get_change_id(change, true), vim.log.levels.INFO)
         end,
       })
     ),
@@ -379,14 +391,14 @@ function M.change_describe(ctx, change, opts)
   end
   -- get current description
   local cmd_log = "log"
-  local args = { "--no-graph", "-r", change.id, "-T", "description" }
+  local args = { "--no-graph", "-r", M.get_change_id(change), "-T", "description" }
   local res = jujutsu.cli(ctx, cmd_log, { args = args })
   local data = vim.trim(res.stdout)
   local current_description = vim.split(data, "\n")
   -- edit description
   if lopts.firstline then
     vim.schedule(function()
-      vim.ui.input({ prompt = "Describe change (" .. change.id_short .. "): ", default = current_description[1] }, function(input)
+      vim.ui.input({ prompt = "Describe change (" .. M.get_change_id(change, true) .. "): ", default = current_description[1] }, function(input)
         if input == nil then
           return
         end
@@ -395,7 +407,7 @@ function M.change_describe(ctx, change, opts)
         jujutsu.cli(ctx, cmd, {
           args = jujutsu.ignore_immtuable({
             "-r",
-            change.id,
+            M.get_change_id(change),
             "--stdin",
             "--no-edit",
             "--quiet",
@@ -408,7 +420,7 @@ function M.change_describe(ctx, change, opts)
             table.concat(vim.list_extend({ cmd }, args), " "),
             vim.tbl_extend("force", lopts, {
               on_exit = function()
-                vim.notify("Described change " .. change.id_short, vim.log.levels.INFO)
+                vim.notify("Described change " .. M.get_change_id(change, true), vim.log.levels.INFO)
               end,
             })
           ),
@@ -417,7 +429,7 @@ function M.change_describe(ctx, change, opts)
     end)
     return true
   end
-  start_dummy_editor(ctx, "describe", { "--edit", change.id }, { force = lopts.force })
+  start_dummy_editor(ctx, "describe", { "--edit", M.get_change_id(change) }, { force = lopts.force })
   return true
 end
 
@@ -432,7 +444,7 @@ function M.change_revert(ctx, change, opts)
   assert(change, "Change not provided: change")
   local lopts = opts or {}
   local cmd = "revert"
-  local args = { "-r", change.id, "-d", "@" }
+  local args = { "-r", M.get_change_id(change), "-d", "@" }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = M.reload_or_error(
@@ -440,7 +452,7 @@ function M.change_revert(ctx, change, opts)
       table.concat(vim.list_extend({ cmd }, args), " "),
       vim.tbl_extend("force", lopts, {
         on_exit = function()
-          vim.notify("Reverted change " .. change.id_short, vim.log.levels.INFO)
+          vim.notify("Reverted change " .. M.get_change_id(change, true), vim.log.levels.INFO)
         end,
       })
     ),
@@ -462,10 +474,10 @@ function M.object_edit(ctx, file, change, opts)
   local lopts = opts or {}
   lopts.edit_cmd = lopts.edit_cmd or vim.cmd.e
   local filename = vim.fs.joinpath(ctx.root, file and file.filename or "")
-  if not file or change.status ~= M.CHANGE_STATUS.CURRENT then
+  if not file or not change.current_working_copy then
     filename = parsers.join_url({
       root = ctx.root,
-      revision = change.id,
+      revision = M.get_change_id(change),
       path = file and file.filename or nil,
     })
   end
@@ -543,7 +555,7 @@ function M.file_restore(ctx, file, change, opts)
   assert(file, "File not provided: file")
   assert(change, "Change not provided: change")
   local lopts = opts or {}
-  if change.status ~= M.CHANGE_STATUS.CURRENT then
+  if not change.current_working_copy then
     vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
     return false
   end
@@ -676,6 +688,8 @@ function M.setup()
         id = object.change_id and object.change_id or "@",
         ---@diagnostic disable-next-line: assign-type-mismatch
         status = object.change_id and object.change_id ~= "@" and M.CHANGE_STATUS.IMMUTABLE or M.CHANGE_STATUS.CURRENT,
+        immutable = object.change_id ~= "@",
+        current_working_copy = object.change_id ~= "@",
       })
     end
   end

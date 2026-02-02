@@ -18,7 +18,7 @@ syn match jiejieHeaderValueReset /‡/ contained conceal nextgroup=jiejieHeaderV
 syn match jiejieElided /^\~  .*$/
 
 syn region jiejieChangeSection start=/^[╮├─╯│ ]*\zs[@×◆◇○][╮├─╯│ ]*  / end=/^\%([╮├─╯│ ]*[@×◆◇○]\)\@=/ fold
-syn match jiejieChangeGraph /[├╮─╯│ ]*  / contained nextgroup=jiejieChangeIdShort skipwhite
+syn match jiejieChangeGraph /[├╮─╯│ ]*  / contained nextgroup=jiejieChangeIdShort,jiejieChangeIdShortDivergent skipwhite
 syn match jiejieChangeStatusHead /○/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusMutable /◇/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusCurrent /@/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
@@ -43,8 +43,13 @@ syn match jiejieConflictSeparator /∬/ contained conceal nextgroup=jiejieConfli
 syn match jiejieImmutableSeparator /∮/ contained conceal nextgroup=jiejieImmutable
 syn match jiejieChangeIdSeparator /∴/ contained conceal nextgroup=jiejieChangeId
 syn match jiejieAuthorEmailSeparator /∵/ contained conceal nextgroup=jiejieAuthorEmail
+syn match jiejieDivergentSeparator /∶/ contained conceal nextgroup=jiejieDivergent
+syn match jiejieCommitIdSeparator /∷/ contained conceal nextgroup=jiejieCommitId
+syn match jiejieWorkingCopySeparator /∼/ contained conceal nextgroup=jiejieWorkingCopy
+syn match jiejieParentsSeparator /∾/ contained conceal nextgroup=jiejieParents
 
 syn match jiejieChangeIdShort /[a-z]\+\t/ contained nextgroup=jiejieEmptyChangeSeparator
+syn match jiejieChangeIdShortDivergent /[a-z]\+??\t/ contained nextgroup=jiejieEmptyChangeSeparator
 syn match jiejieChangeEmpty /\((empty) \)\?/ contained nextgroup=jiejieMessageSeparator
 syn match jiejieChangeMessage /[^⌠]*/ contained nextgroup=jiejieBookmarkSeparator
 syn match jiejieChangeMessageEmpty /(no description set)/ contained nextgroup=jiejieBookmarkSeparator
@@ -54,7 +59,11 @@ syn match jiejieGitHead /\( git_head()\)\?/ contained nextgroup=jiejieConflictSe
 syn match jiejieConflict /\( conflict\)\?/ contained nextgroup=jiejieImmutableSeparator
 syn match jiejieImmutable /\( immutable\)\?/ contained conceal nextgroup=jiejieChangeIdSeparator
 syn match jiejieChangeId /[^∵]\+/ contained conceal nextgroup=jiejieAuthorEmailSeparator
-syn match jiejieAuthorEmail /.\+/ contained
+syn match jiejieAuthorEmail /[^∶]\+/ contained nextgroup=jiejieDivergentSeparator
+syn match jiejieDivergent /\( divergent\)\?/ contained conceal nextgroup=jiejieCommitIdSeparator
+syn match jiejieCommitId /[a-z0-9]\+/ contained conceal nextgroup=jiejieWorkingCopySeparator
+syn match jiejieWorkingCopy /\( current working copy\)\?/ contained conceal nextgroup=jiejieParentsSeparator
+syn match jiejieParents /[0-9]\+/ contained conceal
 
 hi def link jiejieHeader Identifier
 hi def link jiejieHeaderValue Special
@@ -79,6 +88,7 @@ hi def link jiejieFileCopied Type
 hi def link jiejieElided NonText
 hi def link jiejieGitHead Include
 hi def link jiejieChangeIdShort Identifier
+hi def link jiejieChangeIdShortDivergent Error
 hi def link jiejieBookmark Constant
 hi def link jiejieTag Tag
 hi def link jiejieConflict Error

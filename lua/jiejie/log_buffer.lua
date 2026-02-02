@@ -375,7 +375,7 @@ function M.setup_buffer(ctx)
       key = "cbc",
       fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
-          args = { "create", "-r", args.src_change.id, args.bookmark },
+          args = { "create", "-r", commands.get_change_id(args.src_change), args.bookmark },
           on_exit = function()
             vim.notify("Bookmark created: " .. args.bookmark, vim.log.levels.INFO)
           end,
@@ -440,9 +440,9 @@ function M.setup_buffer(ctx)
       key = "cbm",
       fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "bookmark", {
-          args = { "move", args.bookmark, "-t", args.src_change.id },
+          args = { "move", args.bookmark, "-t", commands.get_change_id(args.src_change) },
           on_exit = function()
-            vim.notify("Bookmark " .. args.bookmark .. " moved to change " .. args.src_change.id_short, vim.log.levels.INFO)
+            vim.notify("Bookmark " .. args.bookmark .. " moved to change " .. commands.get_change_id(args.src_change, true), vim.log.levels.INFO)
           end,
         })
         return true
@@ -469,7 +469,7 @@ function M.setup_buffer(ctx)
       key = "cc",
       fn = helpers.search_file(
         helpers.search_change(function(args)
-          if args.src_change.status ~= commands.CHANGE_STATUS.CURRENT then
+          if not args.src_change.current_working_copy then
             vim.notify("Commit not possible, curser is not on the currently edited change", vim.log.levels.ERROR)
             return false
           end
@@ -484,9 +484,12 @@ function M.setup_buffer(ctx)
       key = "cd",
       fn = helpers.search_change(helpers.with_target_change(function(args)
         commands.cli(args.ctx, "duplicate", {
-          args = jujutsu.ignore_immtuable({ "-d", args.dst_change.id, args.src_change.id }, { force = args.force }),
+          args = jujutsu.ignore_immtuable({ "-d", commands.get_change_id(args.dst_change), commands.get_change_id(args.src_change) }, { force = args.force }),
           on_exit = function()
-            vim.notify("Duplicated change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
+            vim.notify(
+              "Duplicated change " .. commands.get_change_id(args.src_change, true) .. " onto " .. commands.get_change_id(args.dst_change, true),
+              vim.log.levels.INFO
+            )
           end,
         })
         return true
@@ -514,7 +517,7 @@ function M.setup_buffer(ctx)
     {
       key = "s<space>",
       fn = helpers.search_change(function(args)
-        vim.fn.feedkeys(":Jj squash -f " .. args.src_change.id_short .. " ", "n")
+        vim.fn.feedkeys(":Jj squash -f " .. commands.get_change_id(args.src_change, true) .. " ", "n")
         return true
       end),
       desc = 'Populate command line with ":Jj squash "',
@@ -524,8 +527,7 @@ function M.setup_buffer(ctx)
       fn = helpers.search_file(
         helpers.search_change(function(args)
           local src_change, dst_change
-          local src_is_current_change = args.src_change.status == commands.CHANGE_STATUS.CURRENT
-          if not src_is_current_change then
+          if not args.src_change.current_working_copy then
             src_change = { id = "@", id_short = "@" }
             dst_change = args.src_change
           else
@@ -535,7 +537,7 @@ function M.setup_buffer(ctx)
             args.ctx,
             ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
             src_change,
-            { files = { src_is_current_change and args.file and args.file.filename or nil }, dst_change = dst_change, force = args.force }
+            { files = { args.src_change.current_working_copy and args.file and args.file.filename or nil }, dst_change = dst_change, force = args.force }
           )
           return true
         end),
@@ -564,7 +566,7 @@ function M.setup_buffer(ctx)
       key = "ctc",
       fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
         commands.cli(args.ctx, "tag", {
-          args = { "set", "-r", args.src_change.id, args.tag },
+          args = { "set", "-r", commands.get_change_id(args.src_change), args.tag },
           on_exit = function()
             vim.notify("Tag created: " .. args.tag, vim.log.levels.INFO)
           end,
@@ -578,9 +580,9 @@ function M.setup_buffer(ctx)
       fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
           commands.cli(args.ctx, "tag", {
-            args = { "set", "-r", args.src_change.id, "--allow-move", args.tag },
+            args = { "set", "-r", commands.get_change_id(args.src_change), "--allow-move", args.tag },
             on_exit = function()
-              vim.notify("Tag " .. args.tag .. " moved to change " .. args.src_change.id_short, vim.log.levels.INFO)
+              vim.notify("Tag " .. args.tag .. " moved to change " .. commands.get_change_id(args.src_change), vim.log.levels.INFO)
             end,
           })
           return true
@@ -681,7 +683,7 @@ function M.setup_buffer(ctx)
     {
       key = "r<space>",
       fn = helpers.search_change(function(args)
-        vim.fn.feedkeys(":Jj rebase -s " .. args.src_change.id_short .. " ", "n")
+        vim.fn.feedkeys(":Jj rebase -s " .. commands.get_change_id(args.src_change, true) .. " ", "n")
         return true
       end),
       desc = 'Populate command line with ":Jj rebase "',
@@ -690,9 +692,15 @@ function M.setup_buffer(ctx)
       key = "rr",
       fn = helpers.search_change(helpers.with_target_change(function(args)
         commands.cli(args.ctx, "rebase", {
-          args = jujutsu.ignore_immtuable({ "-s", args.src_change.id, "-d", args.dst_change.id }, { force = args.force }),
+          args = jujutsu.ignore_immtuable(
+            { "-s", commands.get_change_id(args.src_change), "-d", commands.get_change_id(args.dst_change) },
+            { force = args.force }
+          ),
           on_exit = function()
-            vim.notify("Rebased change tree " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
+            vim.notify(
+              "Rebased change tree " .. commands.get_change_id(args.src_change, true) .. " onto " .. commands.get_change_id(args.dst_change, true),
+              vim.log.levels.INFO
+            )
           end,
         })
         return true
@@ -704,9 +712,15 @@ function M.setup_buffer(ctx)
       key = "ro",
       fn = helpers.search_change(helpers.with_target_change(function(args)
         commands.cli(args.ctx, "rebase", {
-          args = jujutsu.ignore_immtuable({ "-r", args.src_change.id, "-d", args.dst_change.id }, { force = args.force }),
+          args = jujutsu.ignore_immtuable(
+            { "-r", commands.get_change_id(args.src_change), "-d", commands.get_change_id(args.dst_change) },
+            { force = args.force }
+          ),
           on_exit = function()
-            vim.notify("Rebased change " .. args.src_change.id_short .. " onto " .. args.dst_change.id_short, vim.log.levels.INFO)
+            vim.notify(
+              "Rebased change " .. commands.get_change_id(args.src_change, true) .. " onto " .. commands.get_change_id(args.dst_change, true),
+              vim.log.levels.INFO
+            )
           end,
         })
         return true
