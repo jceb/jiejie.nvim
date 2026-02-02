@@ -219,8 +219,12 @@ g1, g2, g...            Set log view.
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.
 
-                                                            *jiejie_gq* *jiejie_q*
-gq                      Close the summary window.
+                                                                      *jiejie_q*
+q                       Close the summary window and the preview window, if
+                        open.
+
+                                                                     *jiejie_qq*
+gq                      Close the preview window.
 
                                                                       *jiejie_R*
 R                       Reload log.

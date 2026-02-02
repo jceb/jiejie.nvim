@@ -749,16 +749,33 @@ function M.setup_buffer(ctx)
     {
       key = "gq",
       fn = function()
-        vim.api.nvim_win_close(0, true)
+        -- close preview window if it has filetype jiejie_change
+        for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if vim.wo[_winid].previewwindow then
+            local bufid = vim.api.nvim_win_get_buf(_winid)
+            if vim.bo[bufid].filetype == "jiejie_change" then
+              vim.api.nvim_win_close(_winid, true)
+            end
+          end
+        end
       end,
-      desc = "Close the summary window",
+      desc = "Close the preview window",
     },
     {
       key = "q",
       fn = function()
+        -- close preview window if it has filetype jiejie_change
+        for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if vim.wo[_winid].previewwindow then
+            local bufid = vim.api.nvim_win_get_buf(_winid)
+            if vim.bo[bufid].filetype == "jiejie_change" then
+              vim.api.nvim_win_close(_winid, true)
+            end
+          end
+        end
         vim.api.nvim_win_close(0, true)
       end,
-      desc = "Close the summary window",
+      desc = "Close the summary window and the preview window, if open",
     },
     {
       key = ".",
