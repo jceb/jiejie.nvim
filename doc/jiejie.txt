@@ -14,7 +14,7 @@ CONFIGURATION                                                    *jiejie-config*
 COMMANDS                                                       *jiejie-commands*
 
                                                                             *:J*
-:J {args}               Same as :Jj, but one character shorter.
+:J [args]               Same as :Jj, but one character shorter.
 
                                                                 *jiejie-summary*
 :Jj                     With no arguments, bring up a log window. If a summary
@@ -23,7 +23,7 @@ COMMANDS                                                       *jiejie-commands*
                         Press g? or see |jiejie-maps| for usage.
 
                                                                            *:Jj*
-:Jj! {args}             Run an arbitrary jj command and display any output.
+:Jj[!] [args]            Run an arbitrary jj command and display any output.
                         With <bang>, add `--ignore-immutuable` to the command.
 
                                                                         *:Jedit*
@@ -106,11 +106,23 @@ cc                      Commit currently edited change and create a new
                         change.
 
                                                                      *jiejie_cd*
-cd                      Duplicate change under the cursor.
+cD                      Duplicate change under the cursor.
 
                                                                     *jiejie_!cd*
-!cd                     Duplicate change under the cursor, ignoring
+!cD                     Duplicate change under the cursor, ignoring
                         immutablily settings.
+
+                                                                     *jiejie_dd*
+cd                      Edit first line of change description.
+
+                                                                    *jiejie_!dd*
+!cd                     Edit first line of an immutable change description.
+
+                                                                     *jiejie_de*
+ce                      Edit change description.
+
+                                                                    *jiejie_!de*
+!ce                     Edit immutable change description.
 
                                                                      *jiejie_cn*
 cn                      Create a new change after the change under the cursor.
@@ -153,18 +165,6 @@ ctX                     Delete tag.
 
                                                                     *jiejie_ctx*
 ctx                     Delete tag at change under the cursor.
-
-                                                                     *jiejie_dd*
-dd                      Edit first line of change description.
-
-                                                                    *jiejie_!dd*
-!dd                     Edit first line of an immutable change description.
-
-                                                                     *jiejie_de*
-de                      Edit change description.
-
-                                                                    *jiejie_!de*
-!de                     Edit immutable change description.
 
                                                                      *jiejie_cU*
 cU                      Revert last operation.

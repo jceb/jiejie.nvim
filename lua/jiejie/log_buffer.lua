@@ -481,7 +481,7 @@ function M.setup_buffer(ctx)
       desc = "Commit currently edited change and create a new change",
     },
     {
-      key = "cd",
+      key = "cD",
       fn = helpers.search_change(helpers.with_target_change(function(args)
         commands.cli(args.ctx, "duplicate", {
           args = jujutsu.ignore_immtuable({ "-d", commands.get_change_id(args.dst_change), commands.get_change_id(args.src_change) }, { force = args.force }),
@@ -496,6 +496,24 @@ function M.setup_buffer(ctx)
       end, { err_notify = false, defualt_target = "@" })),
       with_force = true,
       desc = "Duplicate change under the cursor",
+    },
+    {
+      key = "ce",
+      fn = helpers.search_change(function(args)
+        commands.change_describe(args.ctx, args.src_change, { force = args.force })
+        return true
+      end),
+      with_force = true,
+      desc = "Edit change description",
+    },
+    {
+      key = "cd",
+      fn = helpers.search_change(function(args)
+        commands.change_describe(args.ctx, args.src_change, { firstline = true, force = args.force })
+        return true
+      end),
+      with_force = true,
+      desc = "Edit first line of change description",
     },
     {
       key = "cn",
@@ -622,24 +640,6 @@ function M.setup_buffer(ctx)
         { tags = true }
       ),
       desc = "Delete tag at change under the cursor",
-    },
-    {
-      key = "de",
-      fn = helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change, { force = args.force })
-        return true
-      end),
-      with_force = true,
-      desc = "Edit change description",
-    },
-    {
-      key = "dd",
-      fn = helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change, { firstline = true, force = args.force })
-        return true
-      end),
-      with_force = true,
-      desc = "Edit first line of change description",
     },
     {
       key = "cU",

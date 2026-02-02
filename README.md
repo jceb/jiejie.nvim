@@ -26,11 +26,11 @@ system. The design is heavily inspired by
   - Add `!` prefix to mappings for modification of immutable changes
   - Edit change (`<CR>`)
   - Pull and push changes to git (`gp`, `gP`)
-  - Modify change description in editor (`de`) or quick edit first line (`dd`)
+  - Modify change description in editor (`ce`) or quick edit first line (`cd`)
   - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)
   - Squash change or file into parent or into change under cursor (`cs`, `cS`)
-  - Duplicate change under the cursor (`cd`)
+  - Duplicate change under the cursor (`cD`)
   - Revert change under the cursor (`crc`)
   - Abandon change or file under the cursor (`X`)
   - Rebase change tree or individual change (`rr`, `ro`)
