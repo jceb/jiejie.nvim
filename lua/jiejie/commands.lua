@@ -629,13 +629,14 @@ end
 
 --- Configure commands
 function M.setup()
+  --- @param args vim.api.keyset.create_user_command.command_args Command arguments
   local cmd_jj = function(args)
     local ctx = context.get_context()
     if ctx then
       if #args.fargs == 0 then
         M.show_log(ctx, args.smods.vertical)
       else
-        M.cli(ctx, args.fargs[1], { args = vim.list_slice(args.fargs, 2) })
+        M.cli(ctx, args.fargs[1], { args = jujutsu.ignore_immtuable(vim.list_slice(args.fargs, 2), { force = args.bang }) })
       end
     end
   end

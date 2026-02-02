@@ -14,7 +14,7 @@ CONFIGURATION                                                    *jiejie-config*
 COMMANDS                                                       *jiejie-commands*
 
                                                                             *:J*
-:J [args]               Same as :Jj, but one character shorter.
+:J {args}               Same as :Jj, but one character shorter.
 
                                                                 *jiejie-summary*
 :Jj                     With no arguments, bring up a log window. If a summary
@@ -23,7 +23,8 @@ COMMANDS                                                       *jiejie-commands*
                         Press g? or see |jiejie-maps| for usage.
 
                                                                            *:Jj*
-:Jj {args}              Run an arbitrary git command and display any output.
+:Jj! {args}             Run an arbitrary jj command and display any output.
+                        With <bang>, add `--ignore-immutuable` to the command.
 
                                                                         *:Jedit*
 :Jedit [object]         |:edit| a |jiejie-object|.
