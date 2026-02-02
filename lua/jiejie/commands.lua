@@ -521,7 +521,7 @@ function M.object_edit(ctx, file, change, opts)
       local id
       id = vim.api.nvim_create_autocmd("BufReadPost", {
         buffer = _bufid,
-        callback = function(ev)
+        callback = function()
           vim.api.nvim_del_autocmd(id)
           vim.api.nvim_win_set_cursor(vim.api.nvim_get_current_win(), { cursor_line, 0 })
         end,
@@ -630,10 +630,13 @@ end
 --- Configure commands
 function M.setup()
   local cmd_jj = function(args)
-    if #args.fargs == 0 then
-      M.show_log(context.get_context(), args.smods.vertical)
-    else
-      M.cli(context.get_context(), args.fargs[1], { args = vim.list_slice(args.fargs, 2) })
+    local ctx = context.get_context()
+    if ctx then
+      if #args.fargs == 0 then
+        M.show_log(ctx, args.smods.vertical)
+      else
+        M.cli(ctx, args.fargs[1], { args = vim.list_slice(args.fargs, 2) })
+      end
     end
   end
   local cmd_jedit = function(args)
@@ -659,19 +662,21 @@ function M.setup()
       root = jujutsu.get_root(directory)
     end
     local ctx = context.get_context(root)
-    if not vim.startswith(object.filename, ctx.root) then
-      error("Unable to determine jj root directory")
+    if ctx then
+      if not vim.startswith(object.filename, ctx.root) then
+        error("Unable to determine jj root directory")
+      end
+      if not path then
+        path = vim.fn.trim(vim.fn.strpart(object.filename, #ctx.root), "/", 1)
+      end
+      -- hacky construction of the exact data that's required for object_edit
+      ---@diagnostic disable-next-line: missing-fields
+      M.object_edit(ctx, { filename = path }, {
+        id = object.change_id and object.change_id or "@",
+        ---@diagnostic disable-next-line: assign-type-mismatch
+        status = object.change_id and object.change_id ~= "@" and M.CHANGE_STATUS.IMMUTABLE or M.CHANGE_STATUS.CURRENT,
+      })
     end
-    if not path then
-      path = vim.fn.trim(vim.fn.strpart(object.filename, #ctx.root), "/", 1)
-    end
-    -- hacky construction of the exact data that's required for object_edit
-    ---@diagnostic disable-next-line: missing-fields
-    M.object_edit(ctx, { filename = path }, {
-      id = object.change_id and object.change_id or "@",
-      ---@diagnostic disable-next-line: assign-type-mismatch
-      status = object.change_id and object.change_id ~= "@" and M.CHANGE_STATUS.IMMUTABLE or M.CHANGE_STATUS.CURRENT,
-    })
   end
   local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*", range = 2 }
   -- TODO: define command only for buffers that are related to a repository
