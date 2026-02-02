@@ -10,7 +10,7 @@ local M = {}
 function M.parse_change(line, linenr)
   local match = vim.fn.matchlist(
     line,
-    [[^[╮├─╯│ ]*\([@×◆◇○]\)[╮├─╯│ ]*  \([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
+    [[^[╭╮├┤╰─╯│ ]*\([@×◆◇○]\)[╭╮├┤╰─╯│ ]*  \([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
   )
   if #match == 0 then
     return nil
@@ -88,7 +88,7 @@ end
 --- @param linenr number Line number in log buffer that contains filename
 --- @return ModifiedFile?
 function M.parse_filename(line, linenr)
-  local match = vim.fn.matchlist(line, [[^[╮├─╯│ ]\+  \([MADRC]\) \(.\+\)$]])
+  local match = vim.fn.matchlist(line, [[^[╭╮├┤╰─╯│ ]\+  \([MADRC]\) \(.\+\)$]])
   if #match == 0 then
     return nil
   end
@@ -209,7 +209,13 @@ end
 --- @param url JiejieURL
 --- @return string
 function M.join_url(url)
-  return "jiejie://" .. url.root .. "/.jj/" .. url.revision .. "/" .. (url.path or "")
+  local filename
+  if url.revision == "@" then
+    filename = vim.fs.joinpath(url.root, url.path or "")
+  else
+    filename = "jiejie://" .. url.root .. "/.jj/" .. url.revision .. "/" .. (url.path or "")
+  end
+  return filename
 end
 
 return M

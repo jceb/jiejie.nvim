@@ -144,8 +144,36 @@ function M.setup_buffer(ctx)
     -- disable keys that would cause a modification of the buffer
     vim.keymap.set("", key, "<Nop>", { buffer = true })
   end
-  local commands = require("jiejie.commands")
-  --- @type table<number, {key: string, fn: fun(), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
+  local api = require("jiejie.api")
+  --- @type table<string, fun(opts?: {}): fun()>
+  local fns = {
+    --- @param opts {split_direction?: SplitDirection, diff_commit_under_cursor?: boolean}
+    --- - split_direction: Split direction
+    --- - diff_commit_under_cursor: Diff commit under against its parents instead of diffing against @
+    dd = function(opts)
+      return helpers.search_file(helpers.search_change(function(args)
+        local lopts = opts or {}
+        --- @type RepositoryPath[]
+        local files = {}
+        if args.src_change.current_working_copy or lopts.diff_commit_under_cursor then
+          table.insert(files, { path = args.file.filename, change = args.src_change })
+          local ancestors = api.get_ancestors(ctx, args.src_change)
+          for _, change in ipairs(ancestors) do
+            table.insert(files, { path = args.file.filename, change = change })
+          end
+        else
+          --- @type Change
+          ---@diagnostic disable-next-line: missing-fields
+          local working_copy_change = api.construct_dummy_change("@")
+          table.insert(files, { path = args.file.filename, change = working_copy_change })
+          table.insert(files, { path = args.file.filename, change = args.src_change })
+        end
+        api.diff_split(args.ctx, files, { split_direction = lopts.split_direction, previous_win = true, open_first_file = true })
+        return true
+      end))
+    end,
+  }
+  --- @type table<number, {key: string, fn: fun(args?: WithArgs), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
   local nmaps = {
     --
 
@@ -157,9 +185,10 @@ function M.setup_buffer(ctx)
           helpers.search_file(
             helpers.search_change(function(args)
               if args.pos_change then
-                commands.change_edit(args.ctx, args.pos_change, { force = args.force })
+                api.change_edit(args.ctx, args.pos_change, { force = args.force })
               elseif args.file then
-                commands.object_edit(args.ctx, args.file, args.src_change, { previous_win = true, hunk = args.hunk })
+                log_diff.diff_close(args.ctx)
+                api.object_edit(args.ctx, args.file.filename, args.src_change, { previous_win = true, hunk = args.hunk })
               else
                 vim.schedule(function()
                   vim.notify("No file or change found under the curor", vim.log.levels.WARN)
@@ -179,7 +208,8 @@ function M.setup_buffer(ctx)
     {
       key = "o",
       fn = helpers.search_file(helpers.search_change(function(args)
-        commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.sp })
+        log_diff.diff_close(args.ctx)
+        api.object_edit(args.ctx, args.file.filename, args.src_change, { edit_cmd = vim.cmd.sp })
         return true
       end)),
       desc = "Open the file or jiejie-object under the cursor in a new split",
@@ -187,7 +217,8 @@ function M.setup_buffer(ctx)
     {
       key = "gO",
       fn = helpers.search_file(helpers.search_change(function(args)
-        commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.vnew })
+        log_diff.diff_close(args.ctx)
+        api.object_edit(args.ctx, args.file.filename, args.src_change, { edit_cmd = vim.cmd.vs })
         return true
       end)),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
@@ -195,7 +226,8 @@ function M.setup_buffer(ctx)
     {
       key = "O",
       fn = helpers.search_file(helpers.search_change(function(args)
-        commands.object_edit(args.ctx, args.file, args.src_change, { edit_cmd = vim.cmd.tabnew })
+        log_diff.diff_close(args.ctx)
+        api.object_edit(args.ctx, args.file.filename, args.src_change, { edit_cmd = vim.cmd.tabe })
         return true
       end)),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
@@ -247,7 +279,7 @@ function M.setup_buffer(ctx)
     {
       key = "K",
       fn = helpers.search_change(function(args)
-        commands.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit })
+        api.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit })
         return true
       end),
       desc = "Open change under the cursor",
@@ -355,12 +387,66 @@ function M.setup_buffer(ctx)
       key = "=",
       fn = helpers.search_file(
         helpers.search_change(function(args)
-          commands.toggle_diff(args.ctx, args.src_change, { file = args.file })
+          api.toggle_diff(args.ctx, args.src_change, { file = args.file })
           return true
         end),
         { err_continue = true }
       ),
       desc = "Toggle an inline diff of the change or file under the cursor",
+    },
+    {
+      key = "dD",
+      fn = fns.dd({ diff_commit_under_cursor = true }),
+      desc = "Perform a :Jdiffsplit on the file and change under the cursor.",
+    },
+    {
+      key = "dd",
+      fn = fns.dd(),
+      desc = "Perform a :Jdiffsplit on the file under the cursor and change @.",
+    },
+    {
+      key = "dV",
+      fn = fns.dd({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.vertical }),
+      desc = "Perform a :Jvdiffsplit on the file and change under the cursor.",
+    },
+    {
+      key = "dv",
+      fn = fns.dd({ split_direction = api.SPLIT_DIRECTION.vertical }),
+      desc = "Perform a :Jvdiffsplit on the file under the cursor and change @.",
+    },
+    {
+      key = "dH",
+      fn = fns.dd({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
+      desc = "Perform a :Jhdiffsplit on the file and change under the cursor.",
+    },
+    {
+      key = "dh",
+      fn = fns.dd({ split_direction = api.SPLIT_DIRECTION.horizontal }),
+      desc = "Perform a :Jhdiffsplit on the file under the cursor and change @.",
+    },
+    {
+      key = "dS",
+      fn = fns.dd({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
+      desc = "Perform a :Jhdiffsplit on the file and change under the cursor.",
+    },
+    {
+      key = "ds",
+      fn = fns.dd({ split_direction = api.SPLIT_DIRECTION.horizontal }),
+      desc = "Perform a :Jhdiffsplit on the file under the cursor and change @.",
+    },
+    {
+      key = "dq",
+      fn = function(args)
+        log_diff.diff_close(args.ctx)
+      end,
+      desc = "Close all but the currently focused diff buffer, and invoke :diffoff!",
+    },
+    {
+      key = "d?",
+      fn = function()
+        api.show_help("d")
+      end,
+      desc = "Show diff maps help",
     },
 
     -- Commit maps {{{1
@@ -374,8 +460,8 @@ function M.setup_buffer(ctx)
     {
       key = "cbc",
       fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        commands.cli(args.ctx, "bookmark", {
-          args = { "create", "-r", commands.get_change_id(args.src_change), args.bookmark },
+        api.cli(args.ctx, "bookmark", {
+          args = { "create", "-r", api.get_change_id(args.src_change), args.bookmark },
           on_exit = function()
             vim.notify("Bookmark created: " .. args.bookmark, vim.log.levels.INFO)
           end,
@@ -387,7 +473,7 @@ function M.setup_buffer(ctx)
     {
       key = "cbX",
       fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        commands.cli(args.ctx, "bookmark", {
+        api.cli(args.ctx, "bookmark", {
           args = { "delete", args.bookmark },
           on_exit = function()
             vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
@@ -400,7 +486,7 @@ function M.setup_buffer(ctx)
     {
       key = "cbx",
       fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
-        commands.cli(args.ctx, "bookmark", {
+        api.cli(args.ctx, "bookmark", {
           args = { "delete", args.bookmark },
           on_exit = function()
             vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
@@ -413,7 +499,7 @@ function M.setup_buffer(ctx)
     {
       key = "cbF",
       fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        commands.cli(args.ctx, "bookmark", {
+        api.cli(args.ctx, "bookmark", {
           args = { "forget", args.bookmark },
           on_exit = function()
             vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
@@ -426,7 +512,7 @@ function M.setup_buffer(ctx)
     {
       key = "cbf",
       fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
-        commands.cli(args.ctx, "bookmark", {
+        api.cli(args.ctx, "bookmark", {
           args = { "forget", args.bookmark },
           on_exit = function()
             vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
@@ -439,7 +525,7 @@ function M.setup_buffer(ctx)
     {
       key = "cbM",
       fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        commands.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
+        api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
         return true
       end))),
       with_force = true,
@@ -449,7 +535,7 @@ function M.setup_buffer(ctx)
       key = "cbm",
       fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          commands.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
+          api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
           return true
         end)),
         { revisions = "::@" }
@@ -461,7 +547,7 @@ function M.setup_buffer(ctx)
       key = "cbr",
       fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
         helpers.with_bookmark_or_tag(function(_args)
-          commands.cli(args.ctx, "bookmark", {
+          api.cli(args.ctx, "bookmark", {
             args = { "rename", args.bookmark, _args.bookmark },
             on_exit = function()
               vim.notify("Bookmark renamed: " .. args.bookmark, vim.log.levels.INFO)
@@ -481,7 +567,7 @@ function M.setup_buffer(ctx)
             vim.notify("Commit not possible, curser is not on the currently edited change", vim.log.levels.ERROR)
             return false
           end
-          commands.change_commit(args.ctx, { files = { args.file and args.file.filename or nil } })
+          api.change_commit(args.ctx, { files = { args.file and args.file.filename or nil } })
           return true
         end),
         { err_continue = true }
@@ -491,11 +577,11 @@ function M.setup_buffer(ctx)
     {
       key = "cD",
       fn = helpers.search_change(helpers.with_target_change(function(args)
-        commands.cli(args.ctx, "duplicate", {
-          args = jujutsu.ignore_immtuable({ "-d", commands.get_change_id(args.dst_change), commands.get_change_id(args.src_change) }, { force = args.force }),
+        api.cli(args.ctx, "duplicate", {
+          args = jujutsu.ignore_immtuable({ "-d", api.get_change_id(args.dst_change), api.get_change_id(args.src_change) }, { force = args.force }),
           on_exit = function()
             vim.notify(
-              "Duplicated change " .. commands.get_change_id(args.src_change, true) .. " onto " .. commands.get_change_id(args.dst_change, true),
+              "Duplicated change " .. api.get_change_id(args.src_change, true) .. " onto " .. api.get_change_id(args.dst_change, true),
               vim.log.levels.INFO
             )
           end,
@@ -508,7 +594,7 @@ function M.setup_buffer(ctx)
     {
       key = "ce",
       fn = helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change, { force = args.force })
+        api.change_describe(args.ctx, args.src_change, { force = args.force })
         return true
       end),
       with_force = true,
@@ -517,7 +603,7 @@ function M.setup_buffer(ctx)
     {
       key = "cd",
       fn = helpers.search_change(function(args)
-        commands.change_describe(args.ctx, args.src_change, { firstline = true, force = args.force })
+        api.change_describe(args.ctx, args.src_change, { firstline = true, force = args.force })
         return true
       end),
       with_force = true,
@@ -526,7 +612,7 @@ function M.setup_buffer(ctx)
     {
       key = "cn",
       fn = helpers.search_change(function(args)
-        commands.change_new(args.ctx, args.src_change, { force = args.force })
+        api.change_new(args.ctx, args.src_change, { force = args.force })
         return true
       end),
       with_force = true,
@@ -535,7 +621,7 @@ function M.setup_buffer(ctx)
     {
       key = "crc",
       fn = helpers.search_change(function(args)
-        commands.change_revert(args.ctx, args.src_change)
+        api.change_revert(args.ctx, args.src_change)
         return true
       end),
       desc = "Revert the commit under the cursor",
@@ -543,7 +629,7 @@ function M.setup_buffer(ctx)
     {
       key = "s<space>",
       fn = helpers.search_change(function(args)
-        vim.fn.feedkeys(":Jj squash -f " .. commands.get_change_id(args.src_change, true) .. " ", "n")
+        vim.fn.feedkeys(":Jj squash -f " .. api.get_change_id(args.src_change, true) .. " ", "n")
         return true
       end),
       desc = 'Populate command line with ":Jj squash "',
@@ -554,12 +640,12 @@ function M.setup_buffer(ctx)
         helpers.search_change(function(args)
           local src_change, dst_change
           if not args.src_change.current_working_copy then
-            src_change = { id = "@", id_short = "@" }
+            src_change = api.construct_dummy_change("@")
             dst_change = args.src_change
           else
             src_change = args.src_change
           end
-          commands.change_squash(
+          api.change_squash(
             args.ctx,
             ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
             src_change,
@@ -576,7 +662,7 @@ function M.setup_buffer(ctx)
       key = "cS",
       fn = helpers.search_file(
         helpers.search_change(helpers.with_target_change(function(args)
-          commands.change_squash(
+          api.change_squash(
             args.ctx,
             args.src_change,
             { dst_change = args.dst_change, files = { args.file and args.file.filename or nil }, force = args.force }
@@ -591,8 +677,8 @@ function M.setup_buffer(ctx)
     {
       key = "ctc",
       fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        commands.cli(args.ctx, "tag", {
-          args = { "set", "-r", commands.get_change_id(args.src_change), args.tag },
+        api.cli(args.ctx, "tag", {
+          args = { "set", "-r", api.get_change_id(args.src_change), args.tag },
           on_exit = function()
             vim.notify("Tag created: " .. args.tag, vim.log.levels.INFO)
           end,
@@ -605,10 +691,10 @@ function M.setup_buffer(ctx)
       key = "ctm",
       fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          commands.cli(args.ctx, "tag", {
-            args = { "set", "-r", commands.get_change_id(args.src_change), "--allow-move", args.tag },
+          api.cli(args.ctx, "tag", {
+            args = { "set", "-r", api.get_change_id(args.src_change), "--allow-move", args.tag },
             on_exit = function()
-              vim.notify("Tag " .. args.tag .. " moved to change " .. commands.get_change_id(args.src_change), vim.log.levels.INFO)
+              vim.notify("Tag " .. args.tag .. " moved to change " .. api.get_change_id(args.src_change), vim.log.levels.INFO)
             end,
           })
           return true
@@ -621,7 +707,7 @@ function M.setup_buffer(ctx)
       key = "ctX",
       fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          commands.cli(args.ctx, "tag", {
+          api.cli(args.ctx, "tag", {
             args = { "delete", args.tag },
             on_exit = function()
               vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
@@ -637,7 +723,7 @@ function M.setup_buffer(ctx)
       key = "ctx",
       fn = helpers.with_bookmarks_or_tags(
         helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          commands.cli(args.ctx, "tag", {
+          api.cli(args.ctx, "tag", {
             args = { "delete", args.tag },
             on_exit = function()
               vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
@@ -653,7 +739,7 @@ function M.setup_buffer(ctx)
       key = "cU",
       --- @type fun(args?: WithArgs): boolean Callback function
       fn = function(args)
-        commands.cli(args.ctx, "op", {
+        api.cli(args.ctx, "op", {
           args = { "revert" },
           on_exit = function()
             vim.notify("Operation reverted.", vim.log.levels.INFO)
@@ -669,9 +755,9 @@ function M.setup_buffer(ctx)
         helpers.search_file(
           helpers.search_change(function(args)
             if args.pos_change then
-              commands.change_abandon(args.ctx, args.pos_change, { force = args.force })
+              api.change_abandon(args.ctx, args.pos_change, { force = args.force })
             elseif args.file then
-              commands.file_restore(args.ctx, args.file, args.src_change, { force = args.force })
+              api.file_restore(args.ctx, args.file, args.src_change, { force = args.force })
             else
               vim.schedule(function()
                 vim.notify("No file or change found under the curor", vim.log.levels.WARN)
@@ -691,7 +777,7 @@ function M.setup_buffer(ctx)
     {
       key = "r<space>",
       fn = helpers.search_change(function(args)
-        vim.fn.feedkeys(":Jj rebase -s " .. commands.get_change_id(args.src_change, true) .. " ", "n")
+        vim.fn.feedkeys(":Jj rebase -s " .. api.get_change_id(args.src_change, true) .. " ", "n")
         return true
       end),
       desc = 'Populate command line with ":Jj rebase "',
@@ -699,14 +785,11 @@ function M.setup_buffer(ctx)
     {
       key = "rr",
       fn = helpers.search_change(helpers.with_target_change(function(args)
-        commands.cli(args.ctx, "rebase", {
-          args = jujutsu.ignore_immtuable(
-            { "-s", commands.get_change_id(args.src_change), "-d", commands.get_change_id(args.dst_change) },
-            { force = args.force }
-          ),
+        api.cli(args.ctx, "rebase", {
+          args = jujutsu.ignore_immtuable({ "-s", api.get_change_id(args.src_change), "-d", api.get_change_id(args.dst_change) }, { force = args.force }),
           on_exit = function()
             vim.notify(
-              "Rebased change tree " .. commands.get_change_id(args.src_change, true) .. " onto " .. commands.get_change_id(args.dst_change, true),
+              "Rebased change tree " .. api.get_change_id(args.src_change, true) .. " onto " .. api.get_change_id(args.dst_change, true),
               vim.log.levels.INFO
             )
           end,
@@ -719,14 +802,11 @@ function M.setup_buffer(ctx)
     {
       key = "ro",
       fn = helpers.search_change(helpers.with_target_change(function(args)
-        commands.cli(args.ctx, "rebase", {
-          args = jujutsu.ignore_immtuable(
-            { "-r", commands.get_change_id(args.src_change), "-d", commands.get_change_id(args.dst_change) },
-            { force = args.force }
-          ),
+        api.cli(args.ctx, "rebase", {
+          args = jujutsu.ignore_immtuable({ "-r", api.get_change_id(args.src_change), "-d", api.get_change_id(args.dst_change) }, { force = args.force }),
           on_exit = function()
             vim.notify(
-              "Rebased change " .. commands.get_change_id(args.src_change, true) .. " onto " .. commands.get_change_id(args.dst_change, true),
+              "Rebased change " .. api.get_change_id(args.src_change, true) .. " onto " .. api.get_change_id(args.dst_change, true),
               vim.log.levels.INFO
             )
           end,
@@ -742,7 +822,7 @@ function M.setup_buffer(ctx)
       key = "gp",
       --- @type fun(args?: WithArgs): boolean Callback function
       fn = function(args)
-        commands.cli(args.ctx, "git", {
+        api.cli(args.ctx, "git", {
           args = { "fetch" },
           on_exit = function()
             vim.notify("Changes fetched.", vim.log.levels.INFO)
@@ -756,7 +836,7 @@ function M.setup_buffer(ctx)
       key = "gP",
       --- @type fun(args?: WithArgs): boolean Callback function
       fn = function(args)
-        commands.cli(args.ctx, "git", {
+        api.cli(args.ctx, "git", {
           args = { "push" },
           on_exit = function()
             vim.notify("Changes pushed.", vim.log.levels.INFO)
@@ -771,10 +851,10 @@ function M.setup_buffer(ctx)
     {
       key = "gq",
       fn = function()
-        -- close preview window if it has filetype jiejie_change
         for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
           if vim.wo[_winid].previewwindow then
             local bufid = vim.api.nvim_win_get_buf(_winid)
+            -- close preview window if it has filetype jiejie_change
             if vim.bo[bufid].filetype == "jiejie_change" then
               vim.api.nvim_win_close(_winid, true)
             end
@@ -810,7 +890,7 @@ function M.setup_buffer(ctx)
     },
     {
       key = "g?",
-      fn = commands.show_help,
+      fn = api.show_help,
       desc = "Show help",
     },
     {
@@ -819,7 +899,7 @@ function M.setup_buffer(ctx)
       fn = function(args)
         local _winid = vim.api.nvim_get_current_win()
         local pos = vim.api.nvim_win_get_cursor(_winid)
-        commands.reload_log(args.ctx, function()
+        api.reload_log(args.ctx, function()
           vim.notify("Log reloaded", vim.log.levels.INFO)
           vim.api.nvim_win_set_cursor(_winid, pos)
         end)
@@ -830,7 +910,7 @@ function M.setup_buffer(ctx)
     {
       key = "<C-a>",
       fn = helpers.with_count(function(args)
-        commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
+        api.log_revisions_adjust(args.ctx, { adjustment = args.count })
         return true
       end),
       desc = "Increase the number of displayed revisions in log",
@@ -838,7 +918,7 @@ function M.setup_buffer(ctx)
     {
       key = "<C-x>",
       fn = helpers.with_count(function(args)
-        commands.log_revisions_adjust(args.ctx, { adjustment = args.count })
+        api.log_revisions_adjust(args.ctx, { adjustment = args.count })
         return true
       end, { negate = true }),
       desc = "Decrease the number of displayed revisions in log",

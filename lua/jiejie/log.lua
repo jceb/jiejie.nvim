@@ -7,14 +7,16 @@ local parsers = require("jiejie.parsers")
 --- Jujutsu log related operations
 local M = {}
 
+--- Template to retrieve log entries
+M.template =
+  [[change_id.shortest() ++ if(divergent, "??") ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", description.first_line()) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ if(git_head, " git_head()") ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id ++ "∵ " ++ author.email() ++ "∶" ++ if(divergent, " divergent") ++ "∷" ++ commit_id ++ "∼" ++ if(current_working_copy, " current working copy") ++ "∾" ++ parents.len()]]
+
 --- Load/reload log contents into the jujutsu buffer
 --- @param ctx Context context
 --- @param callback fun(ctx: Context) Asynchronous callback
 M.load = function(ctx, callback)
   local log_diff = require("jiejie.log_diff")
   log_diff.setup_buffer(ctx) -- clear diffs as a workaround until reloading of diffs is implemented
-  local template =
-    [[change_id.shortest() ++ if(divergent, "??") ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", description.first_line()) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ if(git_head, " git_head()") ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id ++ "∵ " ++ author.email() ++ "∶" ++ if(divergent, " divergent") ++ "∷" ++ commit_id ++ "∼" ++ if(current_working_copy, " current working copy") ++ "∾" ++ parents.len()]]
   local cmd = "log"
   local current_log_view = log_view.get_log_view()
   local idx = 1
@@ -35,7 +37,7 @@ M.load = function(ctx, callback)
     tostring(ctx.log_revisions or 10), -- TODO: make default number of revisions configurable
     "-s",
     "-T",
-    template,
+    M.template,
     "-r",
     current_log_view.fileset,
   }
@@ -93,10 +95,13 @@ M.load_object = function(ctx, url, callback)
   jujutsu.cli(ctx, cmd, {
     args = args,
     on_exit = vim.schedule_wrap(function(res)
+      local data
       if res.code ~= 0 then
-        error("Error getting object contents:\n" .. res.stderr)
+        -- error("Error getting object contents:\n" .. res.stderr)
+        data = {}
+      else
+        data = vim.split(res.stdout, "\n")
       end
-      local data = vim.split(res.stdout, "\n")
       buffer.render_file(ctx, data, { filetype = filetype })
       if callback then
         callback(ctx)
@@ -171,7 +176,25 @@ function M.setup(id)
       else
         vim.bo[ev.buf].buftype = "nofile"
         M.load_object({ root = url.root, buf = ev.buf, curpos = nil }, url, function()
-          vim.cmd.doau("BufReadPost")
+          local bufid = vim.api.nvim_get_current_buf()
+          if bufid == ev.buf then
+            -- dectect file type
+            vim.cmd.filetype({ "detect" })
+            vim.cmd.doau("BufReadPost")
+          else
+            -- special handling for when the file is loaded in a window that is not the current one
+            local current_winid = vim.api.nvim_get_current_win()
+            for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+              local win_bufid = vim.api.nvim_win_get_buf(winid)
+              if win_bufid == ev.buf then
+                local winnr = vim.api.nvim_win_get_number(winid)
+                vim.cmd.windo({ range = { winnr }, args = { "filetype", "detect" } })
+                vim.cmd.windo({ range = { winnr }, args = { "doau", "BufReadPost" } })
+                break
+              end
+            end
+            vim.api.nvim_tabpage_set_win(0, current_winid)
+          end
         end)
       end
     end,

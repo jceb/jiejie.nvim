@@ -1,6 +1,6 @@
 local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
-local commands = require("jiejie.commands")
+local api = require("jiejie.api")
 
 --- Opeations that help with extracting data from the log buffer
 local M = {}
@@ -129,7 +129,7 @@ function M.with_target_change(fn, opts)
         return fn(largs)
       else
         -- TODO: verify existence of id before passing it on + generate a proper Change object
-        return fn(vim.tbl_extend("force", largs, { dst_change = { id = target, id_short = target } }))
+        return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "dst_change"] = { id = target, id_short = target } }))
       end
     end)
   end
@@ -199,7 +199,7 @@ end
 --- - tags List tags instead of bookmarks
 --- - _local List local bookmarks - if nil, list local bookmarks
 --- - remote List remote bookmarks - if nil, don't list remote bookmarks
---- - revision Get bookmarks that correspond to these local revisions, default all (::)
+--- - revisions Get bookmarks that correspond to these local revisions, default all (::)
 --- @return function
 function M.with_bookmarks_or_tags(fn, opts)
   --- @param args? WithArgs Arguments
@@ -220,7 +220,7 @@ function M.with_bookmarks_or_tags(fn, opts)
       [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id().short()) ++ "∫" ++ if(normal_target, normal_target.commit_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
     }
     if largs.src_change then
-      _args = vim.list_extend(_args, { "-r", commands.get_change_id(largs.src_change) })
+      _args = vim.list_extend(_args, { "-r", api.get_change_id(largs.src_change) })
     end
     jujutsu.cli(largs.ctx, cmd, {
       args = _args,

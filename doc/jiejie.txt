@@ -26,6 +26,35 @@ COMMANDS                                                       *jiejie-commands*
 :Jj[!] [args]            Run an arbitrary jj command and display any output.
                         With <bang>, add `--ignore-immutuable` to the command.
 
+                                                                   *:Jdiffsplit*
+:Jdiffsplit [object]    Perform a |vimdiff| against the given file, or if a
+                        commit is given, the current file in that commit. With
+                        no argument, the version of the direct ancestors is
+                        used, and the work space version is always placed to
+                        the right or bottom, depending on available width.
+                        Use Vim's |do| and |dp| to stage and unstage changes.
+
+                                                                  *:Jdiffsplit!*
+:Jdiffsplit!            Diff against any and all direct ancestors, retaining
+                        focus on the current window.  During a merge conflict,
+                        this is a three-way diff against the "ours" and
+                        "theirs" ancestors.
+                        TODO: Additional d2o and d3o maps are provided to
+                        obtain the hunk from the "ours" or "theirs" ancestor,
+                        respectively.
+
+:Jdiffsplit! {object}   Like |:Jdiffsplit|, but retain focus on the current
+                        window.
+
+                                                                  *:Jvdiffsplit*
+:Jvdiffsplit [object]   Like |:Jdiffsplit|, but always split vertically.
+
+                                                                  *:Jhdiffsplit*
+:Jdiffsplit ++novertical [object]
+:Jhdiffsplit [object]   Like |:Jdiffsplit|, but with "vertical" removed from
+                        'diffopt'.  The split will still be vertical if
+                        combined with |:vertical|.
+
                                                                         *:Jedit*
 :Jedit [object]         |:edit| a |jiejie-object|.
 
@@ -72,6 +101,42 @@ Diff maps ~
 =                       Toggle an inline diff of the change or file under the
                         cursor.
 
+                                                                     *jiejie_dD*
+dD                      Perform a :Jdiffsplit on the file and change under the
+                        cursor. The file under the cursor is compared to all
+                        its direct ancestors.
+                                                                     *jiejie_dd*
+dd                      Perform a :Jdiffsplit on the file under the cursor and
+                        change @.
+                        If the cursor is on the currently edited change `@`,
+                        the file is compared to the revisions of all direct
+                        ancestors.
+                        If the cursor is on a file in another change, then
+                        that file's version is compared to the same file in
+                        the currently edited change.
+
+                                                                     *jiejie_dV*
+dV                      Perform a |:Jvdiffsplit| on the file under the cursor.
+                        See |jiejie_dD|.
+
+                                                                     *jiejie_dv*
+dv                      Perform a |:Jvdiffsplit| on the file under the cursor
+                        and change @. See |jiejie_dd|.
+
+                                                           *jiejie_dS* *jiejie_dH*
+dS                      Perform a |:Jhdiffsplit| on the file under the cursor.
+dH                      See |jiejie_dD|.
+
+                                                           *jiejie_ds* *jiejie_dh*
+ds                      Perform a |:Jhdiffsplit| on the file under the cursor
+                        and dh change @. See |jiejie_dd|.
+
+                                                                     *jiejie_dq*
+dq                      Close all but the currently focused diff buffer, and
+                        invoke |:diffoff|!.
+
+                                                                     *jiejie_d?*
+d?                      Show this help.
                                                                       *jiejie_c*
 Commit maps ~
 
@@ -251,8 +316,8 @@ R                       Reload log.
 
 SPECIFYING OBJECTS                               *jiejie-object* *jiejie-revision*
 
-Jiejie objects are either work tree files or Git revisions as defined in the
-"Operators" section in the jj documtenation,
+Jiejie objects are either work space files or Jujutsu revisions as defined in
+the "Operators" section in the jj documtenation,
 https://docs.jj-vcs.dev/latest/revsets/, with expansions inspired by
 |cmdline-special| layered on top. For commands that accept an optional object,
 the default is the file in the index for work tree files and the work tree

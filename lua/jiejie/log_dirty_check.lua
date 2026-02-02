@@ -1,5 +1,5 @@
 local helpers = require("jiejie.log_buffer_helpers")
-local commands = require("jiejie.commands")
+local api = require("jiejie.api")
 local context = require("jiejie.context")
 
 local function is_dirty(buf, key)
@@ -32,7 +32,7 @@ function M.dirty_check()
   end
   if M.dirty_check_content(bufid) then
     local curpos_current = vim.api.nvim_win_get_cursor(0)
-    commands.reload_log(ctx, function(_ctx)
+    api.reload_log(ctx, function(_ctx)
       if M.dirty_check_cursor(bufid) and _ctx.curpos then
         vim.api.nvim_win_set_cursor(0, _ctx.curpos)
       else

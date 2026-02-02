@@ -9,11 +9,13 @@ system. The design is heavily inspired by
 ## Features
 
 - UX very close to [tope's vim-fugitive](https://github.com/tpope/vim-fugitive)
-  - Toggle inline diff (`=`)
   - Edit file (`<CR>`, `o`, `gO`, `O`)
   - Open revision of a file (`:Jedit [revision]:[file]`, or by selection the
     file in the log summary via `<CR>`, `o`, `gO`, `O`)
   - Open change (`:Jedit [revision]`, `K`)
+  - Toggle inline diff (`=`)
+  - Edit diff (`:Jdiffsplit [revision]`, `dD`, `dd`, `dV`, `dv`, `dS`, `ds`,
+    `dH`, `dh`, `dq`, `d?`)
   - Wraper for `jj` CLI (`:J` or `:Jj`)
 - Log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
