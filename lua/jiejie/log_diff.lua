@@ -68,8 +68,7 @@ function M.diff_show(ctx, file, change)
     return
   end
   local diff = vim.split(vim.trim(res.stdout), "\n")
-  local offset = 0
-  local dummy_linenr = 23
+  local offset = 1
   for index, line in ipairs(diff) do
     if
       parsers.parse_hunk(line, dummy_linenr, 0)
