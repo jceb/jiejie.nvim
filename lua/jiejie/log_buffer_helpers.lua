@@ -195,10 +195,11 @@ end
 
 --- Retrieve bookmarks or tags
 --- @param fn fun(args?: WithArgs): boolean Callback function
---- @param opts? WithOpts | {_local?: boolean, remote?: boolean, tags?: boolean} Options
+--- @param opts? WithOpts | {_local?: boolean, remote?: boolean, tags?: boolean, revisions?: string} Options
 --- - tags List tags instead of bookmarks
 --- - _local List local bookmarks - if nil, list local bookmarks
 --- - remote List remote bookmarks - if nil, don't list remote bookmarks
+--- - revision Get bookmarks that correspond to these local revisions, default all (::)
 --- @return function
 function M.with_bookmarks_or_tags(fn, opts)
   --- @param args? WithArgs Arguments
@@ -211,6 +212,8 @@ function M.with_bookmarks_or_tags(fn, opts)
     local cmd = lopts.tags and "tag" or "bookmark"
     local _args = {
       "list",
+      "-r",
+      lopts.revisions or "::",
       "-T",
       [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id().short()) ++ "∫" ++ if(normal_target, normal_target.commit_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
     }

@@ -13,6 +13,19 @@ function M.ignore_immtuable(args, opts)
   return args
 end
 
+--- Add --allow-backwards flag to the list of arguments when force is true.
+--- @param args string[] List of arguments
+--- @param opts? {force?: boolean} Options
+--- - force If true, --ignore-immutable flag is added
+--- @return string[]
+function M.allow_backwards(args, opts)
+  local lopts = opts or {}
+  if lopts.force then
+    table.insert(args, "--allow-backwards")
+  end
+  return args
+end
+
 --- Execute jj CLI with arguments
 --- @param ctx Context Context
 --- @param cmd string Command

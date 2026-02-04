@@ -145,7 +145,7 @@ function M.setup_buffer(ctx)
     vim.keymap.set("", key, "<Nop>", { buffer = true })
   end
   local commands = require("jiejie.commands")
-  --- @type table<number, {key: string, fn: fun(), desc: string, with_force: boolean}>
+  --- @type table<number, {key: string, fn: fun(), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
   local nmaps = {
     --
 
@@ -437,17 +437,25 @@ function M.setup_buffer(ctx)
       desc = "Forget bookmark locally keeping the remote intact at change under the cursor",
     },
     {
-      key = "cbm",
+      key = "cbM",
       fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        commands.cli(args.ctx, "bookmark", {
-          args = { "move", args.bookmark, "-t", commands.get_change_id(args.src_change) },
-          on_exit = function()
-            vim.notify("Bookmark " .. args.bookmark .. " moved to change " .. commands.get_change_id(args.src_change, true), vim.log.levels.INFO)
-          end,
-        })
+        commands.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
         return true
       end))),
-      desc = "Move bookmark to change under the cursor",
+      with_force = true,
+      desc = "Move bookmark one of all the available bookmarks to change under the cursor",
+    },
+    {
+      key = "cbm",
+      fn = helpers.with_bookmarks_or_tags(
+        helpers.search_change(helpers.with_bookmark_or_tag(function(args)
+          commands.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
+          return true
+        end)),
+        { revisions = "::@" }
+      ),
+      with_force = true,
+      desc = "Move bookmark from the current branch to change under the cursor",
     },
     {
       key = "cbr",
@@ -858,11 +866,12 @@ function M.setup_buffer(ctx)
   end
   for _, value in ipairs(nmaps) do
     local plug = "<Plug>(jiejie-" .. value.key .. ")"
+    local fn = with_root_context(value.fn)
     vim.keymap.set("n", value.key, plug, { desc = value.desc, nowait = true, buffer = true })
-    vim.keymap.set("n", plug, with_root_context(value.fn), { desc = value.desc, buffer = true })
+    vim.keymap.set("n", plug, fn, { desc = value.desc, buffer = true })
     if value.with_force then
       vim.keymap.set("n", "!" .. value.key, plug, { desc = value.desc, nowait = true, buffer = true })
-      vim.keymap.set("n", plug, helpers.with_force(with_root_context(value.fn)), { desc = "Ignoring immutuability. " .. value.desc, buffer = true })
+      vim.keymap.set("n", plug, helpers.with_force(fn), { desc = "Ignoring immutuability. " .. value.desc, buffer = true })
     end
   end
   require("jiejie.log_diff").setup_buffer(ctx)

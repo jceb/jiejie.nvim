@@ -241,6 +241,33 @@ end
 --- Abandon change
 --- @param ctx Context context
 --- @param change Change Change data
+--- @param bookmark string Name of bookmark
+--- @param opts? {force?: boolean} Options
+--- - force Edit immutable change
+function M.bookmark_move(ctx, change, bookmark, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
+  assert(bookmark and bookmark ~= "", "Bookmark not provided: bookmark")
+  local lopts = opts or {}
+  local cmd = "bookmark"
+  local args = { "move", bookmark, "-t", M.get_change_id(change) }
+  jujutsu.cli(ctx, cmd, {
+    args = jujutsu.allow_backwards(args, { force = lopts.force }),
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", lopts, {
+        on_exit = function()
+          vim.notify("Bookmark " .. bookmark .. " moved to change " .. M.get_change_id(change, true), vim.log.levels.INFO)
+        end,
+      })
+    ),
+  })
+end
+
+--- Abandon change
+--- @param ctx Context context
+--- @param change Change Change data
 --- @param opts? {force?: boolean} Options
 --- - force Edit immutable change
 function M.change_abandon(ctx, change, opts)

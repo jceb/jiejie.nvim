@@ -35,7 +35,7 @@ system. The design is heavily inspired by
   - Abandon change or file under the cursor (`X`)
   - Rebase change tree or individual change (`rr`, `ro`)
   - Undo last operation (`cU`)
-  - Bookmark management (`cbc`, `cbX`, `cbx`, `cbF`, `cbf`, `cbm`, `cbr`)
+  - Bookmark management (`cbc`, `cbX`, `cbx`, `cbF`, `cbf`, `cbM`, `cbm`, `cbr`)
   - Tag management (`ctc`, `ctm`, `ctX`, `ctx`)
 
 ## Installation

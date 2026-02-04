@@ -95,8 +95,21 @@ cbF                     Forget bookmark locally keeping the remote intact.
 cbf                     Forget bookmark locally keeping the remote intact at
                         change under the cursor.
 
+                                                                    *jiejie_cbM*
+cbM                     Move any one of the available bookmarks to change
+                        under the cursor.
+
+                                                                   *jiejie_!cbM*
+!cbM                    Move any one of the available bookmarks to change
+                        under the cursor. Allow backwards movement.
+
                                                                     *jiejie_cbm*
-cbm                     Move bookmark to change under the cursor.
+cbm                     Move one bookmark from the current branch to change
+                        under the cursor.
+
+                                                                   *jiejie_!cbm*
+!cbm                    Move one bookmark from the current branch to change
+                        under the cursor. Allow backwards movement.
 
                                                                     *jiejie_cbr*
 cbr                     Rename bookmark at change under the cursor.
