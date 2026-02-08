@@ -279,11 +279,11 @@ ro                      Rebase only change under the cursor, without its
                                                                       *jiejie_g*
 Git maps ~
 
-                                                                     *jiejie_gp*
-gp                      Fetch changes from git remote.
+                                                                     *jiejie_gu*
+gu                      Fetch changes from git remote.
 
-                                                                     *jiejie_gP*
-gP                      Push changes to git remote.
+                                                                     *jiejie_gp*
+gp                      Push changes to git remote.
 
                                                               *jiejie-misc-maps*
 Miscellaneous maps ~

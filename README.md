@@ -27,7 +27,7 @@ system. The design is heavily inspired by
 - Modify changes from the log buffer
   - Add `!` prefix to mappings for modification of immutable changes
   - Edit change (`<CR>`)
-  - Pull and push changes to git (`gp`, `gP`)
+  - Pull and push changes to git (`gu`, `gp`)
   - Modify change description in editor (`ce`) or quick edit first line (`cd`)
   - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)

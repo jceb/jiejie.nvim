@@ -819,7 +819,7 @@ function M.setup_buffer(ctx)
 
     -- Git maps {{{1
     {
-      key = "gp",
+      key = "gu",
       --- @type fun(args?: WithArgs): boolean Callback function
       fn = function(args)
         api.cli(args.ctx, "git", {
@@ -833,7 +833,7 @@ function M.setup_buffer(ctx)
       desc = "Fetch changes from remote",
     },
     {
-      key = "gP",
+      key = "gp",
       --- @type fun(args?: WithArgs): boolean Callback function
       fn = function(args)
         api.cli(args.ctx, "git", {
