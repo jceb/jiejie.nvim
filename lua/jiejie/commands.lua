@@ -11,7 +11,7 @@ function M.Jj(args)
   local ctx = context.get_context()
   if ctx then
     if #args.fargs == 0 then
-      api.show_log(ctx, args.smods.vertical)
+      api.show_log(ctx, { vertical = args.smods.vertical })
     else
       api.cli(ctx, args.fargs[1], { args = jujutsu.ignore_immtuable(vim.list_slice(args.fargs, 2), { force = args.bang }) })
     end
