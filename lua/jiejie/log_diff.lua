@@ -59,6 +59,12 @@ function M.diff_close(ctx, opts)
         if win.winid == winid then
           vim.api.nvim_win_close(win.winid, false)
         end
+      else
+        if win.winid == winid then
+          -- disable diff in the first window
+          local winnr = vim.api.nvim_win_get_number(winid)
+          vim.cmd.windo({ range = { winnr }, args = { "diffoff" } })
+        end
       end
     end
   end
