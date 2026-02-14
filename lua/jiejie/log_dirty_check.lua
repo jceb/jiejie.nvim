@@ -36,6 +36,10 @@ function M.dirty_check()
       if M.dirty_check_cursor(bufid) and _ctx.curpos then
         vim.api.nvim_win_set_cursor(0, _ctx.curpos)
       else
+        local buf_lines = vim.api.nvim_buf_line_count(_ctx.buf)
+        if curpos_current[1] > buf_lines then
+          curpos_current[1] = buf_lines
+        end
         vim.api.nvim_win_set_cursor(0, curpos_current)
       end
       M.dirty_clear(bufid)

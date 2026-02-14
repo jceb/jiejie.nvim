@@ -35,13 +35,10 @@
 - [ ] Commands: merge / new with multiple ancestors
 - [ ] Fix: restore and squash currently don't work for commits with multiple
       ancestors
-- [ ] API: extract commands from buffer.lua and put them in commands.lua
-- [ ] Bug: issues with empty bookmark lists, e.g. tags
+- [ ] Bug: issues with empty bookmark lists, e.g. tags in log view
 - [ ] Bug: when an empty file is added and the diff `=` is requested, an error
       occurs
 - [ ] Bug: make log reload upon `!` commands
-- [ ] Bug: various cursor outside of buffer issues
-- [ ] Bug: diff breaks ftdetect
 
 ## Priority 2
 
