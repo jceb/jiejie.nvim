@@ -32,11 +32,11 @@
 - [x] Commands: add keybindings for rebasing a tree or an individual commit
 - [x] Commands: make command keybingings follow jj's aliases; also use uppercase
       keys for deletion or operations on arbitrary change IDs
+- [x] Commands: `yy`, `yc` and `yC` for copying the commit description / current
+      file name, change ID or commit ID
 
 ## Priority 1
 
-- [ ] Commands: `yy`, `yc` and `yC` for copying the commit description / current
-      file name, change ID or commit ID
 - [ ] Commands: merge / new with multiple ancestors
 - [ ] Bug: issues with empty bookmark lists, e.g. tags in log view
 - [ ] Commands: cherry-pick - that is jujutsu's equivalent?

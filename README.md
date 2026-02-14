@@ -48,7 +48,8 @@ easily, these rules might prove helpful:
   - Add `!` prefix to mappings for modification of immutable changes
   - Edit change (`<CR>`)
   - Pull and push changes to git (`gu`, `gp`)
-  - Modify change description in editor (`ce`) or quick edit first line (`cd`)
+  - Modify change description in editor (`ce`) or quick edit the first line
+    (`cd`) or copy commit information (`yy`, `yc`, `yC`)
   - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)
   - Squash change or file into parent or into change under cursor (`cs`, `cS`)

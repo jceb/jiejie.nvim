@@ -199,6 +199,15 @@ ce                      Edit change description.
                                                                     *jiejie_!ce*
 !ce                     Edit immutable change description.
 
+                                                                     *jiejie_yy*
+yy                      Copy commit message or file name under the cursor.
+
+                                                                     *jiejie_yc*
+yc                      Copy change id under the cursor.
+
+                                                                     *jiejie_yC*
+yC                      Copy commit id under the cursor.
+
                                                                      *jiejie_cn*
 cn                      Create a new change after the change under the cursor.
 

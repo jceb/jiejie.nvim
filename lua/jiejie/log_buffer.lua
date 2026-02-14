@@ -233,20 +233,19 @@ function M.setup_buffer(ctx)
         --- @param args? WithArgs Callback function
         --- @return boolean
         function(args)
-          local largs = args or {}
           local src_change = api.construct_dummy_change("@")
-          local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(largs.bookmark) or largs.dst_change
+          local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(args.bookmark) or args.dst_change
           if lopts.with_change == 2 ^ 2 then
             dst_change.immutable = false
           end
-          api.cli(largs.ctx, "rebase", {
+          api.cli(args.ctx, "rebase", {
             args = jujutsu.ignore_immtuable({
               lopts.rebase_tree and "-s" or "-r",
               api.get_change_id(src_change),
               "-d",
               ---@diagnostic disable-next-line: param-type-mismatch dst_change is always set
               api.get_change_id(dst_change),
-            }, { force = largs.force }),
+            }, { force = args.force }),
             on_exit = function()
               ---@diagnostic disable-next-line: param-type-mismatch dst_change is always set
               vim.notify("Rebased change " .. api.get_change_id(src_change, true) .. " onto " .. api.get_change_id(dst_change, true), vim.log.levels.INFO)
@@ -254,6 +253,34 @@ function M.setup_buffer(ctx)
           })
           return true
         end
+      )
+    end,
+    --- @param opts {commit_id?: boolean, message_or_filename?: boolean}
+    --- - commit_id: Copy commit id or else the change id if not message_or_filename
+    --- - message_or_filename: Copy commit message or file name
+    yy = function(opts)
+      return helpers.search_file(
+        helpers.search_change(function(args)
+          local lopts = opts or {}
+          local copy = ""
+          if lopts.message_or_filename then
+            if args.file then
+              copy = args.file.filename
+            else
+              copy = args.src_change.description_first_line
+            end
+          else
+            if lopts.commit_id then
+              copy = args.src_change.commit_id
+            else
+              copy = api.get_change_id(args.src_change, true)
+            end
+          end
+          vim.cmd("let @" .. vim.v.register .. '="' .. vim.fn.fnameescape(copy) .. '"')
+          vim.notify("Copied to clipboard: " .. copy, vim.log.levels.INFO)
+          return true
+        end),
+        { err_continue = true }
       )
     end,
   }
@@ -680,6 +707,21 @@ function M.setup_buffer(ctx)
       end),
       with_force = true,
       desc = "Edit first line of change description",
+    },
+    {
+      key = "yC",
+      fn = fns.yy({ commit_id = true }),
+      desc = "Copy commit id under the cursor",
+    },
+    {
+      key = "yc",
+      fn = fns.yy({ commit_id = false }),
+      desc = "Copy change id under the cursor",
+    },
+    {
+      key = "yy",
+      fn = fns.yy({ message_or_filename = true }),
+      desc = "Copy commit message or file name under the cursor",
     },
     {
       key = "cn",
