@@ -52,7 +52,6 @@
 - [ ] Docs: Describe mindset for approaching jiejie and its key bindings; key
       bindings should mainly deal with the @ change
 - [ ] Commands: add keybindings for rebasing a tree or an individual commit
-- [ ] Commands: add support for rebase on a bookmark
 - [ ] Commands: use count to select operation log view, e.g. 3gv instead of g3
 - [ ] Commands: absorb
 - [ ] Commands: parallelize

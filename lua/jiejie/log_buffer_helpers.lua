@@ -215,7 +215,7 @@ function M.with_bookmarks_or_tags(fn, opts)
       "-r",
       lopts.revisions or "::",
       "--sort",
-      "committer-date-,author-date-,name",
+      "committer-date-,name",
       "-T",
       [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id().short()) ++ "∫" ++ if(normal_target, normal_target.commit_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
     }

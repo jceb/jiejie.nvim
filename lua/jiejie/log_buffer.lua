@@ -41,9 +41,11 @@ end
 --- Set lines in current buffer
 --- @param ctx Context context
 --- @param data string[] jj log output to display
---- @param start number jj log output to display
---- @param end_ number jj log output to display
+--- @param start? number jj log output to display
+--- @param end_? number jj log output to display
 function M.buf_set_lines(ctx, data, start, end_)
+  assert(ctx, "Context not provided: ctx")
+  assert(data, "Data not provided: data")
   local modifiable = vim.bo[ctx.buf].modifiable
   local readonly = vim.bo[ctx.buf].readonly
   vim.bo[ctx.buf].modifiable = true
@@ -58,6 +60,8 @@ end
 --- @param data string[] jj log output to display
 --- @param opts? {filetype?: string} Options
 function M.render_file(ctx, data, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(data, "Data not provided: data")
   local lopts = opts or {}
   vim.bo[ctx.buf].modifiable = true
   vim.bo[ctx.buf].readonly = false
@@ -96,11 +100,10 @@ function M.focus(ctx, vertical)
   if bufid == ctx.buf then
     return ctx
   end
-  local tabid = vim.api.nvim_get_current_tabpage()
-  local wins = vim.api.nvim_tabpage_list_wins(tabid)
+  local wins = vim.api.nvim_tabpage_list_wins(0)
   for _, winid in ipairs(wins) do
     if vim.api.nvim_win_get_buf(winid) == ctx.buf then
-      vim.api.nvim_tabpage_set_win(tabid, winid)
+      vim.api.nvim_tabpage_set_win(0, winid)
       return ctx
     end
   end
@@ -147,6 +150,35 @@ function M.setup_buffer(ctx)
   local api = require("jiejie.api")
   --- @type table<string, fun(opts?: {}): fun()>
   local fns = {
+    --- @param opts {close_current_window?: boolean}
+    --- - close_current_window: Close the current window in addition to the preview window
+    q = function(opts)
+      local lopts = opts or {}
+      return helpers.with_count(function(_)
+        for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if vim.wo[_winid].previewwindow then
+            local bufid = vim.api.nvim_win_get_buf(_winid)
+            -- close preview window if it has filetype jiejie_change
+            if vim.bo[bufid].filetype == "jiejie_change" then
+              vim.api.nvim_win_close(_winid, true)
+            end
+          end
+        end
+        if lopts.close_current_window then
+          vim.api.nvim_win_close(0, true)
+        end
+        return true
+      end)
+    end,
+    --- @param opts {negate?: boolean}
+    --- - negate: Negate count
+    ctrl_a = function(opts)
+      local lopts = opts or {}
+      return helpers.with_count(function(args)
+        api.log_revisions_adjust(args.ctx, { adjustment = args.count })
+        return true
+      end, { negate = lopts.negate })
+    end,
     --- @param opts {split_direction?: SplitDirection, diff_commit_under_cursor?: boolean}
     --- - split_direction: Split direction
     --- - diff_commit_under_cursor: Diff commit under against its parents instead of diffing against @
@@ -171,6 +203,58 @@ function M.setup_buffer(ctx)
         api.diff_split(args.ctx, files, { split_direction = lopts.split_direction, previous_win = true, open_first_file = true })
         return true
       end))
+    end,
+    --- @param opts {split_direction?: SplitDirection}
+    --- - split_direction: Split direction
+    o = function(opts)
+      return helpers.search_file(helpers.search_change(function(args)
+        local lopts = opts or {}
+        log_diff.diff_close(args.ctx)
+        api.object_edit(args.ctx, args.file.filename, args.src_change, { edit_cmd = api.SPLIT_DIRECTION_FN[lopts.split_direction] })
+        return true
+      end))
+    end,
+    --- @param opts {rebase_tree?: boolean, revisions?: string, with_change?: number}
+    --- - rebase_tree: Rebase tree, if false rebase just the commit
+    --- - revisions Get bookmarks that correspond to these local revisions, default all (::)
+    --- - with_change 0 (default): use change under cursor, 1: prompt for change id, 3: prompt for bookmark
+    rr = function(opts)
+      local lopts = opts or {}
+      local use_change = function(fn)
+        if lopts.with_change == 2 ^ 1 then
+          return helpers.with_target_change(fn)
+        elseif lopts.with_change == 2 ^ 2 then
+          return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), { revisions = lopts.revisions or "::" })
+        else
+          return helpers.search_change(fn, { args_key = "dst_change" })
+        end
+      end
+      return use_change(
+        --- @param args? WithArgs Callback function
+        --- @return boolean
+        function(args)
+          local largs = args or {}
+          local src_change = api.construct_dummy_change("@")
+          local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(largs.bookmark) or largs.dst_change
+          if lopts.with_change == 2 ^ 2 then
+            dst_change.immutable = false
+          end
+          api.cli(largs.ctx, "rebase", {
+            args = jujutsu.ignore_immtuable({
+              lopts.rebase_tree and "-s" or "-r",
+              api.get_change_id(src_change),
+              "-d",
+              ---@diagnostic disable-next-line: param-type-mismatch dst_change is always set
+              api.get_change_id(dst_change),
+            }, { force = largs.force }),
+            on_exit = function()
+              ---@diagnostic disable-next-line: param-type-mismatch dst_change is always set
+              vim.notify("Rebased change " .. api.get_change_id(src_change, true) .. " onto " .. api.get_change_id(dst_change, true), vim.log.levels.INFO)
+            end,
+          })
+          return true
+        end
+      )
     end,
   }
   --- @type table<number, {key: string, fn: fun(args?: WithArgs), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
@@ -207,29 +291,17 @@ function M.setup_buffer(ctx)
     },
     {
       key = "o",
-      fn = helpers.search_file(helpers.search_change(function(args)
-        log_diff.diff_close(args.ctx)
-        api.object_edit(args.ctx, args.file.filename, args.src_change, { edit_cmd = vim.cmd.sp })
-        return true
-      end)),
+      fn = fns.o({ split_direction = api.SPLIT_DIRECTION.horizontal }),
       desc = "Open the file or jiejie-object under the cursor in a new split",
     },
     {
       key = "gO",
-      fn = helpers.search_file(helpers.search_change(function(args)
-        log_diff.diff_close(args.ctx)
-        api.object_edit(args.ctx, args.file.filename, args.src_change, { edit_cmd = vim.cmd.vs })
-        return true
-      end)),
+      fn = fns.o({ split_direction = api.SPLIT_DIRECTION.vertical }),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
     },
     {
       key = "O",
-      fn = helpers.search_file(helpers.search_change(function(args)
-        log_diff.diff_close(args.ctx)
-        api.object_edit(args.ctx, args.file.filename, args.src_change, { edit_cmd = vim.cmd.tabe })
-        return true
-      end)),
+      fn = fns.o({ split_direction = api.SPLIT_DIRECTION.tab }),
       desc = "Open the file or jiejie-object under the cursor in a new vertical split",
     },
     {
@@ -619,20 +691,21 @@ function M.setup_buffer(ctx)
       desc = "Create a new change after the change under the cursor",
     },
     {
-      key = "crc",
-      fn = helpers.search_change(function(args)
-        api.change_revert(args.ctx, args.src_change)
-        return true
-      end),
-      desc = "Revert the commit under the cursor",
-    },
-    {
       key = "s<space>",
       fn = helpers.search_change(function(args)
         vim.fn.feedkeys(":Jj squash -f " .. api.get_change_id(args.src_change, true) .. " ", "n")
         return true
       end),
       desc = 'Populate command line with ":Jj squash "',
+    },
+    {
+      key = "cR",
+      fn = helpers.search_change(function(args)
+        api.change_revert(args.ctx, args.src_change)
+        vim.notify("Change reverted: " .. args.src_change.id_short, vim.log.levels.INFO)
+        return true
+      end),
+      desc = "Revert the change under the cursor",
     },
     {
       key = "cs",
@@ -780,41 +853,55 @@ function M.setup_buffer(ctx)
         vim.fn.feedkeys(":Jj rebase -s " .. api.get_change_id(args.src_change, true) .. " ", "n")
         return true
       end),
-      desc = 'Populate command line with ":Jj rebase "',
+      desc = "Populate command line with `:Jj rebase `",
     },
     {
-      key = "rr",
-      fn = helpers.search_change(helpers.with_target_change(function(args)
-        api.cli(args.ctx, "rebase", {
-          args = jujutsu.ignore_immtuable({ "-s", api.get_change_id(args.src_change), "-d", api.get_change_id(args.dst_change) }, { force = args.force }),
-          on_exit = function()
-            vim.notify(
-              "Rebased change tree " .. api.get_change_id(args.src_change, true) .. " onto " .. api.get_change_id(args.dst_change, true),
-              vim.log.levels.INFO
-            )
-          end,
-        })
-        return true
-      end, { defualt_target = "" })),
+      key = "rbM",
+      fn = fns.rr({ rebase_tree = true, revisions = "::", with_change = 2 ^ 2 }),
       with_force = true,
-      desc = "Rebase the change under the cursor, together with its descendants",
+      desc = "Rebase the current change `@` on an arbitrary bookmark that is requested from the user, together with its descendants",
+    },
+    {
+      key = "rbm",
+      fn = fns.rr({ rebase_tree = true, revisions = "::@", with_change = 2 ^ 2 }),
+      with_force = true,
+      desc = "Rebase the current change `@` on a bookmark in the current line of changes, together with its descendants",
+    },
+    {
+      key = "rbO",
+      fn = fns.rr({ rebase_tree = false, revisions = "::", with_change = 2 ^ 2 }),
+      with_force = true,
+      desc = "Rebase only the current change `@` on an arbitrary bookmark that is requested from the user, without its descendants",
+    },
+    {
+      key = "rbo",
+      fn = fns.rr({ rebase_tree = false, revisions = "::@", with_change = 2 ^ 2 }),
+      with_force = true,
+      desc = "Rebase only the current change `@` on a bookmark in the current line of changes, without its descendants",
+    },
+    {
+      key = "rO",
+      fn = fns.rr({ rebase_tree = false, with_change = 2 ^ 1 }),
+      with_force = true,
+      desc = "Rebase only the current change `@` on an arbitrary change ID that is requested from the user, without its descendants",
     },
     {
       key = "ro",
-      fn = helpers.search_change(helpers.with_target_change(function(args)
-        api.cli(args.ctx, "rebase", {
-          args = jujutsu.ignore_immtuable({ "-r", api.get_change_id(args.src_change), "-d", api.get_change_id(args.dst_change) }, { force = args.force }),
-          on_exit = function()
-            vim.notify(
-              "Rebased change " .. api.get_change_id(args.src_change, true) .. " onto " .. api.get_change_id(args.dst_change, true),
-              vim.log.levels.INFO
-            )
-          end,
-        })
-        return true
-      end, { defualt_target = "" })),
+      fn = fns.rr({ rebase_tree = false, with_change = 2 ^ 0 }),
       with_force = true,
-      desc = "Rebase only change under the cursor, without its descendants",
+      desc = "Rebase only the current change `@` on the change under the cursor, without its descendants",
+    },
+    {
+      key = "rR",
+      fn = fns.rr({ rebase_tree = true, with_change = 2 ^ 1 }),
+      with_force = true,
+      desc = "Rebase the current change `@` on an arbitrary change ID that is requested from the user",
+    },
+    {
+      key = "rr",
+      fn = fns.rr({ rebase_tree = true, with_change = 2 ^ 0 }),
+      with_force = true,
+      desc = "Rebase the current change `@` on the change undercursor, together with its descendants",
     },
 
     -- Git maps {{{1
@@ -850,33 +937,12 @@ function M.setup_buffer(ctx)
     -- Miscellaneous maps {{{1
     {
       key = "gq",
-      fn = function()
-        for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          if vim.wo[_winid].previewwindow then
-            local bufid = vim.api.nvim_win_get_buf(_winid)
-            -- close preview window if it has filetype jiejie_change
-            if vim.bo[bufid].filetype == "jiejie_change" then
-              vim.api.nvim_win_close(_winid, true)
-            end
-          end
-        end
-      end,
+      fn = fns.q({ close_current_window = false }),
       desc = "Close the preview window",
     },
     {
       key = "q",
-      fn = function()
-        -- close preview window if it has filetype jiejie_change
-        for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          if vim.wo[_winid].previewwindow then
-            local bufid = vim.api.nvim_win_get_buf(_winid)
-            if vim.bo[bufid].filetype == "jiejie_change" then
-              vim.api.nvim_win_close(_winid, true)
-            end
-          end
-        end
-        vim.api.nvim_win_close(0, true)
-      end,
+      fn = fns.q({ close_current_window = true }),
       desc = "Close the summary window and the preview window, if open",
     },
     {
@@ -898,9 +964,14 @@ function M.setup_buffer(ctx)
       --- @type fun(args?: WithArgs): boolean Callback function
       fn = function(args)
         local _winid = vim.api.nvim_get_current_win()
+        local bufid = vim.api.nvim_win_get_buf(_winid)
         local pos = vim.api.nvim_win_get_cursor(_winid)
         api.reload_log(args.ctx, function()
           vim.notify("Log reloaded", vim.log.levels.INFO)
+          local buf_lines = vim.api.nvim_buf_line_count(bufid)
+          if pos[1] > buf_lines then
+            pos[1] = buf_lines
+          end
           vim.api.nvim_win_set_cursor(_winid, pos)
         end)
         return true
@@ -909,18 +980,12 @@ function M.setup_buffer(ctx)
     },
     {
       key = "<C-a>",
-      fn = helpers.with_count(function(args)
-        api.log_revisions_adjust(args.ctx, { adjustment = args.count })
-        return true
-      end),
+      fn = fns.ctrl_a(),
       desc = "Increase the number of displayed revisions in log",
     },
     {
       key = "<C-x>",
-      fn = helpers.with_count(function(args)
-        api.log_revisions_adjust(args.ctx, { adjustment = args.count })
-        return true
-      end, { negate = true }),
+      fn = fns.ctrl_a({ negate = true }),
       desc = "Decrease the number of displayed revisions in log",
     },
   }

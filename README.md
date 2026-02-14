@@ -6,6 +6,26 @@ system. The design is heavily inspired by
 
 ![jiejie](./jiejie.png)
 
+## Usage
+
+jiejie provides a large amount of key mappings in the log window to expose as
+much of jujutsu's functionality as possible. For remembering the mappings more
+easily, these rules might prove helpful:
+
+- The current change (`@`) is at the center of all interactions. Rebasing a
+  commit, squashing changes, all references the current change.
+- When the cursor is on another change, this other change becomes the target of
+  the operation, e.g. the current change (`@`) is rebased upon the change under
+  the cursor.
+- Breaking operations, e.g. moving a bookmark backwards (`--allow-backwards`) or
+  modifying an immutable change (`--ignore-immutable`), can be achieved by
+  adding a leading `!` to the mapping.
+- Destructive operations or operations that prompt the user for an arbitrary
+  change id use upper case letters, e.g. `cbM` for moving an arbitrary bookmark
+  to the change under the cursor.
+- Shortcuts follow jujutsu's aliases where possible, e.g. all bookmark related
+  `cb` mappings start with `c` (change) and `b` (bookmark alias).
+
 ## Features
 
 - UX very close to [tope's vim-fugitive](https://github.com/tpope/vim-fugitive)
@@ -33,9 +53,10 @@ system. The design is heavily inspired by
   - Commit change or file under the cursor (`cc`)
   - Squash change or file into parent or into change under cursor (`cs`, `cS`)
   - Duplicate change under the cursor (`cD`)
-  - Revert change under the cursor (`crc`)
+  - Revert change under the cursor (`cR`)
   - Abandon change or file under the cursor (`X`)
-  - Rebase change tree or individual change (`rr`, `ro`)
+  - Rebase change tree or individual change (`rbM`, `rbm`, `rbO`, `rbo`,`rO`,
+    `ro`, `rR`, `rr`)
   - Undo last operation (`cU`)
   - Bookmark management (`cbc`, `cbX`, `cbx`, `cbF`, `cbf`, `cbM`, `cbm`, `cbr`)
   - Tag management (`ctc`, `ctm`, `ctX`, `ctx`)
