@@ -50,7 +50,7 @@ COMMANDS                                                       *jiejie-commands*
 :Jvdiffsplit [object]   Like |:Jdiffsplit|, but always split vertically.
 
                                                                   *:Jhdiffsplit*
-:Jldiffsplit [object]   Like |:Jdiffsplit|, but always split vertically.
+:Jhdiffsplit [object]   Like |:Jdiffsplit|, but always split vertically.
 
                                                                         *:Jedit*
 :Jedit [object]         |:edit| a |jiejie-object|.
