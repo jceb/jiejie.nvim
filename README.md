@@ -44,7 +44,7 @@ easily, these rules might prove helpful:
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
   - Close buffer (`q`, `gq`)
   - Prepopulate a : command with the file under the cursor (`.`)
-- Modify changes from the log buffer
+- Modify commits from the log buffer
   - Add `!` prefix to mappings for modification of immutable changes
   - Edit change (`<CR>`)
   - Pull and push changes to git (`gu`, `gp`)
@@ -78,6 +78,11 @@ See [ROADMAP.md](./ROADMAP.md).
 
 ## References
 
+There isn't too much information about Jujutus on the web, yet. Here are a
+number of references that I find helpful:
+
 - [Jujutsu documentation](https://docs.jj-vcs.dev/latest/)
 - [Jujutsu's Wiki - Neovim integration](https://github.com/jj-vcs/jj/wiki/Vim,-Neovim)
 - [Jujutsu Tutorial by Steve Klabnik](https://steveklabnik.github.io/jujutsu-tutorial/)
+- [GitButler's Jujutsu intro](https://www.youtube.com/watch?app=desktop&v=dwyMlLYIrPk)
+  and [advanced](https://www.youtube.com/watch?v=PsiXflgIC8Q) videos
