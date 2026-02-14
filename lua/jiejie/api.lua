@@ -88,7 +88,7 @@ end
 --- @param change_id string Change ID, e.g. "@"
 --- @return Change
 function M.construct_dummy_change(change_id)
-  assert(not change_id or change_id ~= "", "Change ID emptype")
+  assert(change_id and change_id ~= "", "Change ID empty")
   return {
     id = change_id,
     id_short = change_id,

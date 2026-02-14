@@ -41,7 +41,7 @@ function M.Jedit(args)
   assert(ctx, "Unable to determine repository context for " .. object.filename)
   assert(vim.startswith(object.filename, ctx.root), "Unable to determine jj root directory")
   local path = vim.fn.trim(vim.fn.strpart(object.filename, #ctx.root), "/", 1)
-  local dummy_change = api.construct_dummy_change("@")
+  local dummy_change = api.construct_dummy_change(object.change_id or "@")
   api.object_edit(ctx, path, dummy_change)
 end
 
