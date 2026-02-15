@@ -195,11 +195,13 @@ end
 
 --- Retrieve bookmarks or tags
 --- @param fn fun(args?: WithArgs): boolean Callback function
---- @param opts? WithOpts | {_local?: boolean, remote?: boolean, tags?: boolean, revisions?: string} Options
---- - tags List tags instead of bookmarks
---- - _local List local bookmarks - if nil, list local bookmarks
---- - remote List remote bookmarks - if nil, don't list remote bookmarks
---- - revisions Get bookmarks that correspond to these local revisions, default all (::)
+--- @param opts? WithOpts | {_local?: boolean, remote?: boolean, tags?: boolean, src_change?: Change, limit_to_change?: boolean, limit_to_branch?: boolean} Options
+--- - tags: List tags instead of bookmarks
+--- - _local: List local bookmarks - if nil, list local bookmarks
+--- - remote: List remote bookmarks - if nil, don't list remote bookmarks
+--- - src_change: Anchor point for bookmark selection, if missing, consider bookmarks on all (::) commits
+--- - limit_to_change: Limits bookmark search to the current change
+--- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
 --- @return function
 function M.with_bookmarks_or_tags(fn, opts)
   --- @param args? WithArgs Arguments
@@ -214,7 +216,10 @@ function M.with_bookmarks_or_tags(fn, opts)
     if not lopts.tags then
       _args = vim.list_extend(_args, {
         "-r",
-        lopts.revisions or "::",
+        (lopts.src_change and lopts.limit_to_change and api.get_change_id(lopts.src_change))
+          or (lopts.src_change and lopts.limit_to_branch and ("::" .. api.get_change_id(lopts.src_change) .. "- | " .. api.get_change_id(lopts.src_change) .. "+::"))
+          or (lopts.src_change and (":: ~" .. api.get_change_id(lopts.src_change)))
+          or "::",
         "--sort",
         "committer-date-,name",
       })
@@ -223,9 +228,6 @@ function M.with_bookmarks_or_tags(fn, opts)
       "-T",
       [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id().short()) ++ "∫" ++ if(normal_target, normal_target.commit_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
     })
-    if largs.src_change then
-      _args = vim.list_extend(_args, { "-r", api.get_change_id(largs.src_change) })
-    end
     jujutsu.cli(largs.ctx, cmd, {
       args = _args,
       on_exit = vim.schedule_wrap(function(out)

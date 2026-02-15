@@ -141,32 +141,36 @@ c<space>                Populate command line with ":Jj commit ".
                                                                     *jiejie_cbc*
 cbc                     Create new bookmark at change under the cursor.
 
-                                                                    *jiejie_cbX*
-cbX                     Delete bookmark including remote boomark.
-
-                                                                    *jiejie_cbX*
-cbx                     Delete bookmark including remote boomark at change
-                        under the cursor.
-
                                                                     *jiejie_cbF*
-cbF                     Forget bookmark locally keeping the remote intact.
+cbF                     Forget any one bookmark locally keeping the remote
+                        intact.
 
                                                                     *jiejie_cbf*
 cbf                     Forget bookmark locally keeping the remote intact at
                         change under the cursor.
 
                                                         *jiejie_cbM* *jiejie_!cbM*
-[!]cbM                  Move any one of the available bookmarks to change
-                        under the cursor. With <bang>, allow backwards
+[!]cbM                  Move any one bookmark to the change under the cursor.
+                        With <>, allow backwards
                         movement.
 
                                                         *jiejie_cbm* *jiejie_!cbm*
-[!]cbm                  Move one bookmark from the current branch to change
-                        under the cursor. With <bang>, allow backwards
+[!]cbm                  Move one bookmark from the current branch to the
+                        change under the cursor. With <bang>, allow backwards
                         movement.
+
+                                                                    *jiejie_cbR*
+cbR                     Rename any one bookmark.
 
                                                                     *jiejie_cbr*
 cbr                     Rename bookmark at change under the cursor.
+
+                                                                    *jiejie_cbX*
+cbX                     Delete any one bookmark including the remote boomark.
+
+                                                                    *jiejie_cbX*
+cbx                     Delete bookmark including remote boomark at change
+                        under the cursor.
 
                                                                      *jiejie_cc*
 cc                      Commit currently edited change and create a new
@@ -185,19 +189,18 @@ cc                      Commit currently edited change and create a new
                         With <bang>, ignore immutability settings.
 
                                                         *jiejie_cpM* *jiejie_!cpM*
-[!]cpM                  Duplicate / cherry-pick current change `@` after an
-                        arbitrary bookmark that is requested from the user.
-                        With <bang>, ignore immutability settings.
+[!]cpM                  Duplicate / cherry-pick current change `@` after any
+                        one bookmark. With <bang>, ignore immutability
+                        settings.
 
                                                         *jiejie_cpm* *jiejie_!cpm*
 [!]cpm                  Duplicate / cherry-pick current change `@` after a
-                        bookmark in the current line of changes. With <bang>,
-                        ignore immutability settings.
+                        bookmark in the current branch. With <bang>, ignore
+                        immutability settings.
 
                                                         *jiejie_cpP* *jiejie_!cpP*
-[!]cpP                  Duplicate / cherry-pick current change `@` after an
-                        arbitrary change ID that is requested from the user.
-                        With <bang>, ignore immutability settings.
+[!]cpP                  Duplicate / cherry-pick current change `@` after any
+                        change ID. With <bang>, ignore immutability settings.
 
                                                         *jiejie_cpp* *jiejie_!cpp*
 [!]cpp                  Duplicate / cherry-pick current change `@` after the
@@ -206,9 +209,8 @@ cc                      Commit currently edited change and create a new
 
                                                         *jiejie_cpT* *jiejie_!cpT*
                                                         *jiejie_cpt* *jiejie_!cpt*
-[!]cpT                  Duplicate / cherry-pick current change `@` after an
-[!]cpt                  arbitrary tag that is requested from the user. With
-                        <bang>, ignore immutability settings.
+[!]cpT                  Duplicate / cherry-pick current change `@` after any
+[!]cpt                  one tag. With <bang>, ignore immutability settings.
 
                                                                      *jiejie_cR*
 cR                      Revert the change under the cursor.
@@ -252,33 +254,29 @@ Rebase maps ~
 r<space>                Populate command line with `:Jj rebase `.
 
                                                         *jiejie_rbM* *jiejie_!rbM*
-[!]rbM                  Rebase the current change `@` on an arbitrary
-                        bookmark that is requested from the user, together
-                        with its descendants. With <bang>, ignore immutability
-                        settings.
+[!]rbM                  Rebase the current change `@` on any one bookmark,
+                        together with its descendants. With <bang>, ignore
+                        immutability settings.
 
                                                         *jiejie_rbm* *jiejie_!rbm*
 [!]rbm                  Rebase the current change `@` on a bookmark in the
-                        current line of changes, together with its
-                        descendants. With <bang>, ignore immutability
-                        settings.
+                        current branch, together with its descendants. With
+                        <bang>, ignore immutability settings.
 
                                                         *jiejie_rbO* *jiejie_!rbO*
-[!]rbO                  Rebase only the current change `@` on an arbitrary
-                        bookmark that is requested from the user, without its
-                        descendants. With <bang>, ignore immutability
-                        settings.
+[!]rbO                  Rebase only the current change `@` on any bookmark,
+                        without its descendants. With <bang>, ignore
+                        immutability settings.
 
                                                         *jiejie_rbo* *jiejie_!rbo*
 [!]rbo                  Rebase only the current change `@` on a bookmark in
-                        the current line of changes, without its descendants.
-                        With <bang>, ignore immutability settings.
+                        the current branch, without its descendants. With
+                        <bang>, ignore immutability settings.
 
                                                           *jiejie_rO* *jiejie_!rO*
-[!]rO                   Rebase only the current change `@` on an arbitrary
-                        change ID that is requested from the user, without its
-                        descendants. With <bang>, ignore immutability
-                        settings.
+[!]rO                   Rebase only the current change `@` on any change ID,
+                        without its descendants. With <bang>, ignore
+                        immutability settings.
 
                                                           *jiejie_ro* *jiejie_!ro*
 [!]ro                   Rebase only the current change `@` on the change under
@@ -286,9 +284,9 @@ r<space>                Populate command line with `:Jj rebase `.
                         ignore immutability settings.
 
                                                           *jiejie_rR* *jiejie_!rR*
-[!]rR                   Rebase the current change `@` on an arbitrary change
-                        ID that is requested from the user. With <bang>,
-                        ignore immutability settings.
+[!]rR                   Rebase the current change `@` on any change ID,
+                        together with its descendants. With <bang>, ignore
+                        immutability settings.
 
                                                                      *jiejie_rr*
                                                                     *jiejie_!rr*

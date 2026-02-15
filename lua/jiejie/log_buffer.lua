@@ -150,20 +150,87 @@ function M.setup_buffer(ctx)
   local api = require("jiejie.api")
   --- @type table<string, fun(opts?: {}): fun()>
   local fns = {
-    --- @param opts {tags?: boolean, revisions?: string, with_change?: number}
+    --
+
+    --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+    --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename
+    --- - drop_change: Drops change and pass nil instead
+    --- - limit_to_change: Limits bookmark search to the current change
+    --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+    cb = function(opts)
+      local lopts = opts or {}
+      local with_bookmarks = function(fn)
+        if lopts.with_action ~= 2 ^ 0 then
+          return function(args)
+            helpers.with_bookmarks_or_tags(fn, {
+              ctx = args.ctx,
+              src_change = not lopts.drop_change and args.src_change or nil,
+              limit_to_change = lopts.limit_to_change,
+              limit_to_branch = lopts.limit_to_branch,
+            })(args)
+          end
+        end
+        return fn
+      end
+      return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
+        if lopts.with_action == 2 ^ 4 then
+          helpers.with_bookmark_or_tag(function(__args)
+            api.cli(args.ctx, "bookmark", {
+              args = { "rename", args.bookmark, __args.bookmark },
+              on_exit = function()
+                vim.notify("Bookmark renamed: " .. args.bookmark, vim.log.levels.INFO)
+              end,
+            })
+            return true
+          end, { prompt = "Enter new name: " })({ ctx = args.ctx })
+        elseif lopts.with_action == 2 ^ 3 then
+          api.cli(args.ctx, "bookmark", {
+            args = { "delete", args.bookmark },
+            on_exit = function()
+              vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
+            end,
+          })
+        elseif lopts.with_action == 2 ^ 1 then
+          api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
+        elseif lopts.with_action == 2 ^ 2 then
+          api.cli(args.ctx, "bookmark", {
+            args = { "forget", args.bookmark },
+            on_exit = function()
+              vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
+            end,
+          })
+        else
+          api.cli(args.ctx, "bookmark", {
+            args = { "create", "-r", api.get_change_id(args.src_change), args.bookmark },
+            on_exit = function()
+              vim.notify("Bookmark created: " .. args.bookmark, vim.log.levels.INFO)
+            end,
+          })
+        end
+        return true
+      end)))
+    end,
+
+    --- @param opts {tags?: boolean, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
     --- - tags List tags instead of bookmarks
-    --- - revisions Get bookmarks that correspond to these local revisions, default all (::)
-    --- - with_change 0 (default): use change under cursor, 1: prompt for change id, 3: prompt for bookmark
-    cpp = function(opts)
+    --- - with_change 1 (default): use change under cursor, 1: prompt for change id, 2: prompt for bookmark
+    --- - drop_change: Drops change and pass nil instead
+    --- - limit_to_change: Limits bookmark search to the current change
+    --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+    cp = function(opts)
       local lopts = opts or {}
       local use_change = function(fn)
         if lopts.with_change == 2 ^ 1 then
           return helpers.with_target_change(fn)
         elseif lopts.with_change == 2 ^ 2 then
-          return helpers.with_bookmarks_or_tags(
-            helpers.with_bookmark_or_tag(fn, { tags = lopts.tags }),
-            { revisions = lopts.revisions or "::", tags = lopts.tags }
-          )
+          return helpers.search_change(function(args)
+            return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn, { tags = lopts.tags }), {
+              src_change = not lopts.drop_change and args.src_change or nil,
+              tags = lopts.tags,
+              limit_to_change = lopts.limit_to_change,
+              limit_to_branch = lopts.limit_to_branch,
+            })(args)
+          end)
         else
           return helpers.search_change(fn, { args_key = "dst_change" })
         end
@@ -184,6 +251,7 @@ function M.setup_buffer(ctx)
         return true
       end)
     end,
+
     --- @param opts {negate?: boolean}
     --- - negate: Negate count
     ctrl_a = function(opts)
@@ -193,10 +261,11 @@ function M.setup_buffer(ctx)
         return true
       end, { negate = lopts.negate })
     end,
+
     --- @param opts {split_direction?: SplitDirection, diff_commit_under_cursor?: boolean}
     --- - split_direction: Split direction
     --- - diff_commit_under_cursor: Diff commit under against its parents instead of diffing against @
-    dd = function(opts)
+    d = function(opts)
       return helpers.search_file(helpers.search_change(function(args)
         local lopts = opts or {}
         --- @type RepositoryPath[]
@@ -218,6 +287,7 @@ function M.setup_buffer(ctx)
         return true
       end))
     end,
+
     --- @param opts {split_direction?: SplitDirection}
     --- - split_direction: Split direction
     o = function(opts)
@@ -228,6 +298,7 @@ function M.setup_buffer(ctx)
         return true
       end))
     end,
+
     --- @param opts {close_current_window?: boolean}
     --- - close_current_window: Close the current window in addition to the preview window
     q = function(opts)
@@ -248,17 +319,26 @@ function M.setup_buffer(ctx)
         return true
       end)
     end,
-    --- @param opts {rebase_tree?: boolean, revisions?: string, with_change?: number}
+
+    --- @param opts {rebase_tree?: boolean, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
     --- - rebase_tree: Rebase tree, if false rebase just the commit
-    --- - revisions Get bookmarks that correspond to these local revisions, default all (::)
-    --- - with_change 0 (default): use change under cursor, 1: prompt for change id, 3: prompt for bookmark
-    rr = function(opts)
+    --- - with_change 1 (default): use change under cursor, 1: prompt for change id, 2: prompt for bookmark
+    --- - drop_change: Drops change and pass nil instead
+    --- - limit_to_change: Limits bookmark search to the current change
+    --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+    r = function(opts)
       local lopts = opts or {}
       local use_change = function(fn)
         if lopts.with_change == 2 ^ 1 then
           return helpers.with_target_change(fn)
         elseif lopts.with_change == 2 ^ 2 then
-          return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), { revisions = lopts.revisions or "::" })
+          return helpers.search_change(function(args)
+            return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), {
+              src_change = not lopts.drop_change and args.src_change or nil,
+              limit_to_change = lopts.limit_to_change,
+              limit_to_branch = lopts.limit_to_branch,
+            })(args)
+          end)
         else
           return helpers.search_change(fn, { args_key = "dst_change" })
         end
@@ -289,10 +369,11 @@ function M.setup_buffer(ctx)
         end
       )
     end,
+
     --- @param opts {commit_id?: boolean, message_or_filename?: boolean}
     --- - commit_id: Copy commit id or else the change id if not message_or_filename
     --- - message_or_filename: Copy commit message or file name
-    yy = function(opts)
+    y = function(opts)
       local lopts = opts or {}
       local locate = function(fn)
         if lopts.message_or_filename then
@@ -544,42 +625,42 @@ function M.setup_buffer(ctx)
     },
     {
       key = "dD",
-      fn = fns.dd({ diff_commit_under_cursor = true }),
+      fn = fns.d({ diff_commit_under_cursor = true }),
       desc = "Perform a :Jdiffsplit on the file and change under the cursor.",
     },
     {
       key = "dd",
-      fn = fns.dd(),
+      fn = fns.d(),
       desc = "Perform a :Jdiffsplit on the file under the cursor and change @.",
     },
     {
       key = "dV",
-      fn = fns.dd({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.vertical }),
+      fn = fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.vertical }),
       desc = "Perform a :Jvdiffsplit on the file and change under the cursor.",
     },
     {
       key = "dv",
-      fn = fns.dd({ split_direction = api.SPLIT_DIRECTION.vertical }),
+      fn = fns.d({ split_direction = api.SPLIT_DIRECTION.vertical }),
       desc = "Perform a :Jvdiffsplit on the file under the cursor and change @.",
     },
     {
       key = "dH",
-      fn = fns.dd({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
+      fn = fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
       desc = "Perform a :Jhdiffsplit on the file and change under the cursor.",
     },
     {
       key = "dh",
-      fn = fns.dd({ split_direction = api.SPLIT_DIRECTION.horizontal }),
+      fn = fns.d({ split_direction = api.SPLIT_DIRECTION.horizontal }),
       desc = "Perform a :Jhdiffsplit on the file under the cursor and change @.",
     },
     {
       key = "dS",
-      fn = fns.dd({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
+      fn = fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
       desc = "Perform a :Jhdiffsplit on the file and change under the cursor.",
     },
     {
       key = "ds",
-      fn = fns.dd({ split_direction = api.SPLIT_DIRECTION.horizontal }),
+      fn = fns.d({ split_direction = api.SPLIT_DIRECTION.horizontal }),
       desc = "Perform a :Jhdiffsplit on the file under the cursor and change @.",
     },
     {
@@ -606,106 +687,56 @@ function M.setup_buffer(ctx)
       desc = 'Populate command line with ":Jj commit "',
     },
     {
+      key = "cbb",
+      fn = fns.cb({ with_action = 2 ^ 0 }),
+      desc = "Alias of cbc",
+    },
+    {
       key = "cbc",
-      fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        api.cli(args.ctx, "bookmark", {
-          args = { "create", "-r", api.get_change_id(args.src_change), args.bookmark },
-          on_exit = function()
-            vim.notify("Bookmark created: " .. args.bookmark, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end)),
+      fn = fns.cb({ with_action = 2 ^ 0 }),
       desc = "Create new bookmark at change under the cursor",
     },
     {
-      key = "cbX",
-      fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        api.cli(args.ctx, "bookmark", {
-          args = { "delete", args.bookmark },
-          on_exit = function()
-            vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end))),
-      desc = "Delete bookmark including remote boomark",
-    },
-    {
-      key = "cbx",
-      fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
-        api.cli(args.ctx, "bookmark", {
-          args = { "delete", args.bookmark },
-          on_exit = function()
-            vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end))),
-      desc = "Delete bookmark including remote boomark at change under the cursor",
-    },
-    {
       key = "cbF",
-      fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        api.cli(args.ctx, "bookmark", {
-          args = { "forget", args.bookmark },
-          on_exit = function()
-            vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end))),
-      desc = "Forget bookmark locally keeping the remote intact",
+      fn = fns.cb({ with_action = 2 ^ 2, drop_change = true }),
+      desc = "Forget any one bookmark locally keeping the remote intact",
     },
     {
       key = "cbf",
-      fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
-        api.cli(args.ctx, "bookmark", {
-          args = { "forget", args.bookmark },
-          on_exit = function()
-            vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end))),
+      fn = fns.cb({ with_action = 2 ^ 2, limit_to_change = true }),
       desc = "Forget bookmark locally keeping the remote intact at change under the cursor",
     },
     {
       key = "cbM",
-      fn = helpers.with_bookmarks_or_tags(helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
-        return true
-      end))),
+      fn = fns.cb({ with_action = 2 ^ 1 }),
       with_force = true,
-      desc = "Move bookmark one of all the available bookmarks to change under the cursor",
+      desc = "Move any one bookmark to the change under the cursor",
     },
     {
       key = "cbm",
-      fn = helpers.with_bookmarks_or_tags(
-        helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
-          return true
-        end)),
-        { revisions = "::@" }
-      ),
+      fn = fns.cb({ with_action = 2 ^ 1, limit_to_branch = true }),
       with_force = true,
-      desc = "Move bookmark from the current branch to change under the cursor",
+      desc = "Move one bookmark from the current branch to the change under the cursor",
+    },
+    {
+      key = "cbR",
+      fn = fns.cb({ with_action = 2 ^ 4, drop_change = true }),
+      desc = "Rename any one bookmark",
     },
     {
       key = "cbr",
-      fn = helpers.search_change(helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(function(args)
-        helpers.with_bookmark_or_tag(function(_args)
-          api.cli(args.ctx, "bookmark", {
-            args = { "rename", args.bookmark, _args.bookmark },
-            on_exit = function()
-              vim.notify("Bookmark renamed: " .. args.bookmark, vim.log.levels.INFO)
-            end,
-          })
-          return true
-        end, { prompt = "Enter new name: " })({ ctx = args.ctx })
-        return true
-      end))),
+      fn = fns.cb({ with_action = 2 ^ 4, limit_to_change = true }),
       desc = "Rename bookmark at change under the cursor",
+    },
+    {
+      key = "cbX",
+      fn = fns.cb({ with_action = 2 ^ 3, drop_change = true }),
+      desc = "Delete any one bookmark including the remote boomark",
+    },
+    {
+      key = "cbx",
+      fn = fns.cb({ with_action = 2 ^ 3, limit_to_change = true }),
+      desc = "Delete bookmark including remote boomark at change under the cursor",
     },
     {
       key = "cc",
@@ -724,37 +755,37 @@ function M.setup_buffer(ctx)
     },
     {
       key = "cpM",
-      fn = fns.cpp({ with_change = 2 ^ 2 }),
+      fn = fns.cp({ with_change = 2 ^ 2 }),
       with_force = true,
-      desc = "Duplicate / cherry-pick current change `@` after an arbitrary bookmark that is requested from the user",
+      desc = "Duplicate / cherry-pick current change `@` after any one bookmark",
     },
     {
       key = "cpm",
-      fn = fns.cpp({ with_change = 2 ^ 2, revisions = "::@" }),
+      fn = fns.cp({ with_change = 2 ^ 2, limit_to_branch = true }),
       with_force = true,
-      desc = "Duplicate / cherry-pick current change `@` after a bookmark in the current line of changes",
+      desc = "Duplicate / cherry-pick current change `@` after a bookmark in the current branch",
     },
     {
       key = "cpP",
-      fn = fns.cpp({ with_change = 2 ^ 1 }),
+      fn = fns.cp({ with_change = 2 ^ 1 }),
       with_force = true,
-      desc = "Duplicate / cherry-pick current change `@` after an arbitrary change ID that is requested from the user",
+      desc = "Duplicate / cherry-pick current change `@` after any change ID",
     },
     {
       key = "cpp",
-      fn = fns.cpp({ with_change = 2 ^ 0 }),
+      fn = fns.cp({ with_change = 2 ^ 0 }),
       with_force = true,
       desc = "Duplicate / cherry-pick current change after the change under the cursor",
     },
     {
       key = "cpT",
-      fn = fns.cpp({ with_change = 2 ^ 2, tags = true }),
+      fn = fns.cp({ with_change = 2 ^ 2, tags = true }),
       with_force = true,
-      desc = "Duplicate / cherry-pick current change `@` after an arbitrary tag that is requested from the user",
+      desc = "Duplicate / cherry-pick current change `@` after any one tag",
     },
     {
       key = "cpt",
-      fn = fns.cpp({ with_change = 2 ^ 2, tags = true }),
+      fn = fns.cp({ with_change = 2 ^ 2, tags = true }),
       with_force = true,
       desc = "Alias of cpT",
     },
@@ -778,17 +809,17 @@ function M.setup_buffer(ctx)
     },
     {
       key = "yC",
-      fn = fns.yy({ commit_id = true }),
+      fn = fns.y({ commit_id = true }),
       desc = "Copy commit id under the cursor",
     },
     {
       key = "yc",
-      fn = fns.yy({ commit_id = false }),
+      fn = fns.y({ commit_id = false }),
       desc = "Copy change id under the cursor",
     },
     {
       key = "yy",
-      fn = fns.yy({ message_or_filename = true }),
+      fn = fns.y({ message_or_filename = true }),
       desc = "Copy commit message or file name under the cursor",
     },
     {
@@ -967,49 +998,49 @@ function M.setup_buffer(ctx)
     },
     {
       key = "rbM",
-      fn = fns.rr({ rebase_tree = true, revisions = "::", with_change = 2 ^ 2 }),
+      fn = fns.r({ rebase_tree = true, with_change = 2 ^ 2 }),
       with_force = true,
-      desc = "Rebase the current change `@` on an arbitrary bookmark that is requested from the user, together with its descendants",
+      desc = "Rebase the current change `@` on any one bookmark, together with its descendants",
     },
     {
       key = "rbm",
-      fn = fns.rr({ rebase_tree = true, revisions = "::@", with_change = 2 ^ 2 }),
+      fn = fns.r({ rebase_tree = true, with_change = 2 ^ 2, limit_to_branch = true }),
       with_force = true,
-      desc = "Rebase the current change `@` on a bookmark in the current line of changes, together with its descendants",
+      desc = "current branch, together with its descendants",
     },
     {
       key = "rbO",
-      fn = fns.rr({ rebase_tree = false, revisions = "::", with_change = 2 ^ 2 }),
+      fn = fns.r({ rebase_tree = false, with_change = 2 ^ 2 }),
       with_force = true,
-      desc = "Rebase only the current change `@` on an arbitrary bookmark that is requested from the user, without its descendants",
+      desc = "Rebase only the current change `@` on any bookmark, without its descendants",
     },
     {
       key = "rbo",
-      fn = fns.rr({ rebase_tree = false, revisions = "::@", with_change = 2 ^ 2 }),
+      fn = fns.r({ rebase_tree = false, with_change = 2 ^ 2, limit_to_branch = true }),
       with_force = true,
-      desc = "Rebase only the current change `@` on a bookmark in the current line of changes, without its descendants",
+      desc = "Rebase only the current change `@` on a bookmark in the current branch, without its descendants",
     },
     {
       key = "rO",
-      fn = fns.rr({ rebase_tree = false, with_change = 2 ^ 1 }),
+      fn = fns.r({ rebase_tree = false, with_change = 2 ^ 1 }),
       with_force = true,
-      desc = "Rebase only the current change `@` on an arbitrary change ID that is requested from the user, without its descendants",
+      desc = "Rebase only the current change `@` on any change ID, without its descendants",
     },
     {
       key = "ro",
-      fn = fns.rr({ rebase_tree = false, with_change = 2 ^ 0 }),
+      fn = fns.r({ rebase_tree = false, with_change = 2 ^ 0 }),
       with_force = true,
       desc = "Rebase only the current change `@` on the change under the cursor, without its descendants",
     },
     {
       key = "rR",
-      fn = fns.rr({ rebase_tree = true, with_change = 2 ^ 1 }),
+      fn = fns.r({ rebase_tree = true, with_change = 2 ^ 1 }),
       with_force = true,
-      desc = "Rebase the current change `@` on an arbitrary change ID that is requested from the user",
+      desc = "Rebase the current change `@` on any change ID, together with its descendants",
     },
     {
       key = "rr",
-      fn = fns.rr({ rebase_tree = true, with_change = 2 ^ 0 }),
+      fn = fns.r({ rebase_tree = true, with_change = 2 ^ 0 }),
       with_force = true,
       desc = "Rebase the current change `@` on the change undercursor, together with its descendants",
     },

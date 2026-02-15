@@ -60,7 +60,8 @@ easily, these rules might prove helpful:
   - Rebase change tree or individual change (`rbM`, `rbm`, `rbO`, `rbo`,`rO`,
     `ro`, `rR`, `rr`)
   - Undo last operation (`cU`)
-  - Bookmark management (`cbc`, `cbX`, `cbx`, `cbF`, `cbf`, `cbM`, `cbm`, `cbr`)
+  - Bookmark management (`cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`, `cbr`,
+    `cbX`, `cbx`)
   - Tag management (`ctc`, `ctm`, `ctX`, `ctx`)
 
 ## Installation
@@ -86,5 +87,9 @@ number of references that I find helpful:
 - [Jujutsu documentation](https://docs.jj-vcs.dev/latest/)
 - [Jujutsu's Wiki - Neovim integration](https://github.com/jj-vcs/jj/wiki/Vim,-Neovim)
 - [Jujutsu Tutorial by Steve Klabnik](https://steveklabnik.github.io/jujutsu-tutorial/)
-- [GitButler's Jujutsu intro](https://www.youtube.com/watch?app=desktop&v=dwyMlLYIrPk)
-  and [advanced](https://www.youtube.com/watch?v=PsiXflgIC8Q) videos
+- Jujutsu introductions:
+  - Git Merge 2024
+    [intro](https://www.youtube.com/watch?app=desktop&v=LV0JzI8IcCY) by Martin
+    von Zweigbergk
+  - GitButler's [intro](https://www.youtube.com/watch?app=desktop&v=dwyMlLYIrPk)
+    and [advanced](https://www.youtube.com/watch?v=PsiXflgIC8Q) videos
