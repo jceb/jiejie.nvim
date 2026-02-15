@@ -3,6 +3,7 @@ local M = {}
 
 --- @class LogView
 --- @field fileset string File set that is referenced
+--- @field description? string Short description, displayed instead of the fileset
 
 --- @type table<LogView>
 M.LOG_VIEWS = {
@@ -13,7 +14,11 @@ M.LOG_VIEWS = {
     fileset = "::@",
   },
   {
-    fileset = "heads(all())",
+    fileset = "visible_heads()",
+  },
+  {
+    fileset = "visible_heads() ~ bookmarks() ~ tags()",
+    description = "detached_heads()",
   },
   {
     fileset = "bookmarks()",

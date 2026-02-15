@@ -23,9 +23,9 @@ M.load = function(ctx, callback)
   local header_log_view = table.concat(
     vim.iter(log_view.LOG_VIEWS):fold({}, function(acc, v)
       if v.fileset == current_log_view.fileset then
-        table.insert(acc, "†g" .. idx .. "‐" .. v.fileset .. "‡")
+        table.insert(acc, "†g" .. idx .. "‐" .. (v.description or v.fileset) .. "‡")
       else
-        table.insert(acc, "g" .. idx .. "‐" .. v.fileset)
+        table.insert(acc, "g" .. idx .. "‐" .. (v.description or v.fileset))
       end
       idx = idx + 1
       return acc

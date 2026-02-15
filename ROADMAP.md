@@ -34,12 +34,13 @@
       keys for deletion or operations on arbitrary change IDs
 - [x] Commands: `yy`, `yc` and `yC` for copying the commit description / current
       file name, change ID or commit ID
+- [x] Log: add detached_heads() view
 
 ## Priority 1
 
+- [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
 - [ ] Commands: merge / new with multiple ancestors
-- [ ] Bug: issues with empty bookmark lists, e.g. tags in log view
-- [ ] Commands: cherry-pick - that is jujutsu's equivalent?
+- [ ] Commands: cherry-pick - that is jujutsu's equivalent? duplicate?
 - [ ] Commands: track / untrack
 - [ ] Commands: absorb
 - [ ] Commands: parallelize
@@ -52,8 +53,7 @@
 ## Priority 2
 
 - [ ] Bug: make log reload upon `!` commands
-- [ ] Navigation: navigation should open folds
-- [ ] Commands: use count to select operation log view, e.g. 3gv instead of g3
+- [ ] Log: navigation should open folds
 - [ ] Commands: evolog
 - [ ] New feature: operations log support
 - [ ] Refactor: make jiejie URLs truly unique so that the index and file paths
