@@ -259,29 +259,44 @@ function M.setup_buffer(ctx)
     --- - commit_id: Copy commit id or else the change id if not message_or_filename
     --- - message_or_filename: Copy commit message or file name
     yy = function(opts)
-      return helpers.search_file(
-        helpers.search_change(function(args)
-          local lopts = opts or {}
-          local copy = ""
-          if lopts.message_or_filename then
-            if args.file then
-              copy = args.file.filename
-            else
-              copy = args.src_change.description_first_line
-            end
+      local lopts = opts or {}
+      local locate = function(fn)
+        if lopts.message_or_filename then
+          return helpers.with_file_at_position(helpers.with_change_at_position(fn, { err_continue = true }), { err_continue = true })
+        else
+          return helpers.search_change(fn)
+        end
+      end
+      return locate(function(args)
+        local copy
+        local copied = ""
+        if lopts.message_or_filename then
+          if args.file then
+            copy = args.file.filename
+            copied = "filename"
           else
-            if lopts.commit_id then
-              copy = args.src_change.commit_id
-            else
-              copy = api.get_change_id(args.src_change, true)
+            if args.src_change then
+              copy = args.src_change.description_first_line
+              copied = "description"
             end
           end
+        else
+          if lopts.commit_id then
+            copy = args.src_change.commit_id
+            copied = "commit id"
+          else
+            copy = api.get_change_id(args.src_change, true)
+            copied = "change id"
+          end
+        end
+        if copy then
           vim.cmd("let @" .. vim.v.register .. '="' .. vim.fn.fnameescape(copy) .. '"')
-          vim.notify("Copied to clipboard: " .. copy, vim.log.levels.INFO)
-          return true
-        end),
-        { err_continue = true }
-      )
+          vim.notify("Yanked " .. copied .. " " .. copy .. (vim.v.register ~= '"' and ' into "' .. vim.v.register or ""), vim.log.levels.INFO)
+        else
+          vim.fn.feedkeys(vim.v.count1 .. '"' .. vim.v.register .. "yy", "n")
+        end
+        return true
+      end)
     end,
   }
   --- @type table<number, {key: string, fn: fun(args?: WithArgs), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
