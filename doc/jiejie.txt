@@ -22,7 +22,7 @@ COMMANDS                                                       *jiejie-commands*
                         is focused instead.
                         Press g? or see |jiejie-maps| for usage.
 
-                                                                           *:Jj*
+                                                                      *:Jj* *:Jj!*
 :Jj[!] [args]            Run an arbitrary jj command and display any output.
                         With <bang>, add `--ignore-immutuable` to the command.
 
@@ -60,12 +60,10 @@ MAPS                                                               *jiejie-maps*
                                                         *jiejie-navigation-maps*
 Navigation maps ~
 
-                                                                   *jiejie_<CR>*
-<CR>                    Edit change or file under the cursor.
+                                                      *jiejie_<CR>* *jiejie_!<CR>*
+[!]<CR>                 Edit change or file under the cursor. With <bang>,
+                        ignore immutability settings.
 
-
-                                                                  *jiejie_!<CR>*
-!<CR>                   Edit immutable change or file under the cursor.
 
                                                                       *jiejie_o*
 o                       Open the file or |jiejie-object| under the cursor in a
@@ -157,21 +155,15 @@ cbF                     Forget bookmark locally keeping the remote intact.
 cbf                     Forget bookmark locally keeping the remote intact at
                         change under the cursor.
 
-                                                                    *jiejie_cbM*
-cbM                     Move any one of the available bookmarks to change
-                        under the cursor.
+                                                        *jiejie_cbM* *jiejie_!cbM*
+[!]cbM                  Move any one of the available bookmarks to change
+                        under the cursor. With <bang>, allow backwards
+                        movement.
 
-                                                                   *jiejie_!cbM*
-!cbM                    Move any one of the available bookmarks to change
-                        under the cursor. Allow backwards movement.
-
-                                                                    *jiejie_cbm*
-cbm                     Move one bookmark from the current branch to change
-                        under the cursor.
-
-                                                                   *jiejie_!cbm*
-!cbm                    Move one bookmark from the current branch to change
-                        under the cursor. Allow backwards movement.
+                                                        *jiejie_cbm* *jiejie_!cbm*
+[!]cbm                  Move one bookmark from the current branch to change
+                        under the cursor. With <bang>, allow backwards
+                        movement.
 
                                                                     *jiejie_cbr*
 cbr                     Rename bookmark at change under the cursor.
@@ -180,24 +172,17 @@ cbr                     Rename bookmark at change under the cursor.
 cc                      Commit currently edited change and create a new
                         change.
 
-                                                                     *jiejie_cD*
-cD                      Duplicate change under the cursor.
+                                                          *jiejie_cD* *jiejie_!cD*
+[!]cD                   Duplicate change under the cursor. With <bang>, ignore
+                        immutability settings.
 
-                                                                    *jiejie_!cD*
-!cD                     Duplicate change under the cursor, ignoring
-                        immutablily settings.
+                                                          *jiejie_cd* *jiejie_!cd*
+[!]cd                   Edit first line of change description. With <bang>,
+                        ignore immutability settings.
 
-                                                                     *jiejie_cd*
-cd                      Edit first line of change description.
-
-                                                                    *jiejie_!cd*
-!cd                     Edit first line of an immutable change description.
-
-                                                                     *jiejie_ce*
-ce                      Edit change description.
-
-                                                                    *jiejie_!ce*
-!ce                     Edit immutable change description.
+                                                          *jiejie_ce* *jiejie_!ce*
+[!]ce                   Edit change description. With <bang>, ignore
+                        immutability settings.
 
                                                                      *jiejie_yy*
 yy                      Copy commit message or file name under the cursor.
@@ -208,12 +193,9 @@ yc                      Copy change id under the cursor.
                                                                      *jiejie_yC*
 yC                      Copy commit id under the cursor.
 
-                                                                     *jiejie_cn*
-cn                      Create a new change after the change under the cursor.
-
-                                                                    *jiejie_!cn*
-!cn                     Create a new change after the change under the cursor,
-                        ignoring immutablily settings.
+                                                          *jiejie_cn* *jiejie_!cn*
+[!]cn                   Create a new change after the change under the cursor.
+                        With <bang>, ignore immutability settings.
 
                                                                      *jiejie_cR*
 cR                      Revert the change under the cursor.
@@ -221,22 +203,15 @@ cR                      Revert the change under the cursor.
                                                                *jiejie_s<space>*
 s<space>                Populate command line with ":Jj squash ".
 
-                                                                     *jiejie_cs*
-cs                      Squash current changes into it's parent or into the
+                                                          *jiejie_cs* *jiejie_!cs*
+[!]cs                   Squash current changes into it's parent or into the
                         change under the cursor if the cursor is not on the
-                        currently edited changed.
+                        currently edited changed. With <bang>, ignore
+                        immutability settings.
 
-                                                                    *jiejie_!cs*
-!cs                     Squash current changes into it's immutable parent or
-                        into the change under the cursor if the cursor is not
-                        on the currently edited changed.
-
-                                                                     *jiejie_cS*
-cS                      Squash current changes into the selected change.
-
-                                                                    *jiejie_!cS*
-!cS                     Squash current changes into the immutuable selected
-                        change.
+                                                          *jiejie_cS* *jiejie_!cS*
+[!]cS                   Squash current changes into the selected change. With
+                        <bang>, ignore immutability settings.
 
                                                                     *jiejie_ctc*
 ctc                     Set tag at change under the cursor.
@@ -253,12 +228,9 @@ ctx                     Delete tag at change under the cursor.
                                                                      *jiejie_cU*
 cU                      Revert last operation.
 
-                                                                      *jiejie_X*
-X                       Abandon change or restore file from parent change.
-
-                                                                     *jiejie_!X*
-!X                      Abandon immutuable change or restore file from parent
-                        change.
+                                                            *jiejie_X* *jiejie_!X*
+[!]X                    Abandon change or restore file from parent change.
+                        With <bang>, ignore immutability settings.
 
                                                                       *jiejie_r*
 Rebase maps ~
@@ -266,81 +238,50 @@ Rebase maps ~
                                                                *jiejie_r<space>*
 r<space>                Populate command line with `:Jj rebase `.
 
-                                                                   *jiejie_!rbM*
-!rbM                    Rebase the current change `@` on an arbitrary
+                                                        *jiejie_rbM* *jiejie_!rbM*
+[!]rbM                  Rebase the current change `@` on an arbitrary
                         bookmark that is requested from the user, together
-                        with its descendants, ignoring immutablily settings.
+                        with its descendants. With <bang>, ignore immutability
+                        settings.
 
-                                                                    *jiejie_rbM*
-rbM                     Rebase the current change `@` on an arbitrary
-                        bookmark that is requested from the user, together
-                        with its descendants.
-
-                                                                   *jiejie_!rbm*
-!rbm                    Rebase the current change `@` on a bookmark in the
-                        current line of changes, together with its descendants,
-                        ignoring immutablily settings.
-
-                                                                    *jiejie_rbm*
-rbm                     Rebase the current change `@` on a bookmark in the
+                                                        *jiejie_rbm* *jiejie_!rbm*
+[!]rbm                  Rebase the current change `@` on a bookmark in the
                         current line of changes, together with its
-                        descendants.
+                        descendants. With <bang>, ignore immutability
+                        settings.
 
-                                                                   *jiejie_!rbO*
-!rbO                    Rebase only the current change `@` on an arbitrary
+                                                        *jiejie_rbO* *jiejie_!rbO*
+[!]rbO                  Rebase only the current change `@` on an arbitrary
                         bookmark that is requested from the user, without its
-                        descendants, ignoring immutablily settings.
+                        descendants. With <bang>, ignore immutability
+                        settings.
 
-                                                                    *jiejie_rbO*
-rbO                     Rebase only the current change `@` on an arbitrary
-                        bookmark that is requested from the user, without its
-                        descendants.
-
-                                                                   *jiejie_!rbo*
-!rbo                    Rebase only the current change `@` on a bookmark in the
-                        current line of changes, without its descendants,
-                        ignoring immutablily settings.
-
-                                                                    *jiejie_rbo*
-rbo                     Rebase only the current change `@` on a bookmark in
+                                                        *jiejie_rbo* *jiejie_!rbo*
+[!]rbo                  Rebase only the current change `@` on a bookmark in
                         the current line of changes, without its descendants.
+                        With <bang>, ignore immutability settings.
 
-                                                                    *jiejie_!rO*
-!rO                     Rebase only the current change `@` on an arbitrary
+                                                          *jiejie_rO* *jiejie_!rO*
+[!]rO                   Rebase only the current change `@` on an arbitrary
                         change ID that is requested from the user, without its
-                        descendants, ignoring immutablily settings.
+                        descendants. With <bang>, ignore immutability
+                        settings.
 
-                                                                     *jiejie_rO*
-rO                      Rebase only the current change `@` on an arbitrary
-                        change ID that is requested from the user, without its
-                        descendants.
+                                                          *jiejie_ro* *jiejie_!ro*
+[!]ro                   Rebase only the current change `@` on the change under
+                        the cursor, without its descendants. With <bang>,
+                        ignore immutability settings.
 
-                                                                    *jiejie_!ro*
-!ro                     Rebase only the current change `@` on the change
-                        under the cursor, without its descendants, ignoring
-                        immutablily settings.
-
-                                                                     *jiejie_ro*
-ro                      Rebase only the current change `@` on the change
-                        under the cursor, without its descendants.
-
-                                                                     *jiejie_rR*
-rR                      Rebase the current change `@` on an arbitrary change
-                        ID that is requested from the user.
-
-                                                                   *jiejie_~!rR*
-!rR                     Rebase the current change `@` on an arbitrary change
-                        ID that is requested from the user, ignoring
-                        immutablily settings.
+                                                          *jiejie_rR* *jiejie_!rR*
+[!]rR                   Rebase the current change `@` on an arbitrary change
+                        ID that is requested from the user. With <bang>,
+                        ignore immutability settings.
 
                                                                      *jiejie_rr*
-rr                      Rebase the current change `@` on the change
-                        undercursor, together with its descendants.
-
                                                                     *jiejie_!rr*
-!rr                     Rebase the current change `@` on the changecursor,
-                        together with its descendants, ignoring immutablily
-                        settings.
+[!]rr                   Rebase the current change `@` on the change
+                        undercursor, together with its descendants. With
+                        <bang>, ignore immutability settings.
 
                                                                       *jiejie_g*
 Git maps ~
