@@ -53,7 +53,8 @@ easily, these rules might prove helpful:
   - Create a new change after the change under the cursor (`cn`)
   - Commit change or file under the cursor (`cc`)
   - Squash change or file into parent or into change under cursor (`cs`, `cS`)
-  - Duplicate change under the cursor (`cD`)
+  - Duplicate / cherry-pick change under the cursor (`cpP`, `cpp`, `cpM`, `cpm`,
+    `cpT`, `cpt`)
   - Revert change under the cursor (`cR`)
   - Abandon change or file under the cursor (`X`)
   - Rebase change tree or individual change (`rbM`, `rbm`, `rbO`, `rbo`,`rO`,

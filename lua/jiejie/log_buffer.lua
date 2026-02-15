@@ -150,23 +150,37 @@ function M.setup_buffer(ctx)
   local api = require("jiejie.api")
   --- @type table<string, fun(opts?: {}): fun()>
   local fns = {
-    --- @param opts {close_current_window?: boolean}
-    --- - close_current_window: Close the current window in addition to the preview window
-    q = function(opts)
+    --- @param opts {tags?: boolean, revisions?: string, with_change?: number}
+    --- - tags List tags instead of bookmarks
+    --- - revisions Get bookmarks that correspond to these local revisions, default all (::)
+    --- - with_change 0 (default): use change under cursor, 1: prompt for change id, 3: prompt for bookmark
+    cpp = function(opts)
       local lopts = opts or {}
-      return helpers.with_count(function(_)
-        for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          if vim.wo[_winid].previewwindow then
-            local bufid = vim.api.nvim_win_get_buf(_winid)
-            -- close preview window if it has filetype jiejie_change
-            if vim.bo[bufid].filetype == "jiejie_change" then
-              vim.api.nvim_win_close(_winid, true)
-            end
-          end
+      local use_change = function(fn)
+        if lopts.with_change == 2 ^ 1 then
+          return helpers.with_target_change(fn)
+        elseif lopts.with_change == 2 ^ 2 then
+          return helpers.with_bookmarks_or_tags(
+            helpers.with_bookmark_or_tag(fn, { tags = lopts.tags }),
+            { revisions = lopts.revisions or "::", tags = lopts.tags }
+          )
+        else
+          return helpers.search_change(fn, { args_key = "dst_change" })
         end
-        if lopts.close_current_window then
-          vim.api.nvim_win_close(0, true)
-        end
+      end
+      return use_change(function(args)
+        local src_change = api.construct_dummy_change("@")
+        local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag or args.bookmark) or args.dst_change
+        api.cli(args.ctx, "duplicate", {
+          args = jujutsu.ignore_immtuable({
+            "-d",
+            api.get_change_id(dst_change),
+            api.get_change_id(src_change),
+          }, { force = args.force }),
+          on_exit = function()
+            vim.notify("Duplicated change " .. api.get_change_id(src_change, true) .. " onto " .. api.get_change_id(dst_change, true), vim.log.levels.INFO)
+          end,
+        })
         return true
       end)
     end,
@@ -214,6 +228,26 @@ function M.setup_buffer(ctx)
         return true
       end))
     end,
+    --- @param opts {close_current_window?: boolean}
+    --- - close_current_window: Close the current window in addition to the preview window
+    q = function(opts)
+      local lopts = opts or {}
+      return helpers.with_count(function(_)
+        for _, _winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if vim.wo[_winid].previewwindow then
+            local bufid = vim.api.nvim_win_get_buf(_winid)
+            -- close preview window if it has filetype jiejie_change
+            if vim.bo[bufid].filetype == "jiejie_change" then
+              vim.api.nvim_win_close(_winid, true)
+            end
+          end
+        end
+        if lopts.close_current_window then
+          vim.api.nvim_win_close(0, true)
+        end
+        return true
+      end)
+    end,
     --- @param opts {rebase_tree?: boolean, revisions?: string, with_change?: number}
     --- - rebase_tree: Rebase tree, if false rebase just the commit
     --- - revisions Get bookmarks that correspond to these local revisions, default all (::)
@@ -230,7 +264,7 @@ function M.setup_buffer(ctx)
         end
       end
       return use_change(
-        --- @param args? WithArgs Callback function
+        --- @param args WithArgs Callback function
         --- @return boolean
         function(args)
           local src_change = api.construct_dummy_change("@")
@@ -689,21 +723,40 @@ function M.setup_buffer(ctx)
       desc = "Commit currently edited change and create a new change",
     },
     {
-      key = "cD",
-      fn = helpers.search_change(helpers.with_target_change(function(args)
-        api.cli(args.ctx, "duplicate", {
-          args = jujutsu.ignore_immtuable({ "-d", api.get_change_id(args.dst_change), api.get_change_id(args.src_change) }, { force = args.force }),
-          on_exit = function()
-            vim.notify(
-              "Duplicated change " .. api.get_change_id(args.src_change, true) .. " onto " .. api.get_change_id(args.dst_change, true),
-              vim.log.levels.INFO
-            )
-          end,
-        })
-        return true
-      end, { err_notify = false, defualt_target = "@" })),
+      key = "cpM",
+      fn = fns.cpp({ with_change = 2 ^ 2 }),
       with_force = true,
-      desc = "Duplicate change under the cursor",
+      desc = "Duplicate / cherry-pick current change `@` after an arbitrary bookmark that is requested from the user",
+    },
+    {
+      key = "cpm",
+      fn = fns.cpp({ with_change = 2 ^ 2, revisions = "::@" }),
+      with_force = true,
+      desc = "Duplicate / cherry-pick current change `@` after a bookmark in the current line of changes",
+    },
+    {
+      key = "cpP",
+      fn = fns.cpp({ with_change = 2 ^ 1 }),
+      with_force = true,
+      desc = "Duplicate / cherry-pick current change `@` after an arbitrary change ID that is requested from the user",
+    },
+    {
+      key = "cpp",
+      fn = fns.cpp({ with_change = 2 ^ 0 }),
+      with_force = true,
+      desc = "Duplicate / cherry-pick current change after the change under the cursor",
+    },
+    {
+      key = "cpT",
+      fn = fns.cpp({ with_change = 2 ^ 2, tags = true }),
+      with_force = true,
+      desc = "Duplicate / cherry-pick current change `@` after an arbitrary tag that is requested from the user",
+    },
+    {
+      key = "cpt",
+      fn = fns.cpp({ with_change = 2 ^ 2, tags = true }),
+      with_force = true,
+      desc = "Alias of cpT",
     },
     {
       key = "ce",

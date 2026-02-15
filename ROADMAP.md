@@ -24,7 +24,7 @@
 - [x] Commands: rebase
 - [x] Commands: bookmark
 - [x] Commands: tag
-- [x] Commands: duplicate
+- [x] Commands: duplicate / cherry-pick
 - [x] Key: display full summary of a change via K
 - [x] Log: support toggling between different log views
 - [x] New Feature: Automatically detect changes in files/buffers and reload logs
@@ -40,7 +40,6 @@
 
 - [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
 - [ ] Commands: merge / new with multiple ancestors
-- [ ] Commands: cherry-pick - that is jujutsu's equivalent? duplicate?
 - [ ] Commands: track / untrack
 - [ ] Commands: absorb
 - [ ] Commands: parallelize

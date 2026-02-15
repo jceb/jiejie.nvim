@@ -172,10 +172,6 @@ cbr                     Rename bookmark at change under the cursor.
 cc                      Commit currently edited change and create a new
                         change.
 
-                                                          *jiejie_cD* *jiejie_!cD*
-[!]cD                   Duplicate change under the cursor. With <bang>, ignore
-                        immutability settings.
-
                                                           *jiejie_cd* *jiejie_!cd*
 [!]cd                   Edit first line of change description. With <bang>,
                         ignore immutability settings.
@@ -184,18 +180,35 @@ cc                      Commit currently edited change and create a new
 [!]ce                   Edit change description. With <bang>, ignore
                         immutability settings.
 
-                                                                     *jiejie_yy*
-yy                      Copy commit message or file name under the cursor.
-
-                                                                     *jiejie_yc*
-yc                      Copy change id under the cursor.
-
-                                                                     *jiejie_yC*
-yC                      Copy commit id under the cursor.
-
                                                           *jiejie_cn* *jiejie_!cn*
 [!]cn                   Create a new change after the change under the cursor.
                         With <bang>, ignore immutability settings.
+
+                                                        *jiejie_cpM* *jiejie_!cpM*
+[!]cpM                  Duplicate / cherry-pick current change `@` after an
+                        arbitrary bookmark that is requested from the user.
+                        With <bang>, ignore immutability settings.
+
+                                                        *jiejie_cpm* *jiejie_!cpm*
+[!]cpm                  Duplicate / cherry-pick current change `@` after a
+                        bookmark in the current line of changes. With <bang>,
+                        ignore immutability settings.
+
+                                                        *jiejie_cpP* *jiejie_!cpP*
+[!]cpP                  Duplicate / cherry-pick current change `@` after an
+                        arbitrary change ID that is requested from the user.
+                        With <bang>, ignore immutability settings.
+
+                                                        *jiejie_cpp* *jiejie_!cpp*
+[!]cpp                  Duplicate / cherry-pick current change `@` after the
+                        change under the cursor. With <bang>, ignore
+                        immutability settings.
+
+                                                        *jiejie_cpT* *jiejie_!cpT*
+                                                        *jiejie_cpt* *jiejie_!cpt*
+[!]cpT                  Duplicate / cherry-pick current change `@` after an
+[!]cpt                  arbitrary tag that is requested from the user. With
+                        <bang>, ignore immutability settings.
 
                                                                      *jiejie_cR*
 cR                      Revert the change under the cursor.
@@ -314,6 +327,15 @@ gq                      Close the preview window.
 
                                                                       *jiejie_R*
 R                       Reload log.
+
+                                                                     *jiejie_yy*
+yy                      Copy commit message or file name under the cursor.
+
+                                                                     *jiejie_yc*
+yc                      Copy change id under the cursor.
+
+                                                                     *jiejie_yC*
+yC                      Copy commit id under the cursor.
 
                                                                   *jiejie_<C-a>*
 <C-a>                   Increase the number of displayed revisions in log.

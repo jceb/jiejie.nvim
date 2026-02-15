@@ -210,15 +210,19 @@ function M.with_bookmarks_or_tags(fn, opts)
     assert(largs.ctx, "Context not provided: ctx")
     local jujutsu = require("jiejie.jujutsu")
     local cmd = lopts.tags and "tag" or "bookmark"
-    local _args = {
-      "list",
-      "-r",
-      lopts.revisions or "::",
-      "--sort",
-      "committer-date-,name",
+    local _args = { "list" }
+    if not lopts.tags then
+      _args = vim.list_extend(_args, {
+        "-r",
+        lopts.revisions or "::",
+        "--sort",
+        "committer-date-,name",
+      })
+    end
+    _args = vim.list_extend(_args, {
       "-T",
       [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id().short()) ++ "∫" ++ if(normal_target, normal_target.commit_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
-    }
+    })
     if largs.src_change then
       _args = vim.list_extend(_args, { "-r", api.get_change_id(largs.src_change) })
     end
