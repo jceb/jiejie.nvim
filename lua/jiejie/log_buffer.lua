@@ -1210,8 +1210,9 @@ function M.setup_buffer(ctx)
     vim.keymap.set("n", value.key, plug, { desc = value.desc, nowait = true, buffer = true })
     vim.keymap.set("n", plug, fn, { desc = value.desc, buffer = true })
     if value.with_force then
-      vim.keymap.set("n", "!" .. value.key, plug, { desc = value.desc, nowait = true, buffer = true })
-      vim.keymap.set("n", plug, helpers.with_force(fn), { desc = "Ignoring immutuability. " .. value.desc, buffer = true })
+      local force_plug = "<Plug>(jiejie-!" .. value.key .. ")"
+      vim.keymap.set("n", "!" .. value.key, force_plug, { desc = value.desc, nowait = true, buffer = true })
+      vim.keymap.set("n", force_plug, helpers.with_force(fn), { desc = "Ignoring immutuability. " .. value.desc, buffer = true })
     end
   end
   require("jiejie.log_diff").setup_buffer(ctx)
