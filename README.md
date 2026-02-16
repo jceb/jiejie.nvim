@@ -50,7 +50,7 @@ easily, these rules might prove helpful:
   - Pull and push changes to git (`gu`, `gp`)
   - Modify change description in editor (`ce`) or quick edit the first line
     (`cd`) or copy commit information (`yy`, `yc`, `yC`)
-  - Create a new change (`ca`, `ci`, `cn`)
+  - Create a new change (`A`, `a`, `cA`, `ca`, `cI`, `ci`, `i`, `I`, `cn`)
   - Create a merge (`cB`, `cm`, `cM`)
   - Commit change or file under the cursor (`cc`)
   - Squash change or file into parent or into change under cursor (`cs`, `cS`)

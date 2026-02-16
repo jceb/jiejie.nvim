@@ -345,15 +345,16 @@ end
 
 --- Create new change
 --- @param ctx Context context
---- @param opts? CliOpts | {force?: boolean, changes?: Change[], before?: Change[], after?: Change[]} Options
+--- @param opts? CliOpts | {force?: boolean, changes?: Change[], before?: Change[], after?: Change[], args?: string[]} Options
 --- - force Edit immutable change
 --- - change: Change data - can not be used in conjunction with before and after
 --- - after: List of changes
 --- - before: List of changes
+--- - args: Additional arguments
 function M.change_new(ctx, opts)
   local lopts = opts or {}
   local cmd = "new"
-  local args = {}
+  local args = lopts.args or {}
   if lopts.before or lopts.after then
     for _, change in ipairs(lopts.before or {}) do
       table.insert(args, "-B")
@@ -368,6 +369,7 @@ function M.change_new(ctx, opts)
       table.insert(args, M.get_change_id(change))
     end
   end
+  print("args", vim.inspect(args))
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = M.reload_or_error(ctx, table.concat(vim.list_extend({ cmd }, args), " "), lopts),

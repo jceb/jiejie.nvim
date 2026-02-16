@@ -184,10 +184,18 @@ cc                      Commit currently edited change and create a new
 [!]ce                   Edit change description. With <bang>, ignore
                         immutability settings.
 
+                                       *jiejie_A* *jiejie_!A* *jiejie_cA* *jiejie_!cA*
+[!]cA                   Like |jiejie_a| but without editing the new change.
+[!]A
+
                                        *jiejie_a* *jiejie_!a* *jiejie_ca* *jiejie_!ca*
 [!]ca                   Create a new change after the change under the cursor
 [!]a                    and before all its children. With <bang>, ignore
                         immutability settings.
+
+                                       *jiejie_I* *jiejie_!I* *jiejie_cI* *jiejie_!cI*
+[!]cI                   Like |jiejie_i| but without editing the new change.
+[!]I
 
                                        *jiejie_i* *jiejie_!i* *jiejie_ci* *jiejie_!ci*
 [!]ci                   Create a new change inbetween the change under the

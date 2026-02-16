@@ -120,8 +120,9 @@ local fns = {
     end))
   end,
 
-  --- @param opts { with_action?: number}
+  --- @param opts { with_action?: number, args?: string[]}
   --- - with_action: 1 (default): new branch, 2: change before, 4: change inbetween
+  --- - args: Additional arguments
   cn = function(opts)
     local lopts = opts or {}
     --- @param args WithArgs
@@ -130,6 +131,7 @@ local fns = {
         api.change_new(args.ctx, {
           force = args.force,
           before = { args.src_change },
+          args = lopts.args,
           on_exit = function()
             vim.notify("Added new change inbetween " .. api.get_change_id(args.src_change, true) .. " and its children", vim.log.levels.INFO)
           end,
@@ -139,6 +141,7 @@ local fns = {
           force = args.force,
           before = api.get_adjacent_changes(args.ctx, args.src_change, { children = true }),
           after = { args.src_change },
+          args = lopts.args,
           on_exit = function()
             vim.notify("Added new change before " .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
           end,
@@ -147,6 +150,7 @@ local fns = {
         api.change_new(args.ctx, {
           force = args.force,
           changes = { args.src_change },
+          args = lopts.args,
           on_exit = function()
             vim.notify("Added new change branch after " .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
           end,
@@ -830,6 +834,18 @@ M.nmaps = {
     desc = "Copy commit message or file name under the cursor",
   },
   {
+    key = "cA",
+    fn = fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
+    with_force = true,
+    desc = "Create a new change after the change under the cursor and before all its children",
+  },
+  {
+    key = "A",
+    fn = fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
+    with_force = true,
+    desc = "Alias of cA",
+  },
+  {
     key = "ca",
     fn = fns.cn({ with_action = 2 ^ 1 }),
     with_force = true,
@@ -840,6 +856,18 @@ M.nmaps = {
     fn = fns.cn({ with_action = 2 ^ 1 }),
     with_force = true,
     desc = "Alias of ca",
+  },
+  {
+    key = "cI",
+    fn = fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
+    with_force = true,
+    desc = "Create a new change inbetween the change under the cursor all its ancestors",
+  },
+  {
+    key = "I",
+    fn = fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
+    with_force = true,
+    desc = "Alias of cI",
   },
   {
     key = "ci",
