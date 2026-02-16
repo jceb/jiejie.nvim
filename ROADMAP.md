@@ -45,8 +45,6 @@
 
 - [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
-- [ ] Bug: when an empty file is added and the diff `=` is requested, an error
-      occurs
 
 ## Priority 2
 
