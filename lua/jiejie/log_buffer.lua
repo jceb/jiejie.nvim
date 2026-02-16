@@ -211,6 +211,41 @@ function M.setup_buffer(ctx)
       end)))
     end,
 
+    --- @param opts { with_action?: number}
+    --- - with_action: 1 (default): new branch, 2: change before, 4: change inbetween
+    cn = function(opts)
+      local lopts = opts or {}
+      return helpers.search_change(function(args)
+        if lopts.with_action == 2 ^ 2 then
+          api.change_new(args.ctx, {
+            force = args.force,
+            before = api.get_adjacent_changes(args.ctx, args.src_change, { children = true }),
+            after = { args.src_change },
+            on_exit = function()
+              vim.notify("Added new change inbetween " .. api.get_change_id(args.src_change, true) .. " and its children", vim.log.levels.INFO)
+            end,
+          })
+        elseif lopts.with_action == 2 ^ 1 then
+          api.change_new(args.ctx, {
+            force = args.force,
+            before = { args.src_change },
+            on_exit = function()
+              vim.notify("Added new change before " .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
+            end,
+          })
+        else
+          api.change_new(args.ctx, {
+            force = args.force,
+            changes = { args.src_change },
+            on_exit = function()
+              vim.notify("Added new change branch after " .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
+            end,
+          })
+        end
+        return true
+      end)
+    end,
+
     --- @param opts {tags?: boolean, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
     --- - tags List tags instead of bookmarks
     --- - with_change 1 (default): use change under cursor, 1: prompt for change id, 2: prompt for bookmark
@@ -320,7 +355,7 @@ function M.setup_buffer(ctx)
         local files = {}
         if args.src_change.current_working_copy or lopts.diff_commit_under_cursor then
           table.insert(files, { path = args.file.filename, change = args.src_change })
-          local ancestors = api.get_ancestors(ctx, args.src_change)
+          local ancestors = api.get_adjacent_changes(ctx, args.src_change)
           for _, change in ipairs(ancestors) do
             table.insert(files, { path = args.file.filename, change = change })
           end
@@ -871,13 +906,22 @@ function M.setup_buffer(ctx)
       desc = "Copy commit message or file name under the cursor",
     },
     {
-      key = "cn",
-      fn = helpers.search_change(function(args)
-        api.change_new(args.ctx, args.src_change, { force = args.force })
-        return true
-      end),
+      key = "ca",
+      fn = fns.cn({ with_action = 2 ^ 1 }),
       with_force = true,
-      desc = "Create a new change after the change under the cursor",
+      desc = "Create a new change before the change under the cursor and before all its ancestors",
+    },
+    {
+      key = "ci",
+      fn = fns.cn({ with_action = 2 ^ 2 }),
+      with_force = true,
+      desc = "Create a new change inbetween the change under the cursor all its children",
+    },
+    {
+      key = "cn",
+      fn = fns.cn({ with_action = 2 ^ 0 }),
+      with_force = true,
+      desc = "Create a new change branch after the change under the cursor",
     },
     {
       key = "s<space>",
@@ -932,7 +976,7 @@ function M.setup_buffer(ctx)
             )
           end
           if not dst_change then
-            local ancestors = api.get_ancestors(args.ctx, args.src_change)
+            local ancestors = api.get_adjacent_changes(args.ctx, args.src_change)
             if #ancestors > 1 then
               vim.ui.select(ancestors, {
                 prompt = "Select ancestor",
@@ -1007,7 +1051,7 @@ function M.setup_buffer(ctx)
             if args.pos_change then
               api.change_abandon(args.ctx, args.pos_change, { force = args.force })
             elseif args.file then
-              local ancestors = api.get_ancestors(args.ctx, args.src_change)
+              local ancestors = api.get_adjacent_changes(args.ctx, args.src_change)
               local action = function(change)
                 api.file_restore(args.ctx, args.file, change, { force = args.force })
               end

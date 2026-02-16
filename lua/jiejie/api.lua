@@ -108,16 +108,19 @@ function M.construct_dummy_change(change_id)
   }
 end
 
---- Get the list of ancestors for a change
+--- Get the list of ancestors or children for a change
 --- @param ctx Context context
 --- @param change Change Change
+--- @param opts? {children?: boolean}
+--- - children: Get the children instead of the ancestors
 --- @return Change[]
-function M.get_ancestors(ctx, change)
+function M.get_adjacent_changes(ctx, change, opts)
   assert(ctx, "Context not provided: ctx")
   assert(change, "Change not provided: change")
+  local lopts = opts or {}
   local log = require("jiejie.log")
   local cmd = "log"
-  local args = { "-r", M.get_change_id(change) .. "-", "-T", log.template }
+  local args = { "-r", M.get_change_id(change) .. (lopts.children and "+" or "-"), "-T", log.template }
   local res = jujutsu.cli(ctx, cmd, { args = args })
   local ancestors = {}
   local log_lines = vim.split(vim.trim(res.stdout), "\n")
@@ -130,13 +133,15 @@ function M.get_ancestors(ctx, change)
   return ancestors
 end
 
+--- @class CliOpts
+--- @field err_notify? boolean Send notification if an error occurs
+--- @field err_continue? boolean Continue execution callback execution even if an error occurs
+--- @field on_exit? fun(out: vim.SystemCompleted) Callback function is executed in a scheduled context
+
 --- Reload buffer or error
 --- @param ctx Context context
 --- @param cmd string Command name that failed
---- @param opts? {err_notify?: boolean, err_continue?: boolean, on_exit?: fun(out: vim.SystemCompleted)} Options
---- - on_exit Callback function is executed in a scheduled context
---- - err_notify Send notification if an error occurs
---- - err_continue Continue execution callback execution even if an error occurs
+--- @param opts? CliOpts
 --- @return fun(out: vim.SystemCompleted)
 function M.reload_or_error(ctx, cmd, opts)
   --- @param out vim.SystemCompleted
@@ -340,24 +345,32 @@ end
 
 --- Create new change
 --- @param ctx Context context
---- @param change Change Change data
---- @param opts? {force?: boolean} Options
+--- @param opts? CliOpts | {force?: boolean, changes?: Change[], before?: Change[], after?: Change[]} Options
 --- - force Edit immutable change
-function M.change_new(ctx, change, opts)
+--- - change: Change data - can not be used in conjunction with before and after
+--- - after: List of changes
+--- - before: List of changes
+function M.change_new(ctx, opts)
   local lopts = opts or {}
   local cmd = "new"
-  local args = { M.get_change_id(change) }
+  local args = {}
+  if lopts.before or lopts.after then
+    for _, change in ipairs(lopts.before or {}) do
+      table.insert(args, "-B")
+      table.insert(args, M.get_change_id(change))
+    end
+    for _, change in ipairs(lopts.after or {}) do
+      table.insert(args, "-A")
+      table.insert(args, M.get_change_id(change))
+    end
+  else
+    for _, change in ipairs(lopts.changes or { M.construct_dummy_change("@") }) do
+      table.insert(args, M.get_change_id(change))
+    end
+  end
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
-    on_exit = M.reload_or_error(
-      ctx,
-      table.concat(vim.list_extend({ cmd }, args), " "),
-      vim.tbl_extend("force", lopts, {
-        on_exit = function()
-          vim.notify("New change created", vim.log.levels.INFO)
-        end,
-      })
-    ),
+    on_exit = M.reload_or_error(ctx, table.concat(vim.list_extend({ cmd }, args), " "), lopts),
   })
 end
 

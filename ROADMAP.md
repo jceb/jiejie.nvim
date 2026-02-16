@@ -38,11 +38,12 @@
 - [x] Fix: restore currently doesn't work for commits with multiple ancestors #2
 - [x] Commands: track and untrack
 - [x] Fix: squash currently doesn't work for commits with multiple ancestors
+- [x] Commands: new with multiple ancestors, `ci`, `ca`
 
 ## Priority 1
 
+- [ ] Commands: merge `cm`
 - [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
-- [ ] Commands: merge / new with multiple ancestors, `ci`, `ca`, `cm`
 - [ ] Commands: absorb
 - [ ] Commands: parallelize
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`

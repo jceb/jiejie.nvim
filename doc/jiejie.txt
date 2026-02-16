@@ -184,9 +184,19 @@ cc                      Commit currently edited change and create a new
 [!]ce                   Edit change description. With <bang>, ignore
                         immutability settings.
 
+                                                          *jiejie_ca* *jiejie_!ca*
+[!]ca                   Create a new change before the change under the cursor
+                        and before all its ancestors. With <bang>, ignore
+                        immutability settings.
+
+                                                          *jiejie_ci* *jiejie_!ci*
+[!]ci                   Create a new change inbetween the change under the
+                        cursor all its children. With <bang>, ignore
+                        immutability settings.
+
                                                           *jiejie_cn* *jiejie_!cn*
-[!]cn                   Create a new change after the change under the cursor.
-                        With <bang>, ignore immutability settings.
+[!]cn                   Create a new change branch after the change under the
+                        cursor. With <bang>, ignore immutability settings.
 
                                                         *jiejie_cpM* *jiejie_!cpM*
 [!]cpM                  Duplicate / cherry-pick current change `@` after any
