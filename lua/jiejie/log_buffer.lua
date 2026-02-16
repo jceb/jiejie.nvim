@@ -163,7 +163,6 @@ function M.setup_buffer(ctx)
         if lopts.with_action ~= 2 ^ 0 then
           return function(args)
             helpers.with_bookmarks_or_tags(fn, {
-              ctx = args.ctx,
               src_change = not lopts.drop_change and args.src_change or nil,
               limit_to_change = lopts.limit_to_change,
               limit_to_branch = lopts.limit_to_branch,
@@ -209,6 +208,55 @@ function M.setup_buffer(ctx)
         end
         return true
       end)))
+    end,
+
+    --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+    --- - with_action: 1 (default): simple merge, 2: pick change id, 4: pick bookmark
+    --- - drop_change: Drops change and pass nil instead
+    --- - limit_to_change: Limits bookmark search to the current change
+    --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+    cm = function(opts)
+      local lopts = opts or {}
+      local with_input = function(fn)
+        if lopts.with_action == 2 ^ 2 then
+          return function(args)
+            helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), {
+              src_change = not lopts.drop_change and args.src_change or nil,
+              limit_to_change = lopts.limit_to_change,
+              limit_to_branch = lopts.limit_to_branch,
+            })(args)
+          end
+        elseif lopts.with_action == 2 ^ 1 then
+          return function(args)
+            helpers.with_target_change(fn)(args)
+          end
+        else
+          return fn
+        end
+      end
+      return helpers.search_change(with_input(function(args)
+        local changes = { api.construct_dummy_change("@") }
+        if lopts.with_action == 2 ^ 2 then
+          table.insert(changes, api.construct_dummy_change(args.bookmark))
+        elseif lopts.with_action == 2 ^ 1 then
+          table.insert(changes, args.dst_change)
+        else
+          table.insert(changes, args.src_change)
+        end
+        api.change_new(args.ctx, {
+          force = args.force,
+          changes = changes,
+          on_exit = function()
+            vim.notify("Merged chagnes " .. vim
+              .iter(changes)
+              :map(function(change)
+                return api.get_change_id(change, true)
+              end)
+              :join(", "), vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end))
     end,
 
     --- @param opts { with_action?: number}
@@ -298,7 +346,6 @@ function M.setup_buffer(ctx)
         if lopts.with_action ~= 2 ^ 0 then
           return function(args)
             helpers.with_bookmarks_or_tags(fn, {
-              ctx = args.ctx,
               src_change = not lopts.drop_change and args.src_change or nil,
               limit_to_change = lopts.limit_to_change,
               limit_to_branch = lopts.limit_to_branch, -- not yet supported by jj
@@ -922,6 +969,24 @@ function M.setup_buffer(ctx)
       fn = fns.cn({ with_action = 2 ^ 0 }),
       with_force = true,
       desc = "Create a new change branch after the change under the cursor",
+    },
+    {
+      key = "cB",
+      fn = fns.cm({ with_action = 2 ^ 2 }),
+      with_force = true,
+      desc = "Merge `@` with any one bookmark",
+    },
+    {
+      key = "cm",
+      fn = fns.cm({ with_action = 2 ^ 0 }),
+      with_force = true,
+      desc = "Merge `@` with the change under the cursor",
+    },
+    {
+      key = "cM",
+      fn = fns.cm({ with_action = 2 ^ 1 }),
+      with_force = true,
+      desc = "Merge `@` with any change ID",
     },
     {
       key = "s<space>",

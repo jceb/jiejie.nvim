@@ -39,10 +39,10 @@
 - [x] Commands: track and untrack
 - [x] Fix: squash currently doesn't work for commits with multiple ancestors
 - [x] Commands: new with multiple ancestors, `ci`, `ca`
+- [x] Commands: merge `cm`
 
 ## Priority 1
 
-- [ ] Commands: merge `cm`
 - [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
 - [ ] Commands: absorb
 - [ ] Commands: parallelize

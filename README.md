@@ -51,6 +51,7 @@ easily, these rules might prove helpful:
   - Modify change description in editor (`ce`) or quick edit the first line
     (`cd`) or copy commit information (`yy`, `yc`, `yC`)
   - Create a new change (`ca`, `ci`, `cn`)
+  - Create a merge (`cB`, `cm`, `cM`)
   - Commit change or file under the cursor (`cc`)
   - Squash change or file into parent or into change under cursor (`cs`, `cS`)
   - Duplicate / cherry-pick change under the cursor (`cpP`, `cpp`, `cpM`, `cpm`,

@@ -194,6 +194,18 @@ cc                      Commit currently edited change and create a new
                         cursor all its children. With <bang>, ignore
                         immutability settings.
 
+                                                          *jiejie_cB* *jiejie_!cB*
+[!]cB                  Merge `@` with any one bookmark. With <bang>, ignore
+                       immutability settings.
+
+                                                          *jiejie_cM* *jiejie_!cM*
+[!]cM                  Merge `@` with any change ID. With <bang>, ignore
+                       immutability settings.
+
+                                                          *jiejie_cm* *jiejie_!cm*
+[!]cm                  Merge `@` with the change under the cursor. With
+                       <bang>, ignore immutability settings.
+
                                                           *jiejie_cn* *jiejie_!cn*
 [!]cn                   Create a new change branch after the change under the
                         cursor. With <bang>, ignore immutability settings.
