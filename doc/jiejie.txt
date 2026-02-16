@@ -218,15 +218,17 @@ cR                      Revert the change under the cursor.
                                                                *jiejie_s<space>*
 s<space>                Populate command line with ":Jj squash ".
 
+x
                                                           *jiejie_cs* *jiejie_!cs*
-[!]cs                   Squash current changes into it's parent or into the
-                        change under the cursor if the cursor is not on the
-                        currently edited changed. With <bang>, ignore
+[!]cs                   Squash current change or file into it's parent or into
+                        the change under the cursor if the cursor is not on
+                        the currently edited changed. With <bang>, ignore
                         immutability settings.
 
                                                           *jiejie_cS* *jiejie_!cS*
-[!]cS                   Squash current changes into the selected change. With
+[!]cS                   Squash current change or file into any change ID. With
                         <bang>, ignore immutability settings.
+
 
                                                         *jiejie_ctc* *jiejie_ctt*
 ctc                     Set tag at change under the cursor.

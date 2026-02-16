@@ -897,30 +897,6 @@ function M.setup_buffer(ctx)
       desc = "Revert the change under the cursor",
     },
     {
-      key = "cs",
-      fn = helpers.search_file(
-        helpers.search_change(function(args)
-          local src_change, dst_change
-          if not args.src_change.current_working_copy then
-            src_change = api.construct_dummy_change("@")
-            dst_change = args.src_change
-          else
-            src_change = args.src_change
-          end
-          api.change_squash(
-            args.ctx,
-            ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
-            src_change,
-            { files = { args.src_change.current_working_copy and args.file and args.file.filename or nil }, dst_change = dst_change, force = args.force }
-          )
-          return true
-        end),
-        { err_notify = true, err_continue = true }
-      ),
-      with_force = true,
-      desc = "Squash current changes into it's parent or into the change under the cursor if the cursor is not on the currently edited changed",
-    },
-    {
       key = "cS",
       fn = helpers.search_file(
         helpers.search_change(helpers.with_target_change(function(args)
@@ -935,6 +911,54 @@ function M.setup_buffer(ctx)
       ),
       with_force = true,
       desc = "Squash current changes into the selecated change",
+    },
+    {
+      key = "cs",
+      fn = helpers.search_file(
+        helpers.search_change(function(args)
+          local src_change, dst_change
+          if not args.src_change.current_working_copy then
+            src_change = api.construct_dummy_change("@")
+            dst_change = args.src_change
+          else
+            src_change = args.src_change
+          end
+          local action = function(_dst_change)
+            api.change_squash(
+              args.ctx,
+              ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
+              src_change,
+              { files = { args.file and args.file.filename or nil }, dst_change = _dst_change, force = args.force }
+            )
+          end
+          if not dst_change then
+            local ancestors = api.get_ancestors(args.ctx, args.src_change)
+            if #ancestors > 1 then
+              vim.ui.select(ancestors, {
+                prompt = "Select ancestor",
+                format_item = function(change)
+                  return api.get_change_id(change, true) .. (change.description_first_line or "")
+                end,
+              }, function(change, _)
+                if not change then
+                  return vim.notify("Selection failed.", vim.log.levels.WARN)
+                end
+                action(change)
+              end)
+            elseif #ancestors > 0 then
+              action(ancestors[1])
+            else
+              vim.notify("No ancestors found.", vim.log.levels.ERROR)
+            end
+          else
+            action(dst_change)
+          end
+          return true
+        end),
+        { err_notify = true, err_continue = true }
+      ),
+      with_force = true,
+      desc = "Squash current change into it's parent or into the change under the cursor if the cursor is not on the currently edited changed",
     },
     {
       key = "ctc",

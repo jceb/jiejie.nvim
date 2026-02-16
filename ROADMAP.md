@@ -37,6 +37,7 @@
 - [x] Log: add detached_heads() view
 - [x] Fix: restore currently doesn't work for commits with multiple ancestors #2
 - [x] Commands: track and untrack
+- [x] Fix: squash currently doesn't work for commits with multiple ancestors
 
 ## Priority 1
 
@@ -45,10 +46,8 @@
 - [ ] Commands: absorb
 - [ ] Commands: parallelize
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
-- [ ] Fix: squash currently doesn't work for commits with multiple ancestors
 - [ ] Bug: when an empty file is added and the diff `=` is requested, an error
       occurs
-- [ ] Bug: rework squash management - consider moving it to `s`
 
 ## Priority 2
 
