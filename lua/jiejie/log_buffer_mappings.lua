@@ -26,6 +26,7 @@ local fns = {
       end
       return fn
     end
+    --- @param args WithArgs
     return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
       if lopts.with_action == 2 ^ 4 then
         helpers.with_bookmark_or_tag(function(__args)
@@ -89,6 +90,7 @@ local fns = {
         return fn
       end
     end
+    --- @param args WithArgs
     return helpers.search_change(with_input(function(args)
       local changes = { api.construct_dummy_change("@") }
       if lopts.with_action == 2 ^ 2 then
@@ -122,12 +124,12 @@ local fns = {
   --- - with_action: 1 (default): new branch, 2: change before, 4: change inbetween
   cn = function(opts)
     local lopts = opts or {}
+    --- @param args WithArgs
     return helpers.search_change(function(args)
       if lopts.with_action == 2 ^ 2 then
         api.change_new(args.ctx, {
           force = args.force,
-          before = api.get_adjacent_changes(args.ctx, args.src_change, { children = true }),
-          after = { args.src_change },
+          before = { args.src_change },
           on_exit = function()
             vim.notify("Added new change inbetween " .. api.get_change_id(args.src_change, true) .. " and its children", vim.log.levels.INFO)
           end,
@@ -135,7 +137,8 @@ local fns = {
       elseif lopts.with_action == 2 ^ 1 then
         api.change_new(args.ctx, {
           force = args.force,
-          before = { args.src_change },
+          before = api.get_adjacent_changes(args.ctx, args.src_change, { children = true }),
+          after = { args.src_change },
           on_exit = function()
             vim.notify("Added new change before " .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
           end,
@@ -165,6 +168,7 @@ local fns = {
       if lopts.with_change == 2 ^ 1 then
         return helpers.with_target_change(fn)
       elseif lopts.with_change == 2 ^ 2 then
+        --- @param args WithArgs
         return helpers.search_change(function(args)
           return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn, { tags = lopts.tags }), {
             src_change = not lopts.drop_change and args.src_change or nil,
@@ -177,16 +181,20 @@ local fns = {
         return helpers.search_change(fn, { args_key = "dst_change" })
       end
     end
+    --- @param args WithArgs
     return use_change(function(args)
       local src_change = api.construct_dummy_change("@")
+      ---@diagnostic disable-next-line: param-type-mismatch param is defined
       local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag or args.bookmark) or args.dst_change
       api.cli(args.ctx, "duplicate", {
         args = jujutsu.ignore_immtuable({
           "-d",
+          ---@diagnostic disable-next-line: param-type-mismatch param is defined
           api.get_change_id(dst_change),
           api.get_change_id(src_change),
         }, { force = args.force }),
         on_exit = function()
+          ---@diagnostic disable-next-line: param-type-mismatch param is defined
           vim.notify("Duplicated change " .. api.get_change_id(src_change, true) .. " onto " .. api.get_change_id(dst_change, true), vim.log.levels.INFO)
         end,
       })
@@ -203,6 +211,7 @@ local fns = {
     local lopts = opts or {}
     local with_tags = function(fn)
       if lopts.with_action ~= 2 ^ 0 then
+        --- @param args WithArgs
         return function(args)
           helpers.with_bookmarks_or_tags(fn, {
             src_change = not lopts.drop_change and args.src_change or nil,
@@ -214,6 +223,7 @@ local fns = {
       end
       return fn
     end
+    --- @param args WithArgs
     return helpers.search_change(with_tags(helpers.with_bookmark_or_tag(function(args)
       if lopts.with_action == 2 ^ 2 then
         api.cli(args.ctx, "tag", {
@@ -245,6 +255,7 @@ local fns = {
   --- - negate: Negate count
   ctrl_a = function(opts)
     local lopts = opts or {}
+    --- @param args WithArgs
     return helpers.with_count(function(args)
       api.log_revisions_adjust(args.ctx, { adjustment = args.count })
       return true
@@ -255,6 +266,7 @@ local fns = {
   --- - split_direction: Split direction
   --- - diff_commit_under_cursor: Diff commit under against its parents instead of diffing against @
   d = function(opts)
+    --- @param args WithArgs
     return helpers.search_file(helpers.search_change(function(args)
       local lopts = opts or {}
       --- @type RepositoryPath[]
@@ -280,6 +292,7 @@ local fns = {
   --- @param opts {split_direction?: SplitDirection}
   --- - split_direction: Split direction
   o = function(opts)
+    --- @param args WithArgs
     return helpers.search_file(helpers.search_change(function(args)
       local lopts = opts or {}
       log_diff.diff_close(args.ctx)
@@ -321,6 +334,7 @@ local fns = {
       if lopts.with_change == 2 ^ 1 then
         return helpers.with_target_change(fn)
       elseif lopts.with_change == 2 ^ 2 then
+        --- @param args WithArgs
         return helpers.search_change(function(args)
           return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), {
             src_change = not lopts.drop_change and args.src_change or nil,
@@ -333,7 +347,7 @@ local fns = {
       end
     end
     return use_change(
-      --- @param args WithArgs Callback function
+      --- @param args WithArgs
       --- @return boolean
       function(args)
         local src_change = api.construct_dummy_change("@")
@@ -819,13 +833,13 @@ M.nmaps = {
     key = "ca",
     fn = fns.cn({ with_action = 2 ^ 1 }),
     with_force = true,
-    desc = "Create a new change before the change under the cursor and before all its ancestors",
+    desc = "Create a new change after the change under the cursor and before all its children",
   },
   {
     key = "ci",
     fn = fns.cn({ with_action = 2 ^ 2 }),
     with_force = true,
-    desc = "Create a new change inbetween the change under the cursor all its children",
+    desc = "Create a new change inbetween the change under the cursor all its ancestors",
   },
   {
     key = "cn",

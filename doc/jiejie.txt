@@ -185,13 +185,13 @@ cc                      Commit currently edited change and create a new
                         immutability settings.
 
                                                           *jiejie_ca* *jiejie_!ca*
-[!]ca                   Create a new change before the change under the cursor
-                        and before all its ancestors. With <bang>, ignore
+[!]ca                   Create a new change after the change under the cursor
+                        and before all its children. With <bang>, ignore
                         immutability settings.
 
                                                           *jiejie_ci* *jiejie_!ci*
 [!]ci                   Create a new change inbetween the change under the
-                        cursor all its children. With <bang>, ignore
+                        cursor all its ancestors. With <bang>, ignore
                         immutability settings.
 
                                                           *jiejie_cB* *jiejie_!cB*
