@@ -71,7 +71,7 @@ function M.Jdiffsplit(args)
     local dst_object = parsers.parse_object(args.fargs[1]) or {}
     if vim.startswith(dst_object.change_id, "@") then
       local ancestors = M.get_ancestors(ctx, M.construct_dummy_change(dst_object.change_id))
-      for idx, change in ipairs(ancestors) do
+      for _, change in ipairs(ancestors) do
         table.insert(files, { path = dst_object.filename or src.path, change = change })
       end
     else
