@@ -96,6 +96,10 @@ local fns = {
       elseif lopts.with_action == 2 ^ 1 then
         table.insert(changes, args.dst_change)
       else
+        if args.src_change.current_working_copy then
+          vim.notify("Can't merge @ with itself", vim.log.levels.ERROR)
+          return
+        end
         table.insert(changes, args.src_change)
       end
       api.change_new(args.ctx, {
