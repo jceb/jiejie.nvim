@@ -469,7 +469,7 @@ M.nmaps = {
     desc = "Open the file or jiejie-object under the cursor in a new vertical split",
   },
   {
-    key = "i",
+    key = "<Tab>",
     fn = helpers.search_file(
       helpers.search_change(
         helpers.search_hunk(
@@ -836,10 +836,22 @@ M.nmaps = {
     desc = "Create a new change after the change under the cursor and before all its children",
   },
   {
+    key = "a",
+    fn = fns.cn({ with_action = 2 ^ 1 }),
+    with_force = true,
+    desc = "Alias of ca",
+  },
+  {
     key = "ci",
     fn = fns.cn({ with_action = 2 ^ 2 }),
     with_force = true,
     desc = "Create a new change inbetween the change under the cursor all its ancestors",
+  },
+  {
+    key = "i",
+    fn = fns.cn({ with_action = 2 ^ 2 }),
+    with_force = true,
+    desc = "Alias of ci",
   },
   {
     key = "cn",
