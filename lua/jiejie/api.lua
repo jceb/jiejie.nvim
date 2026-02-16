@@ -630,7 +630,7 @@ end
 --- Restore file
 --- @param ctx Context context
 --- @param file ModifiedFile File name
---- @param change Change Change to edit file at
+--- @param change Change Change to restore file to
 --- @param opts? {force?: boolean} Options
 --- - force Change immutable
 --- @return boolean?
@@ -639,12 +639,8 @@ function M.file_restore(ctx, file, change, opts)
   assert(file, "File not provided: file")
   assert(change, "Change not provided: change")
   local lopts = opts or {}
-  if not change.current_working_copy then
-    vim.notify("Restore is only implemented for the currently edited change", vim.log.levels.ERROR)
-    return false
-  end
   local cmd = "restore"
-  local args = { "-f", "@-", file.filename }
+  local args = { "-f", M.get_change_id(change), file.filename }
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = M.reload_or_error(
@@ -652,7 +648,7 @@ function M.file_restore(ctx, file, change, opts)
       table.concat(vim.list_extend({ cmd }, args), " "),
       vim.tbl_extend("force", lopts, {
         on_exit = function()
-          vim.notify("Restored file " .. file.filename, vim.log.levels.INFO)
+          vim.notify("Restored file " .. file.filename .. " to change " .. M.get_change_id(change, true), vim.log.levels.INFO)
         end,
       })
     ),

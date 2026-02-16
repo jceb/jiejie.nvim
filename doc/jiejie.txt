@@ -245,7 +245,9 @@ ctx                     Delete tag at change under the cursor.
 cU                      Revert last operation.
 
                                                             *jiejie_X* *jiejie_!X*
-[!]X                    Abandon change or restore file from parent change.
+[!]X                    Abandon change or restore file to change under the
+                        cursor, or the parent change if the currently edited
+                        change is under the cursor.
                         With <bang>, ignore immutability settings.
 
                                                                       *jiejie_r*

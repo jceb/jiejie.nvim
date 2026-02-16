@@ -35,19 +35,20 @@
 - [x] Commands: `yy`, `yc` and `yC` for copying the commit description / current
       file name, change ID or commit ID
 - [x] Log: add detached_heads() view
+- [x] Fix: restore currently doesn't work for commits with multiple ancestors #2
 
 ## Priority 1
 
 - [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
-- [ ] Commands: merge / new with multiple ancestors
+- [ ] Commands: merge / new with multiple ancestors, `ci`, `ca`, `cm`
 - [ ] Commands: track / untrack
 - [ ] Commands: absorb
 - [ ] Commands: parallelize
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
-- [ ] Fix: restore and squash currently don't work for commits with multiple
-      ancestors
+- [ ] Fix: squash currently doesn't work for commits with multiple ancestors
 - [ ] Bug: when an empty file is added and the diff `=` is requested, an error
       occurs
+- [ ] Bug: rework squash management - consider moving it to `s`
 
 ## Priority 2
 

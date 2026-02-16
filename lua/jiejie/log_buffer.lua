@@ -980,13 +980,34 @@ function M.setup_buffer(ctx)
       fn = helpers.with_change_at_position(
         helpers.search_file(
           helpers.search_change(function(args)
-            if args.pos_change then
+            if args.pos_change and not args.file then
               api.change_abandon(args.ctx, args.pos_change, { force = args.force })
             elseif args.file then
-              api.file_restore(args.ctx, args.file, args.src_change, { force = args.force })
+              if args.pos_change then
+                api.file_restore(args.ctx, args.file, args.pos_change, { force = args.force })
+              else
+                local ancestors = api.get_ancestors(args.ctx, args.src_change)
+                if #ancestors > 1 then
+                  vim.ui.select(ancestors, {
+                    prompt = "Select ancestor",
+                    format_item = function(change)
+                      return api.get_change_id(change, true) .. (change.description_first_line or "")
+                    end,
+                  }, function(change, _)
+                    if not change then
+                      return vim.notify("Selection failed.", vim.log.levels.WARN)
+                    end
+                    api.file_restore(args.ctx, args.file, change, { force = args.force })
+                  end)
+                elseif #ancestors > 0 then
+                  api.file_restore(args.ctx, args.file, ancestors[1], { force = args.force })
+                else
+                  vim.notify("No ancestors found.", vim.log.levels.ERROR)
+                end
+              end
             else
               vim.schedule(function()
-                vim.notify("No file or change found under the curor", vim.log.levels.WARN)
+                vim.notify("No file or change found under the cursor", vim.log.levels.WARN)
               end)
             end
             return true
@@ -996,7 +1017,7 @@ function M.setup_buffer(ctx)
         { err_continue = true, args_key = "pos_change" }
       ),
       with_force = true,
-      desc = "Abandon change or restore file from parent change",
+      desc = "Abandon change or restore file to change under the cursor",
     },
 
     -- Rebase maps {{{1
