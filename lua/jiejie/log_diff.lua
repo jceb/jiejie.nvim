@@ -137,9 +137,10 @@ function M.diff_show(ctx, file, change)
       not (
         vim.startswith(line, "diff --git")
         or vim.startswith(line, "--- ")
-        or vim.startswith(line, "+++ b")
+        or vim.startswith(line, "+++ ")
         or vim.startswith(line, "index ")
         or vim.startswith(line, "new file mode")
+        or vim.startswith(line, "deleted ")
       )
     then
       offset = index
