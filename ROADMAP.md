@@ -36,12 +36,12 @@
       file name, change ID or commit ID
 - [x] Log: add detached_heads() view
 - [x] Fix: restore currently doesn't work for commits with multiple ancestors #2
+- [x] Commands: track and untrack
 
 ## Priority 1
 
 - [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
 - [ ] Commands: merge / new with multiple ancestors, `ci`, `ca`, `cm`
-- [ ] Commands: track / untrack
 - [ ] Commands: absorb
 - [ ] Commands: parallelize
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`

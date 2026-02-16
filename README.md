@@ -63,6 +63,7 @@ easily, these rules might prove helpful:
   - Bookmark management (`cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`, `cbr`,
     `cbX`, `cbx`)
   - Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
+  - Track and untrack files (`x`, `!x`)
 
 ## Installation
 

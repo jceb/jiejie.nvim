@@ -135,8 +135,8 @@ end
 --- @param cmd string Command name that failed
 --- @param opts? {err_notify?: boolean, err_continue?: boolean, on_exit?: fun(out: vim.SystemCompleted)} Options
 --- - on_exit Callback function is executed in a scheduled context
---- - err_notify Send notification is change is not found
---- - err_continue Continue execution callback execution on error
+--- - err_notify Send notification if an error occurs
+--- - err_continue Continue execution callback execution even if an error occurs
 --- @return fun(out: vim.SystemCompleted)
 function M.reload_or_error(ctx, cmd, opts)
   --- @param out vim.SystemCompleted

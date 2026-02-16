@@ -1019,6 +1019,27 @@ function M.setup_buffer(ctx)
       with_force = true,
       desc = "Abandon change or restore file to change under the cursor",
     },
+    {
+      key = "x",
+      fn = helpers.search_file(helpers.search_change(function(args)
+        if not args.src_change.current_working_copy then
+          vim.notify("Untrack only works on the currently edited change", vim.log.levels.ERROR)
+          return false
+        end
+        api.cli(args.ctx, "file", {
+          args = {
+            args.force and "track" or "untrack",
+            args.file.filename,
+          },
+          on_exit = function()
+            vim.notify((args.force and "Tracking" or "Untracked") .. " file " .. args.file.filename, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)),
+      with_force = true,
+      desc = "Untrack the file under the cursor. With <bang>, track the file again",
+    },
 
     -- Rebase maps {{{1
     {
