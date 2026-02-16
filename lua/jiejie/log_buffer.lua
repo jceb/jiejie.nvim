@@ -1004,30 +1004,29 @@ function M.setup_buffer(ctx)
       fn = helpers.with_change_at_position(
         helpers.search_file(
           helpers.search_change(function(args)
-            if args.pos_change and not args.file then
+            if args.pos_change then
               api.change_abandon(args.ctx, args.pos_change, { force = args.force })
             elseif args.file then
-              if args.pos_change then
-                api.file_restore(args.ctx, args.file, args.pos_change, { force = args.force })
+              local ancestors = api.get_ancestors(args.ctx, args.src_change)
+              local action = function(change)
+                api.file_restore(args.ctx, args.file, change, { force = args.force })
+              end
+              if #ancestors > 1 then
+                vim.ui.select(ancestors, {
+                  prompt = "Select ancestor",
+                  format_item = function(change)
+                    return api.get_change_id(change, true) .. (change.description_first_line or "")
+                  end,
+                }, function(change, _)
+                  if not change then
+                    return vim.notify("Selection failed.", vim.log.levels.WARN)
+                  end
+                  action(change)
+                end)
+              elseif #ancestors > 0 then
+                action(ancestors[1])
               else
-                local ancestors = api.get_ancestors(args.ctx, args.src_change)
-                if #ancestors > 1 then
-                  vim.ui.select(ancestors, {
-                    prompt = "Select ancestor",
-                    format_item = function(change)
-                      return api.get_change_id(change, true) .. (change.description_first_line or "")
-                    end,
-                  }, function(change, _)
-                    if not change then
-                      return vim.notify("Selection failed.", vim.log.levels.WARN)
-                    end
-                    api.file_restore(args.ctx, args.file, change, { force = args.force })
-                  end)
-                elseif #ancestors > 0 then
-                  api.file_restore(args.ctx, args.file, ancestors[1], { force = args.force })
-                else
-                  vim.notify("No ancestors found.", vim.log.levels.ERROR)
-                end
+                vim.notify("No ancestors found.", vim.log.levels.ERROR)
               end
             else
               vim.schedule(function()
