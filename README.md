@@ -41,7 +41,7 @@ easily, these rules might prove helpful:
 - Log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
   - Set log to different views (`g1`, `g2`, `g...`)
-  - Navigation between changes, files and hunks (`[[`, `]]`, `i`)
+  - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
   - Close buffer (`q`, `gq`)
   - Prepopulate a : command with the file under the cursor (`.`)
