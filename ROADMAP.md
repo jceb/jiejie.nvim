@@ -48,10 +48,11 @@
 
 ## Priority 2
 
-- [ ] Configuration: make default view configurable
-- [ ] Statusline: provide status line integration
+- [ ] Configuration: make default view and number of entries configurable
+- [ ] Statusline: provide status line integration, e.g. file name, diff id,
+      change id
 - [ ] Commands: blame / file annotate
-- [ ] Bug: make log reload upon `!` commands
+- [ ] Bug: make log reload when `!` commands are executed
 - [ ] Log: navigation should open folds
 - [ ] Commands: evolog
 - [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
@@ -63,9 +64,14 @@
 - [ ] Commands: parallelize
 - [ ] Docs: make video that show how to use jiejie - which-key for help with key
       bindings
+- [ ] Refactor: remove notification from api.lua into log_buffer_mappings
+- [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
+      diff mode
 
 ## Priority 3
 
+- [ ] Commands: support pushing / pulling from different origins
+- [ ]
 - [ ] Key: pressing `X` on a hunk should restore it - not natively supported by
       jj
 - [ ] Commands: keep open diffs open when reloading the log

@@ -224,7 +224,7 @@ M.MODIFICATION_TYPE = {
 --- @field linenr number Line number in log buffer that contains filename
 
 --- Show help window
---- @param topic string Jiejie help topic
+--- @param topic? string Jiejie help topic
 function M.show_help(topic)
   vim.cmd.h("jiejie-" .. (topic or "maps"))
 end

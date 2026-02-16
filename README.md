@@ -37,6 +37,7 @@ easily, these rules might prove helpful:
   - Edit diff (`:Jdiffsplit [revision]`, `dD`, `dd`, `dV`, `dv`, `dS`, `ds`,
     `dH`, `dh`, `dq`, `d?`)
   - Wraper for `jj` CLI (`:J` or `:Jj`)
+  - Show help (`g?`, `c?`, `d?`, `r?`)
 - Log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
   - Set log to different views (`g1`, `g2`, `g...`)

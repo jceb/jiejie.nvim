@@ -77,7 +77,7 @@ gO                      Open the file or |jiejie-object| under the cursor in a
 O                       Open the file or |jiejie-object| under the cursor in a
                         new tab.
 
-                                                                      *jiejie_i*
+                                                                  *jiejie_<Tab>*
 <Tab>                   Jump to the next file or hunk, expanding inline diffs
                         automatically.
 
@@ -90,8 +90,12 @@ K                       Open change under the cursor.
                                                                      *jiejie_]]*
 ]]                      Jump [count] sections forward.
 
-                                                                      *jiejie_d*
+                                                                      *jiejie-d*
 Diff maps ~
+
+                                                                     *jiejie_d?*
+d?                      Show this help.
+
                                                                       *jiejie_=*
 =                       Toggle an inline diff of the change or file under the
                         cursor.
@@ -130,10 +134,11 @@ ds                      Perform a |:Jhdiffsplit| on the file under the cursor
 dq                      Close all but the currently focused diff buffer, and
                         invoke |:diffoff|!.
 
-                                                                     *jiejie_d?*
-d?                      Show this help.
-                                                                      *jiejie_c*
+                                                                      *jiejie-c*
 Commit maps ~
+
+                                                                     *jiejie_c?*
+c?                      Show help for commit maps.
 
                                                                *jiejie_c<space>*
 c<space>                Populate command line with ":Jj commit ".
@@ -168,7 +173,7 @@ cbr                     Rename bookmark at change under the cursor.
                                                                     *jiejie_cbX*
 cbX                     Delete any one bookmark including the remote boomark.
 
-                                                                    *jiejie_cbX*
+                                                                    *jiejie_cbx*
 cbx                     Delete bookmark including remote boomark at change
                         under the cursor.
 
@@ -260,11 +265,11 @@ x
                         <bang>, ignore immutability settings.
 
 
-                                                        *jiejie_ctc* *jiejie_ctt*
+                                                         *jiejie_ctc* *jiejie_ctt*
 ctc                     Set tag at change under the cursor.
 ctt
 
-                                                                    *jiejie_ctc*
+                                                                    *jiejie_ctm*
 ctm                     Move any one tag to change under the cursor.
 
                                                                     *jiejie_ctX*
@@ -286,8 +291,11 @@ cU                      Revert last operation.
                         change is under the cursor.
                         With <bang>, ignore immutability settings.
 
-                                                                      *jiejie_r*
+                                                                      *jiejie-r*
 Rebase maps ~
+
+                                                                     *jiejie_r?*
+r?                      Show help for rebase maps.
 
                                                                *jiejie_r<space>*
 r<space>                Populate command line with `:Jj rebase `.

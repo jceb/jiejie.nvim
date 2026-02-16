@@ -624,6 +624,13 @@ M.nmaps = {
 
   -- Diff maps {{{1
   {
+    key = "d?",
+    fn = function()
+      api.show_help("d")
+    end,
+    desc = "Show diff maps help",
+  },
+  {
     key = "=",
     fn = helpers.search_file(
       helpers.search_change(function(args)
@@ -681,15 +688,15 @@ M.nmaps = {
     end,
     desc = "Close all but the currently focused diff buffer, and invoke :diffoff!",
   },
-  {
-    key = "d?",
-    fn = function()
-      api.show_help("d")
-    end,
-    desc = "Show diff maps help",
-  },
 
   -- Commit maps {{{1
+  {
+    key = "c?",
+    fn = function()
+      api.show_help("c")
+    end,
+    desc = "Show help for commit maps",
+  },
   {
     key = "c<space>",
     fn = function()
@@ -1088,6 +1095,13 @@ M.nmaps = {
 
   -- Rebase maps {{{1
   {
+    key = "r?",
+    fn = function()
+      api.show_help("r")
+    end,
+    desc = "Show help for rebase maps",
+  },
+  {
     key = "r<space>",
     fn = helpers.search_change(function(args)
       vim.fn.feedkeys(":Jj rebase -s " .. api.get_change_id(args.src_change, true) .. " ", "n")
@@ -1196,7 +1210,9 @@ M.nmaps = {
   },
   {
     key = "g?",
-    fn = api.show_help,
+    fn = function()
+      api.show_help()
+    end,
     desc = "Show help",
   },
   {
