@@ -44,20 +44,23 @@
 ## Priority 1
 
 - [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
-- [ ] Commands: absorb
-- [ ] Commands: parallelize
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
 - [ ] Bug: when an empty file is added and the diff `=` is requested, an error
       occurs
 
 ## Priority 2
 
+- [ ] Commands: blame / file annotate
 - [ ] Bug: make log reload upon `!` commands
 - [ ] Log: navigation should open folds
 - [ ] Commands: evolog
+- [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
+      the quickfix/location list see issue #1
 - [ ] New feature: operations log support
 - [ ] Refactor: make jiejie URLs truly unique so that the index and file paths
       can be distinguished
+- [ ] Commands: absorb
+- [ ] Commands: parallelize
 
 ## Priority 3
 
@@ -73,7 +76,6 @@
 - [ ] Commands: split (current workaround: commit one file instead of the whole
       change, then squash the other files that should be part of the commit)
 - [ ] Refactor: follow lua's style of returning errors
-- [ ] Commands: blame
 - [ ] Commands: diffedit
 - [ ] Commands: show full change
 - [ ] Commands: metaedit
@@ -81,8 +83,6 @@
 - [ ] New Feature: completion for Jj command
 - [ ] Statusline: provide status line integration
 - [ ] Commands: work tree / workspace - not sure what to support here
-- [ ] Commands: :Jclog/:Jllog for loading the commit history into the
-      quickfix/location list
 - [ ] Commands: :Jgrep for loading the commit history into the quickfix list
 - [ ] Commands: :Jcd / Jlcd change directory relative to the repository :cd /
       :lcd
