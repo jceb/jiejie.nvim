@@ -131,7 +131,7 @@ function M.diff_show(ctx, file, change)
     return
   end
   local diff = vim.split(vim.trim(res.stdout), "\n")
-  local offset = 1
+  local offset = 0
   for index, line in ipairs(diff) do
     if
       not (
@@ -146,6 +146,9 @@ function M.diff_show(ctx, file, change)
       offset = index
       break
     end
+  end
+  if offset == 0 then
+    offset = #diff + 1
   end
   local buffer = require("jiejie.log_buffer")
   local data = { unpack(diff, offset) }
