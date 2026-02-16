@@ -190,8 +190,6 @@ function M.setup_buffer(ctx)
               vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
             end,
           })
-        elseif lopts.with_action == 2 ^ 1 then
-          api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
         elseif lopts.with_action == 2 ^ 2 then
           api.cli(args.ctx, "bookmark", {
             args = { "forget", args.bookmark },
@@ -199,6 +197,8 @@ function M.setup_buffer(ctx)
               vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
             end,
           })
+        elseif lopts.with_action == 2 ^ 1 then
+          api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
         else
           api.cli(args.ctx, "bookmark", {
             args = { "create", "-r", api.get_change_id(args.src_change), args.bookmark },
@@ -250,6 +250,54 @@ function M.setup_buffer(ctx)
         })
         return true
       end)
+    end,
+
+    --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+    --- - with_action: 1 (default): create, 2: move, 4: delete
+    --- - drop_change: Drops change and pass nil instead
+    --- - limit_to_change: Limits bookmark search to the current change
+    --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+    ct = function(opts)
+      local lopts = opts or {}
+      local with_tags = function(fn)
+        if lopts.with_action ~= 2 ^ 0 then
+          return function(args)
+            helpers.with_bookmarks_or_tags(fn, {
+              ctx = args.ctx,
+              src_change = not lopts.drop_change and args.src_change or nil,
+              limit_to_change = lopts.limit_to_change,
+              limit_to_branch = lopts.limit_to_branch, -- not yet supported by jj
+              tags = true,
+            })(args)
+          end
+        end
+        return fn
+      end
+      return helpers.search_change(with_tags(helpers.with_bookmark_or_tag(function(args)
+        if lopts.with_action == 2 ^ 2 then
+          api.cli(args.ctx, "tag", {
+            args = { "delete", args.tag },
+            on_exit = function()
+              vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
+            end,
+          })
+        elseif lopts.with_action == 2 ^ 1 then
+          api.cli(args.ctx, "tag", {
+            args = { "set", "-r", api.get_change_id(args.src_change), "--allow-move", args.tag },
+            on_exit = function()
+              vim.notify("Tag " .. args.tag .. " moved to change " .. api.get_change_id(args.src_change), vim.log.levels.INFO)
+            end,
+          })
+        else
+          api.cli(args.ctx, "tag", {
+            args = { "set", "-r", api.get_change_id(args.src_change), args.tag },
+            on_exit = function()
+              vim.notify("Tag created: " .. args.tag, vim.log.levels.INFO)
+            end,
+          })
+        end
+        return true
+      end, { tags = true })))
     end,
 
     --- @param opts {negate?: boolean}
@@ -890,63 +938,27 @@ function M.setup_buffer(ctx)
     },
     {
       key = "ctc",
-      fn = helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-        api.cli(args.ctx, "tag", {
-          args = { "set", "-r", api.get_change_id(args.src_change), args.tag },
-          on_exit = function()
-            vim.notify("Tag created: " .. args.tag, vim.log.levels.INFO)
-          end,
-        })
-        return true
-      end, { tags = true })),
+      fn = fns.ct({ with_action = 2 ^ 0 }),
       desc = "Create new tag at change under the cursor",
     },
     {
       key = "ctm",
-      fn = helpers.with_bookmarks_or_tags(
-        helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          api.cli(args.ctx, "tag", {
-            args = { "set", "-r", api.get_change_id(args.src_change), "--allow-move", args.tag },
-            on_exit = function()
-              vim.notify("Tag " .. args.tag .. " moved to change " .. api.get_change_id(args.src_change), vim.log.levels.INFO)
-            end,
-          })
-          return true
-        end, { tags = true })),
-        { tags = true }
-      ),
-      desc = "Delete tag",
+      fn = fns.ct({ with_action = 2 ^ 1 }),
+      desc = "Move any one tag to change under the cursor",
+    },
+    {
+      key = "ctt",
+      fn = fns.ct({ with_action = 2 ^ 0 }),
+      desc = "Alias of ctc",
     },
     {
       key = "ctX",
-      fn = helpers.with_bookmarks_or_tags(
-        helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          api.cli(args.ctx, "tag", {
-            args = { "delete", args.tag },
-            on_exit = function()
-              vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
-            end,
-          })
-          return true
-        end, { tags = true })),
-        { tags = true }
-      ),
-      desc = "Delete tag",
+      fn = fns.ct({ with_action = 2 ^ 2 }),
+      desc = "Delete any one tag",
     },
     {
       key = "ctx",
-      fn = helpers.with_bookmarks_or_tags(
-        helpers.search_change(helpers.with_bookmark_or_tag(function(args)
-          api.cli(args.ctx, "tag", {
-            args = { "delete", args.tag },
-            on_exit = function()
-              vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
-            end,
-          })
-          return true
-        end, { tags = true })),
-        { tags = true }
-      ),
+      fn = fns.ct({ with_action = 2 ^ 2, limit_to_change = true }),
       desc = "Delete tag at change under the cursor",
     },
     {

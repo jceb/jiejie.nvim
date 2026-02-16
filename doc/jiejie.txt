@@ -228,14 +228,15 @@ s<space>                Populate command line with ":Jj squash ".
 [!]cS                   Squash current changes into the selected change. With
                         <bang>, ignore immutability settings.
 
-                                                                    *jiejie_ctc*
+                                                        *jiejie_ctc* *jiejie_ctt*
 ctc                     Set tag at change under the cursor.
+ctt
 
                                                                     *jiejie_ctc*
-ctm                     Move tag to change under the cursor.
+ctm                     Move any one tag to change under the cursor.
 
                                                                     *jiejie_ctX*
-ctX                     Delete tag.
+ctX                     Delete any one tag.
 
                                                                     *jiejie_ctx*
 ctx                     Delete tag at change under the cursor.

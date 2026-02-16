@@ -62,7 +62,7 @@ easily, these rules might prove helpful:
   - Undo last operation (`cU`)
   - Bookmark management (`cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`, `cbr`,
     `cbX`, `cbx`)
-  - Tag management (`ctc`, `ctm`, `ctX`, `ctx`)
+  - Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
 
 ## Installation
 

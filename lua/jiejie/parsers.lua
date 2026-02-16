@@ -175,15 +175,16 @@ end
 --- @field tracked boolean Bookmark is tracking a remote bookmark
 --- @field present boolean Bookmark is active or has been deleted
 --- @field remote string? Name of remote
---- @field id string change ID
+--- @field id string Change ID
 --- @field id_short string Short change ID
+--- @field commit_id string Commit ID
 --- @field description_first_line string First line of description
 
 --- Parse a line to containing a bookmark or tag
 --- @param line string Line
 --- @return BookmarkTag?
 function M.parse_bookmark_or_tag(line)
-  local match = vim.fn.matchlist(line, [[^\([^†]\+\)†\([^‡]\+\)‡\([^⌠]\+\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\(.*\)$]])
+  local match = vim.fn.matchlist(line, [[^\([^†]\+\)†\([^‡]\+\)‡\([^⌠]\+\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)∮\(.*\)$]])
   if #match == 0 then
     return nil
   end
@@ -194,6 +195,7 @@ function M.parse_bookmark_or_tag(line)
   local id = match[6] ~= "" and match[6] or nil
   local id_short = match[7] ~= "" and match[7] or nil
   local description_first_line = match[8] ~= "" and match[8] or nil
+  local commit_id = match[9] ~= "" and match[9] or nil
   return {
     name = name,
     tracked = tracked,
@@ -202,6 +204,7 @@ function M.parse_bookmark_or_tag(line)
     id = id,
     id_short = id_short,
     description_first_line = description_first_line,
+    commit_id = commit_id,
   }
 end
 

@@ -445,7 +445,7 @@ describe("jiejie parse_bookmark_or_tag", function()
   end)
 
   it("When parsing a bookmark without a remote, the parser shall yield the object", function()
-    local result = require("jiejie.parsers").parse_bookmark_or_tag("main†false‡true⌠⌡∫∬")
+    local result = require("jiejie.parsers").parse_bookmark_or_tag("main†false‡true⌠⌡∫∬∮")
     local expected = {
       name = "main",
       tracked = false,
@@ -455,7 +455,7 @@ describe("jiejie parse_bookmark_or_tag", function()
   end)
 
   it("When parsing a bookmark with a remote, the parser shall yield the object", function()
-    local result = require("jiejie.parsers").parse_bookmark_or_tag("main†false‡true⌠origin⌡id∫short_id∬description")
+    local result = require("jiejie.parsers").parse_bookmark_or_tag("main†false‡true⌠origin⌡id∫short_id∬description∮commit_id")
     local expected = {
       name = "main",
       tracked = false,
@@ -464,6 +464,7 @@ describe("jiejie parse_bookmark_or_tag", function()
       id = "id",
       id_short = "short_id",
       description_first_line = "description",
+      commit_id = "commit_id",
     }
     eq(expected, result)
   end)
