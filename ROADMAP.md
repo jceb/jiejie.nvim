@@ -48,6 +48,8 @@
 
 ## Priority 2
 
+- [ ] Configuration: make default view configurable
+- [ ] Statusline: provide status line integration
 - [ ] Commands: blame / file annotate
 - [ ] Bug: make log reload upon `!` commands
 - [ ] Log: navigation should open folds
@@ -59,27 +61,21 @@
       can be distinguished
 - [ ] Commands: absorb
 - [ ] Commands: parallelize
+- [ ] Docs: make video that show how to use jiejie - which-key for help with key
+      bindings
 
 ## Priority 3
 
-- [ ] Docs: make video that show how to use jiejie - which-key for help with key
-      bindings
-- [ ] Key: Adjust all bindings to vim.ui.select from the currently visible
-      change IDs or enter a custom ID, where needed
 - [ ] Key: pressing `X` on a hunk should restore it - not natively supported by
       jj
 - [ ] Commands: keep open diffs open when reloading the log
 - [ ] Commands: add verbose mode for displaying the executed `jj` commands
-- [ ] Commands: Jedit for commits and directories
+- [ ] Commands: Jedit directories
 - [ ] Commands: split (current workaround: commit one file instead of the whole
       change, then squash the other files that should be part of the commit)
 - [ ] Refactor: follow lua's style of returning errors
-- [ ] Commands: diffedit
-- [ ] Commands: show full change
-- [ ] Commands: metaedit
 - [ ] Commands: interdiff
 - [ ] New Feature: completion for Jj command
-- [ ] Statusline: provide status line integration
 - [ ] Commands: work tree / workspace - not sure what to support here
 - [ ] Commands: :Jgrep for loading the commit history into the quickfix list
 - [ ] Commands: :Jcd / Jlcd change directory relative to the repository :cd /
