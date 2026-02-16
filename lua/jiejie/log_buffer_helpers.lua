@@ -223,7 +223,7 @@ function M.with_bookmarks_or_tags(fn, opts)
         "--sort",
         "committer-date-,name",
       })
-    elseif lopts.limit_to_change then
+    elseif lopts.tags and lopts.limit_to_change then
       return fn(vim.tbl_extend("force", largs, {
         [lopts.args_key or (lopts.tags and "tags" or "bookmarks")] = vim.tbl_map(function(t)
           return {
@@ -237,7 +237,7 @@ function M.with_bookmarks_or_tags(fn, opts)
     end
     _args = vim.list_extend(_args, {
       "-T",
-      [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.commit_id()) ++ "∫" ++ if(normal_target, normal_target.change_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "\n"]],
+      [[name ++ "†" ++ tracked ++ "‡" ++ present ++ "⌠" ++ remote ++ "⌡" ++ if(normal_target, normal_target.change_id()) ++ "∫" ++ if(normal_target, normal_target.change_id().short()) ++ "∬" ++ if(normal_target, normal_target.description().first_line()) ++ "∮" ++ if(normal_target, normal_target.commit_id()) ++ "\n"]],
     })
     jujutsu.cli(largs.ctx, cmd, {
       args = _args,
