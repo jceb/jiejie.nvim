@@ -30,7 +30,7 @@ easily, these rules might prove helpful:
 
 - UX very close to [tope's vim-fugitive](https://github.com/tpope/vim-fugitive)
   - Edit file (`<CR>`, `o`, `gO`, `O`)
-  - Open revision of a file (`:Jedit [revision]:[file]`, or by selection the
+  - Open revision of a file (`:Jedit [revision]:[file]`, or by selecting the
     file in the log summary via `<CR>`, `o`, `gO`, `O`)
   - Open change (`:Jedit [revision]`, `K`)
   - Toggle inline diff (`=`)
@@ -44,7 +44,7 @@ easily, these rules might prove helpful:
   - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
   - Close buffer (`q`, `gq`)
-  - Prepopulate a : command with the file under the cursor (`.`)
+  - Populate a `:` command with the file under the cursor (`.`)
 - Modify commits from the log buffer
   - Add `!` prefix to mappings for modification of immutable changes
   - Edit change (`<CR>`)
