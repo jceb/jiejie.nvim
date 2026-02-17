@@ -300,15 +300,31 @@ r?                      Show help for rebase maps.
                                                                *jiejie_r<space>*
 r<space>                Populate command line with `:Jj rebase `.
 
-                                                        *jiejie_rbM* *jiejie_!rbM*
-[!]rbM                  Rebase the current change `@` on any one bookmark,
+                                                        *jiejie_rbD* *jiejie_!rbD*
+[!]rbD                  Rebase the current change `@` on any one bookmark,
                         together with its descendants. With <bang>, ignore
                         immutability settings.
 
-                                                        *jiejie_rbm* *jiejie_!rbm*
-[!]rbm                  Rebase the current change `@` on a bookmark in the
+                                                        *jiejie_rbd* *jiejie_!rbd*
+[!]rbd                  Rebase the current change `@` on a bookmark in the
                         current branch, together with its descendants. With
                         <bang>, ignore immutability settings.
+
+                                                          *jiejie_rD* *jiejie_!rD*
+[!]rD                   Rebase the current change `@` on any change ID,
+                        together with its descendants. With <bang>, ignore
+                        immutability settings.
+
+                                                          *jiejie_rd* *jiejie_!rd*
+[!]rd                   Rebase the current change `@` on the change under the
+                        cursor, together with its descendants. With
+                        <bang>, ignore immutability settings.
+
+                                                        *jiejie_rbM* *jiejie_!rbM*
+                                                        *jiejie_rbm* *jiejie_!rbm*
+[!]rbM                  Rebase the current change `@` on any one bookmark,
+[!]rbm                  together with its branch. With <bang>, ignore
+                        immutability settings.
 
                                                         *jiejie_rbO* *jiejie_!rbO*
 [!]rbO                  Rebase only the current change `@` on any bookmark,
@@ -332,14 +348,31 @@ r<space>                Populate command line with `:Jj rebase `.
 
                                                           *jiejie_rR* *jiejie_!rR*
 [!]rR                   Rebase the current change `@` on any change ID,
-                        together with its descendants. With <bang>, ignore
+                        together with its branch. With <bang>, ignore
                         immutability settings.
 
-                                                                     *jiejie_rr*
-                                                                    *jiejie_!rr*
-[!]rr                   Rebase the current change `@` on the change
-                        undercursor, together with its descendants. With
+                                                          *jiejie_rr* *jiejie_!rr*
+[!]rr                   Rebase the current change `@` on the change under the
+                        cursor, together with its branch. With
                         <bang>, ignore immutability settings.
+
+                                                        *jiejie_rtD* *jiejie_!rtD*
+                                                        *jiejie_rtd* *jiejie_!rtd*
+[!]rtD                  Rebase the current change `@` on any one tag,
+[!]rtd                  together with its descendants. With <bang>, ignore
+                        immutability settings.
+
+                                                        *jiejie_rtO* *jiejie_!rtO*
+                                                        *jiejie_rto* *jiejie_!rto*
+[!]rtO                  Rebase only the current change `@` on any tag, without
+[!]rt0                  its descendants. With <bang>, ignore immutability
+                        settings.
+
+                                                        *jiejie_rtT* *jiejie_!rtT*
+                                                        *jiejie_rtT* *jiejie_!rtT*
+[!]rtT                  Rebase the current change `@` on any one tag, together
+[!]rtT                  with its branch. With <bang>, ignore immutability
+                        settings.
 
                                                                       *jiejie_g*
 Git maps ~

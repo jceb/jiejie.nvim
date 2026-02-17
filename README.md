@@ -59,8 +59,9 @@ easily, these rules might prove helpful:
     `cpT`, `cpt`)
   - Revert change under the cursor (`cR`)
   - Abandon change or file under the cursor (`X`)
-  - Rebase change tree or individual change (`rbM`, `rbm`, `rbO`, `rbo`,`rO`,
-    `ro`, `rR`, `rr`)
+  - Rebase branch, tree or individual change (`rbD`, `rbd`, `rbM`, `rbm`, `rbO`,
+    `rbo`, `rD`, `rd`, `rO`, `ro`, `rR`, `rr`, `rtD`, `rtd`, `rtO`, `rto`, `rtt`
+    `rtT`)
   - Undo last operation (`cU`)
   - Bookmark management (`cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`, `cbr`,
     `cbX`, `cbx`)

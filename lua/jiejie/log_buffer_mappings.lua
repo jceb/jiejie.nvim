@@ -10,8 +10,8 @@ local fns = {
   --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename
   --- - drop_change: Drops change and pass nil instead
-  --- - limit_to_change: Limits bookmark search to the current change
-  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+  --- - limit_to_change: Limits bookmark / tag search to the current change
+  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
   cb = function(opts)
     local lopts = opts or {}
     local with_bookmarks = function(fn)
@@ -69,8 +69,8 @@ local fns = {
   --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): simple merge, 2: pick change id, 4: pick bookmark
   --- - drop_change: Drops change and pass nil instead
-  --- - limit_to_change: Limits bookmark search to the current change
-  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+  --- - limit_to_change: Limits bookmark / tag search to the current change
+  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
   cm = function(opts)
     local lopts = opts or {}
     local with_input = function(fn)
@@ -161,11 +161,11 @@ local fns = {
   end,
 
   --- @param opts {tags?: boolean, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
-  --- - tags List tags instead of bookmarks
-  --- - with_change 1 (default): use change under cursor, 1: prompt for change id, 2: prompt for bookmark
+  --- - tags: List tags instead of bookmarks
+  --- - with_change: 1 (default): use change under cursor, 2: prompt for change id, 4: prompt for bookmark
   --- - drop_change: Drops change and pass nil instead
-  --- - limit_to_change: Limits bookmark search to the current change
-  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+  --- - limit_to_change: Limits bookmark / tag search to the current change
+  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
   cp = function(opts)
     local lopts = opts or {}
     local use_change = function(fn)
@@ -209,8 +209,8 @@ local fns = {
   --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): create, 2: move, 4: delete
   --- - drop_change: Drops change and pass nil instead
-  --- - limit_to_change: Limits bookmark search to the current change
-  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+  --- - limit_to_change: Limits bookmark / tag search to the current change
+  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
   ct = function(opts)
     local lopts = opts or {}
     local with_tags = function(fn)
@@ -326,12 +326,13 @@ local fns = {
     end)
   end,
 
-  --- @param opts {rebase_tree?: boolean, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
-  --- - rebase_tree: Rebase tree, if false rebase just the commit
-  --- - with_change 1 (default): use change under cursor, 1: prompt for change id, 2: prompt for bookmark
+  --- @param opts {rebase?: number, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean, tags?: boolean}
+  --- - tags: List tags instead of bookmarks
+  --- - rebase: 1 (default): revision, 2: with descendants, 4: branch
+  --- - with_change: 1 (default): use change under cursor, 2: prompt for change id, 4: prompt for bookmark or tag
   --- - drop_change: Drops change and pass nil instead
-  --- - limit_to_change: Limits bookmark search to the current change
-  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
+  --- - limit_to_change: Limits bookmark / tag search to the current change
+  --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
   r = function(opts)
     local lopts = opts or {}
     local use_change = function(fn)
@@ -340,10 +341,11 @@ local fns = {
       elseif lopts.with_change == 2 ^ 2 then
         --- @param args WithArgs
         return helpers.search_change(function(args)
-          return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), {
+          return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn, { tags = lopts.tags }), {
             src_change = not lopts.drop_change and args.src_change or nil,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch,
+            tags = lopts.tags,
           })(args)
         end)
       else
@@ -355,13 +357,13 @@ local fns = {
       --- @return boolean
       function(args)
         local src_change = api.construct_dummy_change("@")
-        local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(args.bookmark) or args.dst_change
+        local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag or args.bookmark) or args.dst_change
         if lopts.with_change == 2 ^ 2 then
           dst_change.immutable = false
         end
         api.cli(args.ctx, "rebase", {
           args = jujutsu.ignore_immtuable({
-            lopts.rebase_tree and "-s" or "-r",
+            lopts.rebase == 2 ^ 2 and "-b" or lopts.rebase == 2 ^ 1 and "-s" or "-r",
             api.get_change_id(src_change),
             "-d",
             ---@diagnostic disable-next-line: param-type-mismatch dst_change is always set
@@ -1110,52 +1112,112 @@ M.nmaps = {
     desc = "Populate command line with `:Jj rebase `",
   },
   {
-    key = "rbM",
-    fn = fns.r({ rebase_tree = true, with_change = 2 ^ 2 }),
+    key = "rbD",
+    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 2 }),
     with_force = true,
     desc = "Rebase the current change `@` on any one bookmark, together with its descendants",
   },
   {
-    key = "rbm",
-    fn = fns.r({ rebase_tree = true, with_change = 2 ^ 2, limit_to_branch = true }),
+    key = "rbd",
+    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 2, limit_to_branch = true }),
     with_force = true,
-    desc = "current branch, together with its descendants",
+    desc = "Rebase the current change `@` on a bookmark in the current branch, together with its descendants",
+  },
+  {
+    key = "rbM",
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
+    with_force = true,
+    desc = "Rebase the current change `@` on any one bookmark, together with its branch",
+  },
+  {
+    key = "rbm",
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
+    with_force = true,
+    desc = "Alias of rbM",
   },
   {
     key = "rbO",
-    fn = fns.r({ rebase_tree = false, with_change = 2 ^ 2 }),
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2 }),
     with_force = true,
     desc = "Rebase only the current change `@` on any bookmark, without its descendants",
   },
   {
     key = "rbo",
-    fn = fns.r({ rebase_tree = false, with_change = 2 ^ 2, limit_to_branch = true }),
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, limit_to_branch = true }),
     with_force = true,
     desc = "Rebase only the current change `@` on a bookmark in the current branch, without its descendants",
   },
   {
+    key = "rD",
+    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 1 }),
+    with_force = true,
+    desc = "Rebase the current change `@` on any change ID, together with its descendants",
+  },
+  {
+    key = "rd",
+    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 0 }),
+    with_force = true,
+    desc = "Rebase the current change `@` on the change under the cursor, together with its descendants",
+  },
+  {
     key = "rO",
-    fn = fns.r({ rebase_tree = false, with_change = 2 ^ 1 }),
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 1 }),
     with_force = true,
     desc = "Rebase only the current change `@` on any change ID, without its descendants",
   },
   {
     key = "ro",
-    fn = fns.r({ rebase_tree = false, with_change = 2 ^ 0 }),
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 0 }),
     with_force = true,
     desc = "Rebase only the current change `@` on the change under the cursor, without its descendants",
   },
   {
     key = "rR",
-    fn = fns.r({ rebase_tree = true, with_change = 2 ^ 1 }),
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1 }),
     with_force = true,
-    desc = "Rebase the current change `@` on any change ID, together with its descendants",
+    desc = "Rebase the current change `@` on any change ID, together with its branch",
   },
   {
     key = "rr",
-    fn = fns.r({ rebase_tree = true, with_change = 2 ^ 0 }),
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 0 }),
     with_force = true,
-    desc = "Rebase the current change `@` on the change undercursor, together with its descendants",
+    desc = "Rebase the current change `@` on the change under the cursor, together with its branch",
+  },
+  {
+    key = "rtD",
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
+    with_force = true,
+    desc = "Rebase the current change `@` on any one tag, together with its descendants",
+  },
+  {
+    key = "rtd",
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
+    with_force = true,
+    desc = "Alias of rbd",
+  },
+  {
+    key = "rtO",
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
+    with_force = true,
+    desc = "Rebase only the current change `@` on any tag, without its descendants",
+  },
+  {
+    key = "rto",
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
+    with_force = true,
+    desc = "Alias of rtO",
+  },
+  {
+    key = "rtT",
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
+    with_force = true,
+    desc = "Rebase the current change `@` on any one tag, together with its branch",
+  },
+  {
+    key = "rtt",
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
+    with_force = true,
+    desc = "Alias of rbT",
   },
 
   -- Git maps {{{1
