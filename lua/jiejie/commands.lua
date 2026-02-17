@@ -9,12 +9,11 @@ local M = {}
 --- @param args vim.api.keyset.create_user_command.command_args Command arguments
 function M.Jj(args)
   local ctx = context.get_context()
-  if ctx then
-    if #args.fargs == 0 then
-      api.show_log(ctx, { vertical = args.smods.vertical })
-    else
-      api.cli(ctx, args.fargs[1], { args = jujutsu.ignore_immtuable(vim.list_slice(args.fargs, 2), { force = args.bang }) })
-    end
+  assert(ctx, "Working directory does not belong to a Jujutsu repository")
+  if #args.fargs == 0 then
+    api.show_log(ctx, { vertical = args.smods.vertical })
+  else
+    api.cli(ctx, args.fargs[1], { args = jujutsu.ignore_immtuable(vim.list_slice(args.fargs, 2), { force = args.bang }) })
   end
 end
 
@@ -38,8 +37,8 @@ function M.Jedit(args)
     root = jujutsu.get_root(directory)
   end
   local ctx = context.get_context(root)
-  assert(ctx, "Unable to determine repository context for " .. object.filename)
-  assert(vim.startswith(object.filename, ctx.root), "Unable to determine jj root directory")
+  assert(ctx, "Working directory does not belong to a Jujutsu repository. File: " .. object.filename)
+  assert(vim.startswith(object.filename, ctx.root), "Unable to determine Jujutsu root directory for. File: " .. object.filename)
   local path = vim.fn.trim(vim.fn.strpart(object.filename, #ctx.root), "/", 1)
   local dummy_change = api.construct_dummy_change(object.change_id or "@")
   api.object_edit(ctx, path, dummy_change)
@@ -61,12 +60,12 @@ function M.Jdiffsplit(args)
   else
     local directory = vim.fn.fnamemodify(src.filename, ":h")
     src.root = jujutsu.get_root(directory)
-    assert(not vim.startswith(src.filename, src.root), "Unable to determine jj root directory of file" .. src.filename)
+    assert(src.filename and src.root and not vim.startswith(src.filename, src.root), "Unable to determine Jujutsu root directory for. File: " .. src.filename)
     src.path = vim.fn.trim(vim.fn.strpart(src.filename, #src.root), "/", 1)
   end
   table.insert(files, { path = src.path, M.construct_dummy_change(src.change_id or "@") })
   local ctx = context.get_context(src.root)
-  assert(ctx, "Unable to determine repository context for file " .. src.filename)
+  assert(ctx, "Working directory does not belong to a Jujutsu repository. File: " .. object.filename)
   if #args.fargs > 0 then
     local dst_object = parsers.parse_object(args.fargs[1]) or {}
     if vim.startswith(dst_object.change_id, "@") then
