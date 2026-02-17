@@ -141,6 +141,7 @@ function M.diff_show(ctx, file, change)
         or vim.startswith(line, "index ")
         or vim.startswith(line, "new file mode")
         or vim.startswith(line, "deleted ")
+        or vim.startswith(line, "rename ")
       )
     then
       offset = index
