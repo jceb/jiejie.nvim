@@ -20,12 +20,13 @@ M.load = function(ctx, callback)
   local cmd = "log"
   local current_log_view = log_view.get_log_view()
   local idx = 1
+  local sepaator = "→"
   local header_log_view = table.concat(
     vim.iter(log_view.LOG_VIEWS):fold({}, function(acc, v)
       if v.fileset == current_log_view.fileset then
-        table.insert(acc, "†g" .. idx .. "‐" .. (v.description or v.fileset) .. "‡")
+        table.insert(acc, "†g" .. idx .. sepaator .. (v.description or v.fileset) .. "‡")
       else
-        table.insert(acc, "g" .. idx .. "‐" .. (v.description or v.fileset))
+        table.insert(acc, "g" .. idx .. sepaator .. (v.description or v.fileset))
       end
       idx = idx + 1
       return acc
