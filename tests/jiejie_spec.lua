@@ -224,6 +224,12 @@ describe("jiejie parse_filename", function()
     eq(expected, result)
   end)
 
+  it("When parsing an invalid line that looks like a file name, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_filename("  r = function(opts)", 23)
+    local expected = nil
+    eq(expected, result)
+  end)
+
   it("When parsing a modified filename, the parser shall yield the filename", function()
     local result = require("jiejie.parsers").parse_filename("│  M lua/jiejie/buffer.lua", 23)
     local expected = {
@@ -233,8 +239,6 @@ describe("jiejie parse_filename", function()
     }
     eq(expected, result)
   end)
-
-  -- TODO: continue here
 
   it("When parsing an added filename, the parser shall yield the filename", function()
     local result = require("jiejie.parsers").parse_filename("│  A lua/jiejie/log_diff.lua", 23)

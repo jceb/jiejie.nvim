@@ -240,13 +240,13 @@ function M.toggle_diff(ctx, change, opts)
   local lopts = opts or {}
   local files = {}
   if lopts.file then
-    files = vim.list_extend(files, { lopts.file })
+    table.insert(files, lopts.file)
   else
     ---@diagnostic disable-next-line: param-type-mismatch
     for idx, line in ipairs(vim.fn.getbufline(ctx.buf, change.linenr + 1, "$")) do
       local f = parsers.parse_filename(line, change.linenr + idx)
       if f then
-        files = vim.list_extend(files, { f })
+        table.insert(files, f)
       end
       local ch = parsers.parse_change(line, change.linenr + idx)
       if ch then

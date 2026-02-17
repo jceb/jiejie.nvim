@@ -17,7 +17,7 @@ syn match jiejieHeaderValueReset /‡/ contained conceal nextgroup=jiejieHeaderV
 
 syn match jiejieElided /^\~  .*$/
 
-syn region jiejieChangeSection start=/^[╭╮├┤╰─╯│ ]*\zs[@×◆◇○][╭╮├┤╰─╯│ ]*  / end=/^\%([╭╮├┤╰─╯│ ]*[@×◆◇○]\)\@=/ fold
+syn region jiejieChangeSection start=/^\%([╭╮├┤╰─╯│][╭╮├┤╰─╯│ ]*\)\?\zs[@×◆◇○][╭╮├┤╰─╯│ ]*  / end=/^\%(\%([╭╮├┤╰─╯│][╭╮├┤╰─╯│ ]*\)\?[@×◆◇○]\)\@=/ fold
 syn match jiejieChangeGraph /[╭╮├┤╰─╯│ ]*  / contained nextgroup=jiejieChangeIdShort,jiejieChangeIdShortDivergent skipwhite
 syn match jiejieChangeStatusHead /○/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusMutable /◇/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
@@ -25,14 +25,14 @@ syn match jiejieChangeStatusCurrent /@/ contained containedin=jiejieChangeSectio
 syn match jiejieChangeStatusConflict /×/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusImmutable /◆/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeGraph skipwhite
 
-syn region jiejieFileSection start=/^[╭╮├┤╰─╯│ ]\+  \zs[MADRC]/ end=/^\%(\%([╭╮├┤╰─╯│@×◆◇○]\|[╭╮├┤╰─╯│ ]\+[@×◆◇○]\)[╭╮├┤╰─╯│ ]*  \)\@=/ containedin=jiejieChangeSection contained
+syn region jiejieFileSection start=/^[╭╮├┤╰─╯│][╭╮├┤╰─╯│ ]*  \zs[MADRC]/ end=/^\%(\%([╭╮├┤╰─╯│@×◆◇○]\|\%([╭╮├┤╰─╯│][╭╮├┤╰─╯│ ]*\)\?[@×◆◇○]\)[╭╮├┤╰─╯│ ]*  \)\@=/ containedin=jiejieChangeSection contained
 syn match jiejieFileModified /M\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileDeleted /D\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileAdded /A\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileRenamed /R\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFileCopied /C\ze / contained containedin=jiejieFileSection nextgroup=jiejieFilename skipwhite
 syn match jiejieFilename /.*$/ contained nextgroup=jiejieHunkSection skipnl
-syn region jiejieHunkSection start=/^\%(@@\+ -\|Binary files \)\@=/ end=/^\%(\%([╭╮├┤╰─╯│@×◆◇○]\|[╭╮├┤╰─╯│ ]\+[@×◆◇○]\)[╭╮├┤╰─╯│ ]*  \)\@=/ contains=diffLine,diffRemoved,diffAdded,diffNoEOL,diffBDiffer contained fold
+syn region jiejieHunkSection start=/^\%(@@\+ -\|Binary files \)\@=/ end=/^\%(\%([╭╮├┤╰─╯│@×◆◇○]\|\%([╭╮├┤╰─╯│][╭╮├┤╰─╯│ ]*\)\?[@×◆◇○]\)[╭╮├┤╰─╯│ ]*  \)\@=/ contains=diffLine,diffRemoved,diffAdded,diffNoEOL,diffBDiffer contained fold
 
 syn match jiejieEmptyChangeSeparator /†/ contained conceal nextgroup=jiejieChangeEmpty skipwhite
 syn match jiejieMessageSeparator /‡/ contained conceal nextgroup=jiejieChangeMessageEmpty,jiejieChangeMessage skipwhite
