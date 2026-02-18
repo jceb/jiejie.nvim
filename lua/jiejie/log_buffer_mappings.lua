@@ -2,6 +2,7 @@ local api = require("jiejie.api")
 local jujutsu = require("jiejie.jujutsu")
 local log_diff = require("jiejie.log_diff")
 local helpers = require("jiejie.log_buffer_helpers")
+local log_view = require("jiejie.log_view")
 
 --- @type table<string, fun(opts?: {}): fun()>
 local fns = {
@@ -1255,6 +1256,21 @@ M.nmaps = {
     key = "gq",
     fn = fns.q({ close_current_window = false }),
     desc = "Close the preview window",
+  },
+  {
+    key = "ss",
+    fn = function(args)
+      local view_id = vim.v.count1
+      if log_view.LOG_VIEWS[view_id] then
+        log_view.set_log_view(log_view.LOG_VIEWS[view_id])
+        local log_dirty_check = require("jiejie.log_dirty_check")
+        log_dirty_check.dirty_mark_content(args.ctx.buf)
+        log_dirty_check.do_dirty_check()
+      else
+        vim.notify("View " .. view_id .. " does not exist", vim.log.levels.WARN)
+      end
+    end,
+    desc = "Set log view",
   },
   {
     key = "q",

@@ -390,8 +390,8 @@ Miscellaneous maps ~
 .                       Start a |:| command line with the file under the
                         cursor prepopulated.
 
-                                                           *jiejie_g1* *jiejie_g2*
-g1, g2, g...            Set log view.
+                                                                     *jiejie_ss*
+[count]ss               Set log view.
 
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.

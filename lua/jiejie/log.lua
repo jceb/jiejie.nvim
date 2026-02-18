@@ -20,13 +20,14 @@ M.load = function(ctx, callback)
   local cmd = "log"
   local current_log_view = log_view.get_log_view()
   local idx = 1
-  local sepaator = "→"
+  local sepaator = "·"
   local header_log_view = table.concat(
     vim.iter(log_view.LOG_VIEWS):fold({}, function(acc, v)
+      local view = idx .. "ss" .. sepaator .. (v.description or v.fileset)
       if v.fileset == current_log_view.fileset then
-        table.insert(acc, "†g" .. idx .. sepaator .. (v.description or v.fileset) .. "‡")
+        table.insert(acc, "†" .. view .. "‡")
       else
-        table.insert(acc, "g" .. idx .. sepaator .. (v.description or v.fileset))
+        table.insert(acc, view)
       end
       idx = idx + 1
       return acc
@@ -52,7 +53,7 @@ M.load = function(ctx, callback)
       local headers = {
         buffer.create_header("Help", "g?"),
         buffer.create_header("Reload", "R"),
-        buffer.create_header("Log view", header_log_view),
+        buffer.create_header("View", header_log_view),
       }
       local cmd_op = "op"
       local oplog = jujutsu.cli(ctx, cmd_op, {

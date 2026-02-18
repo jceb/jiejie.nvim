@@ -1,6 +1,5 @@
 local parsers = require("jiejie.parsers")
 local helpers = require("jiejie.log_buffer_helpers")
-local log_view = require("jiejie.log_view")
 
 --- Opeations that manipulate the buffer / window
 local M = {}
@@ -145,22 +144,7 @@ function M.setup_buffer(ctx)
     -- disable keys that would cause a modification of the buffer
     vim.keymap.set("", key, "<Nop>", { buffer = true })
   end
-  local log_dirty_check = require("jiejie.log_dirty_check")
-  local set_log_view = {
-    fn = function(view_id)
-      return function(args)
-        log_view.set_log_view(log_view.LOG_VIEWS[view_id])
-        log_dirty_check.dirty_mark_content(args.ctx.buf)
-        log_dirty_check.do_dirty_check()
-        return true
-      end
-    end,
-    desc = "Set log view",
-  }
   local mappings = require("jiejie.log_buffer_mappings")
-  for i = 1, #log_view.LOG_VIEWS, 1 do
-    table.insert(mappings.nmaps, vim.tbl_extend("force", set_log_view, { key = "g" .. i, fn = set_log_view.fn(i) }))
-  end
   --- @param fn fun(args?: WithArgs): boolean Callback function
   --- @param opts? WithOpts Options
   local with_root_context = function(fn, opts)
