@@ -57,7 +57,7 @@ function M.diff_close(ctx, opts)
   -- FIXME: tabnr isn't stable, it changes when the order of tabs is modified. This causes the diffed windows to not be found anymore
   local tabid = lopts.tabid and ("id_" .. lopts.tabid) or vim.t.jiejie_tabid
   --- @type table<number, DiffWindow[]>
-  local windows = vim.b[ctx.buf].jiejie_diff_windows
+  local windows = vim.b[ctx.buf].jiejie_diff_windows or {}
   for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     for idx, win in ipairs(windows[tabid] or {}) do
       if idx > 1 then
