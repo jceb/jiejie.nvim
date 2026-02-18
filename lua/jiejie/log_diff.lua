@@ -1,4 +1,5 @@
 local jujutsu = require("jiejie.jujutsu")
+local parsers = require("jiejie.parsers")
 
 --- Set file as unexpanded
 --- @param change_id string ChangeID
@@ -133,17 +134,7 @@ function M.diff_show(ctx, file, change)
   local diff = vim.split(vim.trim(res.stdout), "\n")
   local offset = 0
   for index, line in ipairs(diff) do
-    if
-      not (
-        vim.startswith(line, "diff --git")
-        or vim.startswith(line, "--- ")
-        or vim.startswith(line, "+++ ")
-        or vim.startswith(line, "index ")
-        or vim.startswith(line, "new file mode")
-        or vim.startswith(line, "deleted ")
-        or vim.startswith(line, "rename ")
-      )
-    then
+    if vim.startswith(line, "Binary ") or parsers.parse_hunk(line, 23, 0) then
       offset = index
       break
     end
@@ -151,10 +142,14 @@ function M.diff_show(ctx, file, change)
   if offset == 0 then
     offset = #diff + 1
   end
-  local buffer = require("jiejie.log_buffer")
-  local data = { unpack(diff, offset) }
-  buffer.buf_set_lines(ctx, data, file.linenr, file.linenr)
-  set_expanded({ change_id = api.get_change_id(change), filename = file.filename, length = #data })
+  if not diff[offset] then
+    vim.notify("Diff not available for file " .. file.filename, vim.log.levels.WARN)
+  else
+    local buffer = require("jiejie.log_buffer")
+    local data = { unpack(diff, offset) }
+    buffer.buf_set_lines(ctx, data, file.linenr, file.linenr)
+    set_expanded({ change_id = api.get_change_id(change), filename = file.filename, length = #data })
+  end
 end
 
 --- Adjust the displayed number of revisions
