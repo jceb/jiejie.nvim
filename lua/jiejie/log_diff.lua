@@ -1,6 +1,9 @@
 local jujutsu = require("jiejie.jujutsu")
 local parsers = require("jiejie.parsers")
 
+--- @class DiffWindow
+--- @field winid number Window number
+
 --- Set file as unexpanded
 --- @param change_id string ChangeID
 --- @param filename string File name
@@ -42,8 +45,8 @@ local M = {}
 
 --- Closes open windows and buffers associated with a diff
 --- @param ctx Context context
---- @param opts? {tabnr?: number} Options
---- - tabnr: Closes windows on this tab, if not provided, the current tab is used
+--- @param opts? {tabid?: number} Options
+--- - tabid: Closes windows on this tab, if not provided, the current tab is used
 function M.diff_close(ctx, opts)
   assert(ctx, "Context not provided: ctx")
   local lopts = opts or {}
@@ -52,10 +55,11 @@ function M.diff_close(ctx, opts)
     return
   end
   -- FIXME: tabnr isn't stable, it changes when the order of tabs is modified. This causes the diffed windows to not be found anymore
-  local tabnr = lopts.tabnr or vim.api.nvim_get_current_tabpage()
+  local tabid = lopts.tabid and ("id_" .. lopts.tabid) or vim.t.jiejie_tabid
+  --- @type table<number, DiffWindow[]>
   local windows = vim.b[ctx.buf].jiejie_diff_windows
   for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    for idx, win in ipairs(windows[tabnr] or {}) do
+    for idx, win in ipairs(windows[tabid] or {}) do
       if idx > 1 then
         if win.winid == winid then
           vim.api.nvim_win_close(win.winid, false)
@@ -69,7 +73,8 @@ function M.diff_close(ctx, opts)
       end
     end
   end
-  table.remove(windows, tabnr)
+  windows[tabid] = nil
+  vim.t.jiejie_tabid = nil
   vim.b[ctx.buf].jiejie_diff_windows = windows
   return ctx
 end
@@ -88,9 +93,12 @@ function M.diff_mark(ctx, opts)
   end
   local winid = lopts.winid or vim.api.nvim_get_current_win()
   -- FIXME: tabnr isn't stable, it changes when the order of tabs is modified. This causes the diffed windows to not be found anymore
-  local tabnr = vim.api.nvim_win_get_tabpage(winid)
+  local tabnr = vim.api.nvim_get_current_tabpage()
+  local range = 999
+  local tabid = vim.t.jiejie_tabid or ("id_" .. math.random(tabnr * range, (tabnr + 1) * range))
+  --- @type table<number, DiffWindow[]>
   local windows = (vim.b[ctx.buf].jiejie_diff_windows or {})
-  local tabwindows = windows[tabnr] or {}
+  local tabwindows = windows[tabid] or {}
   if #(vim.tbl_filter(function(win)
     return win.winid == winid
   end, tabwindows)) > 0 then
@@ -98,9 +106,9 @@ function M.diff_mark(ctx, opts)
     return
   end
   table.insert(tabwindows, { winid = winid })
-  table.remove(windows, tabnr)
-  table.insert(windows, tabnr, tabwindows)
+  windows[tabid] = tabwindows
   vim.b[ctx.buf].jiejie_diff_windows = windows
+  vim.t.jiejie_tabid = tabid
   return ctx
 end
 
@@ -178,10 +186,6 @@ function M.setup_buffer(ctx)
   --- @field length number Number of lines in diff
   --- @type table<DiffExpansion>
   vim.b.jiejie_diff_expansion = {}
-  --- @class DiffWindow
-  --- @field winid number Window number
-  --- @type table<number, DiffWindow[]>
-  vim.b.jiejie_diff_windows = {}
   return ctx
 end
 
