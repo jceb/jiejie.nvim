@@ -8,7 +8,7 @@ local log_view = require("jiejie.log_view")
 local fns = {
   --
 
-  --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+  --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
@@ -67,7 +67,7 @@ local fns = {
     end)))
   end,
 
-  --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+  --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): simple merge, 2: pick change id, 4: pick bookmark
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
@@ -121,7 +121,7 @@ local fns = {
     end))
   end,
 
-  --- @param opts { with_action?: number, args?: string[]}
+  --- @param opts {with_action?: number, args?: string[]}
   --- - with_action: 1 (default): new branch, 2: change before, 4: change inbetween
   --- - args: Additional arguments
   cn = function(opts)
@@ -207,7 +207,7 @@ local fns = {
     end)
   end,
 
-  --- @param opts { with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+  --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): create, 2: move, 4: delete
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
@@ -327,6 +327,115 @@ local fns = {
     end)
   end,
 
+  --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean}
+  --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset
+  --- - tags Handle tags instead of bookmarks
+  --- - args: Additional arguments
+  s = function(opts)
+    local lopts = opts or {}
+    local with_view = function(fn)
+      --- @param _args WithArgs
+      return function(_args)
+        local largs = _args or {}
+        local view
+        if lopts.with_action == 2 ^ 4 then
+          return vim.ui.input({ prompt = "Enter revset: " }, function(revset)
+            if not revset or revset == "" then
+              return
+            end
+            view = {
+              id = revset,
+              revset = revset,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end)
+        elseif lopts.with_action == 2 ^ 3 then
+          return helpers.search_change(helpers.search_file(function(args)
+            local current_view = log_view.get_log_view_current()
+            local revset = (args.file and current_view and (current_view.revset or "::")) or ("::" .. api.get_change_id(args.src_change))
+            local description = (args.file and vim.fs.basename(args.file.filename)) or ("::" .. args.src_change.id_short)
+            view = {
+              id = args.file and args.file.filename or args.src_change.id,
+              revset = revset,
+              paths = args.file and { args.file.filename },
+              description = description,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end, { err_continue = true }))(_args)
+        elseif lopts.with_action == 2 ^ 2 then
+          return helpers.with_bookmarks_or_tags(
+            --- @param args WithArgs
+            helpers.with_bookmark_or_tag(function(args)
+              local revset = "::" .. (lopts.tags and args.tag or args.bookmark)
+              view = {
+                id = revset,
+                revset = revset,
+              }
+              log_view.add_dynamic_view(view)
+              return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+            end, { tags = lopts.tags }),
+            { tags = lopts.tags }
+          )(_args)
+        elseif lopts.with_action == 2 ^ 1 then
+          local current_view
+          if vim.v.count > 0 then
+            current_view = log_view.get_log_view(vim.v.count)
+          else
+            current_view = log_view.get_log_view_current()
+          end
+          if not current_view or not current_view.id or not log_view.remove_dynamic_view(current_view) then
+            return vim.notify("View isn't a dynamic and can't be removed", vim.log.levels.WARN)
+          end
+          if vim.v.count > 0 then
+            view = log_view.get_log_view_current()
+          end
+          if not view then
+            view = log_view.get_log_view_previous()
+          end
+          if not view then
+            view = log_view.get_log_view(1)
+          end
+          if not view then
+            return vim.notify("Previous view does not exist", vim.log.levels.WARN)
+          end
+        else
+          local view_nr
+          if vim.v.count > 0 then
+            view_nr = vim.v.count
+            view = log_view.get_log_view(view_nr)
+            if not view then
+              return vim.notify("View " .. view_nr .. " does not exist", vim.log.levels.WARN)
+            end
+          else
+            -- switch to previous view
+            view = log_view.get_log_view_previous()
+            if not view then
+              return vim.notify("Previous view does not exist, yet", vim.log.levels.WARN)
+            end
+          end
+        end
+        if view then
+          return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+        end
+      end
+    end
+    return with_view(
+      --- @param args WithArgs
+      --- @return boolean
+      function(args)
+        if args.view then
+          log_view.set_log_view(args.view)
+          local log_dirty_check = require("jiejie.log_dirty_check")
+          log_dirty_check.dirty_mark_content(args.ctx.buf)
+          log_dirty_check.do_dirty_check()
+        end
+        return true
+      end
+    )
+  end,
+
   --- @param opts {rebase?: number, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean, tags?: boolean}
   --- - tags: List tags instead of bookmarks
   --- - rebase: 1 (default): revision, 2: with descendants, 4: branch
@@ -358,6 +467,7 @@ local fns = {
       --- @return boolean
       function(args)
         local src_change = api.construct_dummy_change("@")
+        ---@diagnostic disable-next-line: param-type-mismatch tag or bookmark are always set
         local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag or args.bookmark) or args.dst_change
         if lopts.with_change == 2 ^ 2 then
           dst_change.immutable = false
@@ -1258,19 +1368,34 @@ M.nmaps = {
     desc = "Close the preview window",
   },
   {
+    key = "sf",
+    fn = fns.s({ with_action = 2 ^ 3 }),
+    desc = "Add dynamic view that filters for the chander or file path under the cursor",
+  },
+  {
+    key = "sb",
+    fn = fns.s({ with_action = 2 ^ 2 }),
+    desc = "Add dynamic view that filters for the selected bookmark",
+  },
+  {
+    key = "sq",
+    fn = fns.s({ with_action = 2 ^ 1 }),
+    desc = "Close dynamic view",
+  },
+  {
+    key = "sr",
+    fn = fns.s({ with_action = 2 ^ 4 }),
+    desc = "Add dynamic view that filters for a revset provided by the user",
+  },
+  {
     key = "ss",
-    fn = function(args)
-      local view_id = vim.v.count1
-      if log_view.LOG_VIEWS[view_id] then
-        log_view.set_log_view(log_view.LOG_VIEWS[view_id])
-        local log_dirty_check = require("jiejie.log_dirty_check")
-        log_dirty_check.dirty_mark_content(args.ctx.buf)
-        log_dirty_check.do_dirty_check()
-      else
-        vim.notify("View " .. view_id .. " does not exist", vim.log.levels.WARN)
-      end
-    end,
-    desc = "Set log view",
+    fn = fns.s({ with_action = 2 ^ 0 }),
+    desc = "Set log view or switch to the previous view, if no count is given",
+  },
+  {
+    key = "st",
+    fn = fns.s({ with_action = 2 ^ 2, tags = true }),
+    desc = "Add dynamic view that filters for the selected tag",
   },
   {
     key = "q",

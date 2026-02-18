@@ -40,15 +40,16 @@
 - [x] Fix: squash currently doesn't work for commits with multiple ancestors
 - [x] Commands: new with multiple ancestors, `ci`, `ca`
 - [x] Commands: merge `cm`
+- [x] Log: use count to select operation log view, e.g. 3gv instead of g3
+- [x] Log: support dynamic views
 
 ## Priority 1
 
-- [ ] Log: use count to select operation log view, e.g. 3gv instead of g3
+- [ ] Configuration: make default view and number of entries configurable
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
 
 ## Priority 2
 
-- [ ] Configuration: make default view and number of entries configurable
 - [ ] Statusline: provide status line integration, e.g. file name, diff id,
       change id
 - [ ] Commands: blame / file annotate
@@ -71,7 +72,7 @@
 ## Priority 3
 
 - [ ] Commands: support pushing / pulling from different origins
-- [ ]
+- [ ] Show conflicts in file names, see https://github.com/jj-vcs/jj/issues/1111
 - [ ] Key: pressing `X` on a hunk should restore it - not natively supported by
       jj
 - [ ] Commands: keep open diffs open when reloading the log

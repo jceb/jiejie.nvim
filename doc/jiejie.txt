@@ -390,8 +390,29 @@ Miscellaneous maps ~
 .                       Start a |:| command line with the file under the
                         cursor prepopulated.
 
+                                                                     *jiejie_sb*
+sb                      Add dynamic view that filters for the selected
+                        bookmark.
+
+                                                                     *jiejie_sf*
+sf                      Add dynamic view that filters for the change or file
+                        name under the cursor. For a file name, it takes into
+                        account the revset of the current view and applies it
+                        to the filtered view.
+
+                                                                     *jiejie_sr*
+sr                      Add dynamic view that filters for a revset provided by
+                        the user.
+
+                                                                     *jiejie_sq*
+[count]sq               Close dynamic view.
+
                                                                      *jiejie_ss*
-[count]ss               Set log view.
+[count]ss               Set log view or switch to the previous view, if no
+                        count is given.
+
+                                                                     *jiejie_st*
+st                      Add dynamic view that filters for the selected tag.
 
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.

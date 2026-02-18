@@ -40,7 +40,8 @@ easily, these rules might prove helpful:
   - Show help (`g?`, `c?`, `d?`, `r?`)
 - Log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
-  - Set log to different views (`1ss`, `2ss`, `...`)
+  - Set log to different views (`sb`, `sf`, `sr`, `sq`, `ss`, `1ss`, `..ss`,
+    `st`)
   - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
   - Close buffer (`q`, `gq`)

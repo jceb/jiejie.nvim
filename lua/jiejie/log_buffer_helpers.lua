@@ -20,6 +20,7 @@ local M = {}
 --- @field tag? string Tag
 --- @field tags? BookmarkTag[] Selection of tags to choose from - opts.tags must be set for tags to be used
 --- @field force? boolean Sets force
+--- @field view? LogView Log view
 
 --- @class WithOpts
 --- @field err_notify? boolean Send notification is change is not found

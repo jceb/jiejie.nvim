@@ -369,7 +369,6 @@ function M.change_new(ctx, opts)
       table.insert(args, M.get_change_id(change))
     end
   end
-  print("args", vim.inspect(args))
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.ignore_immtuable(args, { force = lopts.force }),
     on_exit = M.reload_or_error(ctx, table.concat(vim.list_extend({ cmd }, args), " "), lopts),

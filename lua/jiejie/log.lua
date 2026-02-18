@@ -18,22 +18,27 @@ M.load = function(ctx, callback)
   local log_diff = require("jiejie.log_diff")
   log_diff.setup_buffer(ctx) -- clear diffs as a workaround until reloading of diffs is implemented
   local cmd = "log"
-  local current_log_view = log_view.get_log_view()
+  local current_log_view = log_view.get_log_view_current()
+  assert(current_log_view, "Current log view is undefined")
   local idx = 1
-  local sepaator = "·"
-  local header_log_view = table.concat(
-    vim.iter(log_view.LOG_VIEWS):fold({}, function(acc, v)
-      local view = idx .. sepaator .. (v.description or v.fileset)
-      if v.fileset == current_log_view.fileset then
-        table.insert(acc, "†" .. view .. "‡")
-      else
-        table.insert(acc, view)
-      end
-      idx = idx + 1
-      return acc
-    end),
-    " "
-  )
+  local build_log_view = function(views)
+    local sepaator = "·"
+    return table.concat(
+      vim.iter(views):fold({}, function(acc, v)
+        local view = idx .. sepaator .. (v.description or v.revset)
+        if v.id == current_log_view.id and v.revset == current_log_view.revset then
+          table.insert(acc, "†" .. view .. "‡")
+        else
+          table.insert(acc, view)
+        end
+        idx = idx + 1
+        return acc
+      end),
+      " "
+    )
+  end
+  local header_log_view = build_log_view(log_view.LOG_VIEWS)
+  local header_log_view_dynamic = build_log_view(log_view.LOG_VIEWS_DYNAMIC)
   local args = {
     "-n",
     tostring(ctx.log_revisions or 10), -- TODO: make default number of revisions configurable
@@ -41,8 +46,9 @@ M.load = function(ctx, callback)
     "-T",
     M.template,
     "-r",
-    current_log_view.fileset,
+    current_log_view.revset,
   }
+  args = vim.list_extend(args, current_log_view.paths or {})
   jujutsu.cli(ctx, cmd, {
     args = args,
     on_exit = vim.schedule_wrap(function(res)
@@ -55,6 +61,9 @@ M.load = function(ctx, callback)
         buffer.create_header("Reload", "R"),
         buffer.create_header("View", "Xss " .. header_log_view),
       }
+      if header_log_view_dynamic ~= "" then
+        table.insert(headers, "Dynamic View: Xss " .. header_log_view_dynamic)
+      end
       local cmd_op = "op"
       local oplog = jujutsu.cli(ctx, cmd_op, {
         args = { "log", "-n", "1", "--no-graph", "-T", 'id.short(4) ++ " " ++ user ++ " " ++ description' },
