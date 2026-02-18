@@ -30,12 +30,12 @@ easily, these rules might prove helpful:
 
 - UX very close to [tope's vim-fugitive](https://github.com/tpope/vim-fugitive)
   - Edit file (`<CR>`, `o`, `gO`, `O`)
-  - Open revision of a file (`:Jedit [revision]:[file]`, or by selecting the
-    file in the log summary via `<CR>`, `o`, `gO`, `O`)
-  - Open change (`:Jedit [revision]`, `K`)
+  - Edit file at a certain revision (`:Jedit [revision]:[file]`, or by selecting
+    the file in the log summary window via `<CR>`, `o`, `gO`, `O`)
+  - Open change (`K`)
   - Toggle inline diff (`=`)
-  - Edit diff (`:Jdiffsplit [revision]`, `dD`, `dd`, `dV`, `dv`, `dS`, `ds`,
-    `dH`, `dh`, `dq`, `d?`)
+  - Compare multiple versions of a file (`:Jdiffsplit [revision]`, `dD`, `dd`,
+    `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`, `d?`)
   - Wraper for `jj` CLI (`:J` or `:Jj`)
   - Show help (`g?`, `c?`, `d?`, `r?`)
 - Log buffer (`:J` or `:Jj`)
