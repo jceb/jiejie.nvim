@@ -846,7 +846,7 @@ M.nmaps = {
     key = "cA",
     fn = fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
     with_force = true,
-    desc = "Create a new change after the change under the cursor and before all its children",
+    desc = "No-edit append a new change after the change under the cursor and before all its children",
   },
   {
     key = "A",
@@ -858,7 +858,7 @@ M.nmaps = {
     key = "ca",
     fn = fns.cn({ with_action = 2 ^ 1 }),
     with_force = true,
-    desc = "Create a new change after the change under the cursor and before all its children",
+    desc = "No-edit append a new change after the change under the cursor and before all its children",
   },
   {
     key = "a",
@@ -870,7 +870,7 @@ M.nmaps = {
     key = "cI",
     fn = fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
     with_force = true,
-    desc = "Create a new change inbetween the change under the cursor all its ancestors",
+    desc = "Non-edit insert a new change inbetween the change under the cursor all its ancestors",
   },
   {
     key = "I",
@@ -882,7 +882,7 @@ M.nmaps = {
     key = "ci",
     fn = fns.cn({ with_action = 2 ^ 2 }),
     with_force = true,
-    desc = "Create a new change inbetween the change under the cursor all its ancestors",
+    desc = "Insert a new change inbetween the change under the cursor all its ancestors",
   },
   {
     key = "i",

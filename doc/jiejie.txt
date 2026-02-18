@@ -194,7 +194,7 @@ cc                      Commit currently edited change and create a new
 [!]A
 
                                        *jiejie_a* *jiejie_!a* *jiejie_ca* *jiejie_!ca*
-[!]ca                   Create a new change after the change under the cursor
+[!]ca                   Append a new change after the change under the cursor
 [!]a                    and before all its children. With <bang>, ignore
                         immutability settings.
 
@@ -203,7 +203,7 @@ cc                      Commit currently edited change and create a new
 [!]I
 
                                        *jiejie_i* *jiejie_!i* *jiejie_ci* *jiejie_!ci*
-[!]ci                   Create a new change inbetween the change under the
+[!]ci                   Insert a new change inbetween the change under the
 [!]i                    cursor all its ancestors. With <bang>, ignore
                         immutability settings.
 
