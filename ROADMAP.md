@@ -47,6 +47,8 @@
 
 - [ ] Configuration: make default view and number of entries configurable
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
+- [ ] Log: Add support for shifting / reordering commits back and forth (rebase)
+      `<<`, `>>`,
 
 ## Priority 2
 
@@ -62,15 +64,26 @@
 - [ ] Refactor: make jiejie URLs truly unique so that the index and file paths
       can be distinguished
 - [ ] Commands: absorb
+- [ ] Log: `!!` should work like `.` with a leading `!` - fnameescape the
+      filename
 - [ ] Commands: parallelize
 - [ ] Docs: make video that show how to use jiejie - which-key for help with key
       bindings
 - [ ] Refactor: remove notification from api.lua into log_buffer_mappings
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
+- [ ] Feature: add support for handling PRs
+- [ ] Log: improve cursor positioning by computing an expected new position
+- [ ] Commands: prev and next `<p`, `>n`
+- [ ] Commands: granular squash via a terminal and the interactive jj UI
+- [ ] Commands: split via a terminal and the interactive jj UI (current
+      workaround: commit one file instead of the whole change, then squash the
+      other files that should be part of the commit)
 
 ## Priority 3
 
+- [ ] Commands: something like `Jj toggle` to toggle the visibility of the log
+      status window
 - [ ] Commands: support pushing / pulling from different origins
 - [ ] Show conflicts in file names, see https://github.com/jj-vcs/jj/issues/1111
 - [ ] Key: pressing `X` on a hunk should restore it - not natively supported by
@@ -78,8 +91,6 @@
 - [ ] Commands: keep open diffs open when reloading the log
 - [ ] Commands: add verbose mode for displaying the executed `jj` commands
 - [ ] Commands: Jedit directories
-- [ ] Commands: split (current workaround: commit one file instead of the whole
-      change, then squash the other files that should be part of the commit)
 - [ ] Refactor: follow lua's style of returning errors
 - [ ] Commands: interdiff
 - [ ] New Feature: completion for Jj command
