@@ -65,7 +65,7 @@ function M.Jdiffsplit(args)
   end
   table.insert(files, { path = src.path, M.construct_dummy_change(src.change_id or "@") })
   local ctx = context.get_context(src.root)
-  assert(ctx, "Working directory does not belong to a Jujutsu repository. File: " .. object.filename)
+  assert(ctx, "Working directory does not belong to a Jujutsu repository. File: " .. src.filename)
   if #args.fargs > 0 then
     local dst_object = parsers.parse_object(args.fargs[1]) or {}
     if vim.startswith(dst_object.change_id, "@") then
