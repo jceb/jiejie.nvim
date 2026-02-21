@@ -1371,11 +1371,13 @@ M.nmaps = {
     desc = "Push changes to remote",
   },
 
-  -- Miscellaneous maps {{{1
+  -- Status log filter maps {{{1
   {
-    key = "gq",
-    fn = fns.q({ close_current_window = false }),
-    desc = "Close the preview window",
+    key = "s?",
+    fn = function()
+      api.show_help("s")
+    end,
+    desc = "Show help for status log filter maps",
   },
   {
     key = "sf",
@@ -1406,6 +1408,13 @@ M.nmaps = {
     key = "st",
     fn = fns.s({ with_action = 2 ^ 2, tags = true }),
     desc = "Add dynamic view that filters for the selected tag",
+  },
+
+  -- Miscellaneous maps {{{1
+  {
+    key = "gq",
+    fn = fns.q({ close_current_window = false }),
+    desc = "Close the preview window",
   },
   {
     key = "q",

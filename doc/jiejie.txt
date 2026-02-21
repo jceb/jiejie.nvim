@@ -365,13 +365,13 @@ r<space>                Populate command line with `:Jj rebase `.
                                                         *jiejie_rtO* *jiejie_!rtO*
                                                         *jiejie_rto* *jiejie_!rto*
 [!]rtO                  Rebase only the current change `@` on any tag, without
-[!]rt0                  its descendants. With <bang>, ignore immutability
+[!]rto                  its descendants. With <bang>, ignore immutability
                         settings.
 
                                                         *jiejie_rtT* *jiejie_!rtT*
-                                                        *jiejie_rtT* *jiejie_!rtT*
+                                                        *jiejie_rtt* *jiejie_!rtt*
 [!]rtT                  Rebase the current change `@` on any one tag, together
-[!]rtT                  with its branch. With <bang>, ignore immutability
+[!]rtt                  with its branch. With <bang>, ignore immutability
                         settings.
 
                                                                       *jiejie_g*
@@ -383,16 +383,11 @@ gu                      Fetch changes from git remote.
                                                                      *jiejie_gp*
 gp                      Push changes to git remote.
 
-                                                              *jiejie-misc-maps*
-Miscellaneous maps ~
+                                                                      *jiejie-s*
+Status log filter maps ~
 
-                                                                     *jiejie_!!*
-!!                      Start a |!:| command line with the file under the
-                        cursor prepopulated.
-
-                                                                      *jiejie_.*
-.                       Start a |:| command line with the file under the
-                        cursor prepopulated.
+                                                                     *jiejie_s?*
+s?                      Show help for status log filter maps.
 
                                                                      *jiejie_sb*
 sb                      Add dynamic view that filters for the selected
@@ -417,6 +412,17 @@ sr                      Add dynamic view that filters for a revset provided by
 
                                                                      *jiejie_st*
 st                      Add dynamic view that filters for the selected tag.
+
+                                                              *jiejie-misc-maps*
+Miscellaneous maps ~
+
+                                                                     *jiejie_!!*
+!!                      Start a |!:| command line with the file under the
+                        cursor prepopulated.
+
+                                                                      *jiejie_.*
+.                       Start a |:| command line with the file under the
+                        cursor prepopulated.
 
                                                                      *jiejie_g?*
 g?                      Show help for |jiejie-maps|.

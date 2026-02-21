@@ -43,10 +43,10 @@
 - [x] Log: use count to select operation log view, e.g. 3gv instead of g3
 - [x] Log: support dynamic views
 - [x] Log: `!!` should work like `.` with a leading `!`
+- [x] Move view filters into a custom section in the docs
 
 ## Priority 1
 
-- [ ] Move view filters into a custom section in the docs
 - [ ] Configuration: make default view and number of entries configurable
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
 - [ ] Log: Add support for shifting / reordering commits back and forth (rebase)
