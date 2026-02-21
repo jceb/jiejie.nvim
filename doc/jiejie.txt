@@ -386,6 +386,10 @@ gp                      Push changes to git remote.
                                                               *jiejie-misc-maps*
 Miscellaneous maps ~
 
+                                                                     *jiejie_!!*
+!!                      Start a |!:| command line with the file under the
+                        cursor prepopulated.
+
                                                                       *jiejie_.*
 .                       Start a |:| command line with the file under the
                         cursor prepopulated.

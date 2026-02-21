@@ -42,9 +42,11 @@
 - [x] Commands: merge `cm`
 - [x] Log: use count to select operation log view, e.g. 3gv instead of g3
 - [x] Log: support dynamic views
+- [x] Log: `!!` should work like `.` with a leading `!`
 
 ## Priority 1
 
+- [ ] Move view filters into a custom section in the docs
 - [ ] Configuration: make default view and number of entries configurable
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
 - [ ] Log: Add support for shifting / reordering commits back and forth (rebase)
@@ -64,8 +66,6 @@
 - [ ] Refactor: make jiejie URLs truly unique so that the index and file paths
       can be distinguished
 - [ ] Commands: absorb
-- [ ] Log: `!!` should work like `.` with a leading `!` - fnameescape the
-      filename
 - [ ] Commands: parallelize
 - [ ] Docs: make video that show how to use jiejie - which-key for help with key
       bindings

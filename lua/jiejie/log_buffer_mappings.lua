@@ -7,6 +7,16 @@ local log_view = require("jiejie.log_view")
 --- @type table<string, fun(opts?: {}): fun()>
 local fns = {
   --
+  --- @param opts {bang?: boolean}
+  --- - bang: Execute a shell command instead of a vim command
+  ["."] = function(opts)
+    return helpers.search_file(function(args)
+      local lopts = opts or {}
+      local home = vim.api.nvim_replace_termcodes("<Home>" .. (lopts.bang and "<Right>" or ""), true, false, true)
+      vim.api.nvim_feedkeys(":" .. (lopts.bang and "!" or "") .. " ./" .. vim.fn.fnameescape(args.file.filename) .. home, "n", false)
+      return true
+    end)
+  end,
 
   --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename
@@ -1404,12 +1414,13 @@ M.nmaps = {
   },
   {
     key = ".",
-    fn = helpers.search_file(function(args)
-      local home = vim.api.nvim_replace_termcodes("<Home>", true, false, true)
-      vim.api.nvim_feedkeys(": ./" .. vim.fn.fnameescape(args.file.filename) .. home, "n", false)
-      return true
-    end),
+    fn = fns["."](),
     desc = "Start a : command line with the file under the cursor prepopulated",
+  },
+  {
+    key = "!!",
+    fn = fns["."]({ bang = true }),
+    desc = "Start a :! command line with the file under the cursor prepopulated",
   },
   {
     key = "g?",

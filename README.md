@@ -45,7 +45,7 @@ easily, these rules might prove helpful:
   - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
   - Close buffer (`q`, `gq`)
-  - Populate a `:` command with the file under the cursor (`.`)
+  - Populate a `:` or `:!`command with the file under the cursor (`.`, `!!`)
 - Modify commits from the log buffer
   - Add `!` prefix to mappings for modification of immutable changes
   - Edit change (`<CR>`)
