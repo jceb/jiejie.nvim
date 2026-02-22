@@ -410,7 +410,7 @@ local fns = {
   end,
 
   --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean}
-  --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset
+  --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset, 32: description, 64: author, 128: manual input author
   --- - tags Handle tags instead of bookmarks
   --- - args: Additional arguments
   s = function(opts)
@@ -419,8 +419,47 @@ local fns = {
       --- @param _args WithArgs
       return function(_args)
         local largs = _args or {}
+        --- @type LogView?
         local view
-        if lopts.with_action == 2 ^ 4 then
+        local current_view = log_view.get_log_view_current()
+        if not current_view then
+          error("Unable to determine current view")
+        end
+        if lopts.with_action == 2 ^ 7 then
+          return vim.ui.input({ prompt = "Enter author: " }, function(author)
+            if not author or author == "" then
+              return
+            end
+            local author_escaped = vim.fn.escape(author, '"')
+            view = {
+              id = "author-" .. author,
+              revset = current_view.revset .. ' & (author(glob:"*' .. author_escaped .. '*") | committer(glob:"*' .. author_escaped .. '*"))',
+              description = author,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end)
+        elseif lopts.with_action == 2 ^ 6 then
+          view = {
+            id = largs.src_change.email,
+            revset = current_view.revset .. ' & (author_email("' .. largs.src_change.email .. '") | committer_email("' .. largs.src_change.email .. '"))',
+            description = largs.src_change.email,
+          }
+        elseif lopts.with_action == 2 ^ 5 then
+          return vim.ui.input({ prompt = "Enter description: " }, function(description)
+            if not description or description == "" then
+              return
+            end
+            local description_escaped = vim.fn.escape(description, '"')
+            view = {
+              id = "desc-" .. description,
+              revset = current_view.revset .. ' & description(glob:"*' .. description_escaped .. '*")',
+              description = description,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end)
+        elseif lopts.with_action == 2 ^ 4 then
           return vim.ui.input({ prompt = "Enter revset: " }, function(revset)
             if not revset or revset == "" then
               return
@@ -434,7 +473,6 @@ local fns = {
           end)
         elseif lopts.with_action == 2 ^ 3 then
           return helpers.search_change(helpers.search_file(function(args)
-            local current_view = log_view.get_log_view_current()
             local revset = (args.file and current_view and (current_view.revset or "::")) or ("::" .. api.get_change_id(args.src_change))
             local description = (args.file and vim.fs.basename(args.file.filename)) or ("::" .. args.src_change.id_short)
             view = {
@@ -461,11 +499,8 @@ local fns = {
             { tags = lopts.tags }
           )(_args)
         elseif lopts.with_action == 2 ^ 1 then
-          local current_view
           if vim.v.count > 0 then
             current_view = log_view.get_log_view(vim.v.count)
-          else
-            current_view = log_view.get_log_view_current()
           end
           if not current_view or not current_view.id or not log_view.remove_dynamic_view(current_view) then
             return vim.notify("View isn't a dynamic and can't be removed", vim.log.levels.WARN)
@@ -1464,14 +1499,34 @@ M.nmaps = {
     desc = "Show help for status log filter maps",
   },
   {
-    key = "sf",
-    fn = fns.s({ with_action = 2 ^ 3 }),
-    desc = "Add dynamic view that filters for the chander or file path under the cursor",
+    key = "sa",
+    fn = helpers.search_change(fns.s({ with_action = 2 ^ 6 })),
+    desc = "Add dynamic view that filters changes for the author of the change under the cursor",
+  },
+  {
+    key = "sA",
+    fn = fns.s({ with_action = 2 ^ 7 }),
+    desc = "Add dynamic view that filters changes for the author of the change under the cursor",
   },
   {
     key = "sb",
     fn = fns.s({ with_action = 2 ^ 2 }),
-    desc = "Add dynamic view that filters for the selected bookmark",
+    desc = "Add dynamic view that displays all changes that belong to the selected bookmark",
+  },
+  {
+    key = "sD",
+    fn = fns.s({ with_action = 2 ^ 5 }),
+    desc = "Add dynamic view that filters changes for a description",
+  },
+  {
+    key = "sd",
+    fn = fns.s({ with_action = 2 ^ 5 }),
+    desc = "Alias of sD",
+  },
+  {
+    key = "sf",
+    fn = fns.s({ with_action = 2 ^ 3 }),
+    desc = "Add dynamic view that lists changes for that belong to the change or modify the file name under the cursor",
   },
   {
     key = "sq",
@@ -1491,7 +1546,7 @@ M.nmaps = {
   {
     key = "st",
     fn = fns.s({ with_action = 2 ^ 2, tags = true }),
-    desc = "Add dynamic view that filters for the selected tag",
+    desc = "Add dynamic view that displays all changes that belong to the selected tag",
   },
 
   -- Miscellaneous maps {{{1

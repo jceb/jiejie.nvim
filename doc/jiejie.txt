@@ -401,15 +401,26 @@ Status log filter maps ~
                                                                      *jiejie_s?*
 s?                      Show help for status log filter maps.
 
+                                                                     *jiejie_sa*
+sa                      Add dynamic view that filters changes for the author
+                        of the change under the cursor. The revset of the
+                        current view is taken into account and applied it to
+                        the filtered view.
+
                                                                      *jiejie_sb*
-sb                      Add dynamic view that filters for the selected
-                        bookmark.
+sb                      Add dynamic view that displays all changes that belong
+                        to the selected bookmark.
+
+                                                                     *jiejie_sd*
+sd                      Add dynamic view that filters changes for a
+                        description. The revset of the current view is taken
+                        into account and applied it to the filtered view.
 
                                                                      *jiejie_sf*
-sf                      Add dynamic view that filters for the change or file
-                        name under the cursor. For a file name, it takes into
-                        account the revset of the current view and applies it
-                        to the filtered view.
+sf                      Add dynamic view that lists changes for that belong to
+                        the change or modify the file name under the cursor.
+                        For a file name, it takes into account the revset of
+                        the current view and applies it to the filtered view.
 
                                                                      *jiejie_sr*
 sr                      Add dynamic view that filters for a revset provided by
@@ -423,7 +434,8 @@ sr                      Add dynamic view that filters for a revset provided by
                         count is given.
 
                                                                      *jiejie_st*
-st                      Add dynamic view that filters for the selected tag.
+st                      Add dynamic view that displays all changes that belong
+                        to the selected tag.
 
                                                               *jiejie-misc-maps*
 Miscellaneous maps ~

@@ -46,6 +46,7 @@
 - [x] Move view filters into a custom section in the docs
 - [x] Log: Add support for shifting / reordering commits back and forth (rebase)
       `<<`, `>>`,
+- [x] Log: add more status filters for authors and descriptions
 
 ## Priority 1
 
@@ -75,7 +76,8 @@
 - [ ] Feature: add support for handling PRs
 - [ ] Feature: add support for hiding certain branches from the log view, e.g.
       renovate
-- [ ] Log: improve cursor positioning by computing an expected new position
+- [ ] Log: improve cursor positioning by computing an expected new position,
+      e.g. via `search()`
 - [ ] Commands: prev and next `<p`, `>n`
 - [ ] Commands: granular squash via a terminal and the interactive jj UI
 - [ ] Commands: split via a terminal and the interactive jj UI (current
