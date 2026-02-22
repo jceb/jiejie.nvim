@@ -401,6 +401,10 @@ Status log filter maps ~
                                                                      *jiejie_s?*
 s?                      Show help for status log filter maps.
 
+                                                                     *jiejie_sA*
+sA                      Add dynamic view that filters for an author provided
+                        by the user.
+
                                                                      *jiejie_sa*
 sa                      Add dynamic view that filters changes for the author
                         of the change under the cursor. The revset of the
@@ -412,8 +416,8 @@ sb                      Add dynamic view that displays all changes that belong
                         to the selected bookmark.
 
                                                                      *jiejie_sd*
-sd                      Add dynamic view that filters changes for a
-                        description. The revset of the current view is taken
+sD                      Add dynamic view that filters changes for a
+sd                      description. The revset of the current view is taken
                         into account and applied it to the filtered view.
 
                                                                      *jiejie_sf*

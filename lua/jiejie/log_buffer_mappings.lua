@@ -440,11 +440,13 @@ local fns = {
             return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
           end)
         elseif lopts.with_action == 2 ^ 6 then
+          local email = vim.trim(largs.src_change.email)
           view = {
-            id = largs.src_change.email,
-            revset = current_view.revset .. ' & (author_email("' .. largs.src_change.email .. '") | committer_email("' .. largs.src_change.email .. '"))',
-            description = largs.src_change.email,
+            id = email,
+            revset = current_view.revset .. ' & (author_email("' .. email .. '") | committer_email("' .. email .. '"))',
+            description = email,
           }
+          log_view.add_dynamic_view(view)
         elseif lopts.with_action == 2 ^ 5 then
           return vim.ui.input({ prompt = "Enter description: " }, function(description)
             if not description or description == "" then
@@ -1499,13 +1501,13 @@ M.nmaps = {
     desc = "Show help for status log filter maps",
   },
   {
-    key = "sa",
-    fn = helpers.search_change(fns.s({ with_action = 2 ^ 6 })),
+    key = "sA",
+    fn = fns.s({ with_action = 2 ^ 7 }),
     desc = "Add dynamic view that filters changes for the author of the change under the cursor",
   },
   {
-    key = "sA",
-    fn = fns.s({ with_action = 2 ^ 7 }),
+    key = "sa",
+    fn = helpers.search_change(fns.s({ with_action = 2 ^ 6 })),
     desc = "Add dynamic view that filters changes for the author of the change under the cursor",
   },
   {
