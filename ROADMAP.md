@@ -50,42 +50,42 @@
 
 ## Priority 1
 
-- [ ] Configuration: make default view and number of entries configurable
-- [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
+- [ ] New feature: operations log support
 
 ## Priority 2
 
-- [ ] Statusline: provide status line integration, e.g. file name, diff id,
-      change id
-- [ ] Commands: blame / file annotate
-- [ ] Bug: make log reload when `!` commands are executed
-- [ ] Log: navigation should open folds
-- [ ] Commands: evolog
-- [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
-      the quickfix/location list see issue #1
-- [ ] New feature: operations log support
-- [ ] Refactor: make jiejie URLs truly unique so that the index and file paths
-      can be distinguished
-- [ ] Commands: absorb
-- [ ] Commands: parallelize
-- [ ] Docs: make video that show how to use jiejie - which-key for help with key
-      bindings
-- [ ] Refactor: remove notification from api.lua into log_buffer_mappings
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
-- [ ] Feature: add support for handling PRs
-- [ ] Feature: add support for hiding certain branches from the log view, e.g.
-      renovate
+- [ ] Configuration: make default view and number of entries configurable
+- [ ] Bug: make log reload when `!` commands are executed
+- [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
+      the quickfix/location list see issue #1
+- [ ] Commands: evolog
+- [ ] Navigation: implement `(, ), [c, ]c, [], ][ and [m, ]m`
 - [ ] Log: improve cursor positioning by computing an expected new position,
       e.g. via `search()`
-- [ ] Commands: prev and next `<p`, `>n`
+
+## Priority 3
+
 - [ ] Commands: granular squash via a terminal and the interactive jj UI
 - [ ] Commands: split via a terminal and the interactive jj UI (current
       workaround: commit one file instead of the whole change, then squash the
       other files that should be part of the commit)
-
-## Priority 3
-
+- [ ] Feature: add support for handling PRs
+- [ ] Statusline: provide status line integration, e.g. file name, diff id,
+      change id
+- [ ] Commands: blame / file annotate
+- [ ] Refactor: make jiejie URLs truly unique so that the index and file paths
+      can be distinguished
+- [ ] Refactor: remove notification from api.lua into log_buffer_mappings
+- [ ] Commands: absorb
+- [ ] Commands: parallelize
+- [ ] Docs: make video that show how to use jiejie - which-key for help with key
+      bindings
+- [ ] Feature: add support for hiding certain branches from the log view, e.g.
+      renovate/
+- [ ] Commands: prev and next `<p`, `>n`
+- [ ] Log: navigation should open folds
 - [ ] Commands: something like `Jj toggle` to toggle the visibility of the log
       status window
 - [ ] Commands: support pushing / pulling from different origins
