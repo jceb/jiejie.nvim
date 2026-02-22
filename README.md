@@ -32,30 +32,32 @@ easily, these rules might prove helpful:
   - Edit file (`<CR>`, `o`, `gO`, `O`)
   - Edit file at a certain revision (`:Jedit [revision]:[file]`, or by selecting
     the file in the log summary window via `<CR>`, `o`, `gO`, `O`)
-  - Open change (`K`)
+  - Open full change in preview window (`K`)
   - Toggle inline diff (`=`)
   - Compare multiple versions of a file (`d?`, `:Jdiffsplit [revision]`, `dD`,
     `dd`, `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`)
   - Wraper for `jj` CLI (`:J` or `:Jj`)
   - Show help (`g?`, `c?`, `d?`, `r?`, `s?`)
-- Log buffer (`:J` or `:Jj`)
+- Status log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
-  - Set status log view (`s?`, `sA`, `sa`, `sb`, `sd`, `sf`, `sr`, `sq`, `ss`,
-    `1ss`, `..ss`, `st`)
+  - Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sb`, `sd`, `sf`,
+    `sr`, `sq`, `ss`, `1ss`, `..ss`, `st`)
   - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
-  - Close buffer (`q`, `gq`)
-  - Populate a `:` or `:!`command with the file under the cursor (`.`, `!!`)
+  - Close log buffer (`q`, `gq`)
+  - Populate a `:` or `:!` command with the file under the cursor (`.`, `!!`)
 - Modify commits from the log buffer
-  - Add `!` prefix to mappings for modification of immutable changes
+  - Add `!` prefix to mappings when modifying immutable changes
   - Edit change (`<CR>`)
   - Pull and push changes to git (`gu`, `gp`)
-  - Modify change description in editor (`ce`) or quick edit the first line
-    (`cd`) or copy commit information (`yy`, `yc`, `yC`)
+  - Modify change description in an editor window (`ce`) or quick edit the first
+    line (`cd`)
+  - Copy change description of change / commit ID (`yy`, `yc`, `yC`)
   - Create a new change (`c?`, `A`, `a`, `cA`, `ca`, `cI`, `ci`, `i`, `I`, `cn`)
-  - Create a merge (`cB`, `cm`, `cM`)
+  - Create a merge commit (`cB`, `cm`, `cM`)
   - Commit change or file under the cursor (`cc`)
-  - Squash change or file into parent or into change under cursor (`cs`, `cS`)
+  - Squash change or file into parent or into the change under the cursor (`cs`,
+    `cS`)
   - Duplicate / cherry-pick change under the cursor (`cpP`, `cpp`, `cpM`, `cpm`,
     `cpT`, `cpt`)
   - Revert change under the cursor (`cR`)
