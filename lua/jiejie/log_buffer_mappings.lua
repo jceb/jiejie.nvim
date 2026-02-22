@@ -7,6 +7,7 @@ local log_view = require("jiejie.log_view")
 --- @type table<string, fun(opts?: {}): fun()>
 local fns = {
   --
+
   --- @param opts {bang?: boolean}
   --- - bang: Execute a shell command instead of a vim command
   ["."] = function(opts)
@@ -16,6 +17,77 @@ local fns = {
       vim.api.nvim_feedkeys(":" .. (lopts.bang and "!" or "") .. " ./" .. vim.fn.fnameescape(args.file.filename) .. home, "n", false)
       return true
     end)
+  end,
+
+  --- @param opts {backwards?: boolean}
+  --- - backwards: Shift backwards
+  [">"] = function(opts)
+    return helpers.search_change(function(args)
+      local lopts = opts or {}
+      local src_change
+      local dst_change
+      local action = function(_dst_change)
+        if _dst_change.current_working_copy then
+          vim.notify(
+            "The working copy change " .. api.get_change_id(_dst_change, true) .. " is already in the position you asked to move it to",
+            vim.log.levels.WARN
+          )
+          return
+        end
+        local _args = {
+          "-r",
+          ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
+          api.get_change_id(src_change),
+          lopts.backwards and "-B" or "-A",
+          api.get_change_id(_dst_change),
+        }
+        local dst_adjacent_changes = api.get_adjacent_changes(args.ctx, _dst_change, { children = not lopts.backwards })
+        for _, c in ipairs(dst_adjacent_changes) do
+          vim.list_extend(_args, {
+            lopts.backwards and "-A" or "-B",
+            api.get_change_id(c),
+          })
+        end
+        api.cli(args.ctx, "rebase", {
+          args = jujutsu.ignore_immtuable(_args, { force = args.force }),
+          on_exit = function()
+            ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
+            local src_id = api.get_change_id(src_change, true)
+            local dst_id = api.get_change_id(_dst_change, true)
+            vim.notify("Shifted change " .. src_id .. " " .. (lopts.backwards and "before" or "after") .. " change " .. dst_id, vim.log.levels.INFO)
+          end,
+        })
+      end
+      if args.dst_change.current_working_copy then
+        src_change = args.dst_change
+        local dst_changes = api.get_adjacent_changes(args.ctx, args.dst_change, { children = not lopts.backwards })
+        if #dst_changes > 1 then
+          vim.ui.select(dst_changes, {
+            prompt = "Select " .. (lopts.backwards and "parent" or "child") .. "to swap position with",
+            format_item = function(change)
+              return api.get_change_id(change, true) .. (change.description_first_line or "")
+            end,
+          }, function(change, _)
+            if not change then
+              return vim.notify("Selection failed.", vim.log.levels.WARN)
+            end
+            action(change)
+          end)
+          return true
+        elseif #dst_changes > 0 then
+          dst_change = dst_changes[1]
+        else
+          ---@diagnostic disable-next-line: param-type-mismatch srct_change is always set
+          vim.notify("No " .. (lopts.backwards and "parent" or "child") .. " found for change " .. api.get_change_id(src_change, true), vim.log.levels.WARN)
+          return false
+        end
+      else
+        src_change = api.construct_dummy_change("@")
+        dst_change = args.dst_change
+      end
+      action(dst_change)
+      return true
+    end, { args_key = "dst_change" })
   end,
 
   --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
@@ -1231,6 +1303,18 @@ M.nmaps = {
       return true
     end),
     desc = "Populate command line with `:Jj rebase `",
+  },
+  {
+    key = "<<",
+    fn = fns[">"]({ backwards = true }),
+    with_force = true,
+    desc = "Shift the current change `@` before the change under the cursor",
+  },
+  {
+    key = ">>",
+    fn = fns[">"](),
+    with_force = true,
+    desc = "Shift the current change `@` after the change under the cursor",
   },
   {
     key = "rbD",

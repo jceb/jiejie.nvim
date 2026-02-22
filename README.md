@@ -34,10 +34,10 @@ easily, these rules might prove helpful:
     the file in the log summary window via `<CR>`, `o`, `gO`, `O`)
   - Open change (`K`)
   - Toggle inline diff (`=`)
-  - Compare multiple versions of a file (`:Jdiffsplit [revision]`, `dD`, `dd`,
-    `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`, `d?`)
+  - Compare multiple versions of a file (`d?`, `:Jdiffsplit [revision]`, `dD`,
+    `dd`, `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`)
   - Wraper for `jj` CLI (`:J` or `:Jj`)
-  - Show help (`g?`, `c?`, `d?`, `r?`)
+  - Show help (`g?`, `c?`, `d?`, `r?`, `s?`)
 - Log buffer (`:J` or `:Jj`)
   - Includes the list of modified files alongside the log
   - Set status log filters views (`s?`, `sb`, `sf`, `sr`, `sq`, `ss`, `1ss`,
@@ -52,7 +52,7 @@ easily, these rules might prove helpful:
   - Pull and push changes to git (`gu`, `gp`)
   - Modify change description in editor (`ce`) or quick edit the first line
     (`cd`) or copy commit information (`yy`, `yc`, `yC`)
-  - Create a new change (`A`, `a`, `cA`, `ca`, `cI`, `ci`, `i`, `I`, `cn`)
+  - Create a new change (`c?`, `A`, `a`, `cA`, `ca`, `cI`, `ci`, `i`, `I`, `cn`)
   - Create a merge (`cB`, `cm`, `cM`)
   - Commit change or file under the cursor (`cc`)
   - Squash change or file into parent or into change under cursor (`cs`, `cS`)
@@ -60,9 +60,9 @@ easily, these rules might prove helpful:
     `cpT`, `cpt`)
   - Revert change under the cursor (`cR`)
   - Abandon change or file under the cursor (`X`)
-  - Rebase branch, tree or individual change (`rbD`, `rbd`, `rbM`, `rbm`, `rbO`,
-    `rbo`, `rD`, `rd`, `rO`, `ro`, `rR`, `rr`, `rtD`, `rtd`, `rtO`, `rto`, `rtt`
-    `rtT`)
+  - Rebase branch, tree or individual change (`r?`, `<<`, `>>`, `rbD`, `rbd`,
+    `rbM`, `rbm`, `rbO`, `rbo`, `rD`, `rd`, `rO`, `ro`, `rR`, `rr`, `rtD`,
+    `rtd`, `rtO`, `rto`, `rtt` `rtT`)
   - Undo last operation (`cU`)
   - Bookmark management (`cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`, `cbr`,
     `cbX`, `cbx`)

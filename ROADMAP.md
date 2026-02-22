@@ -44,13 +44,13 @@
 - [x] Log: support dynamic views
 - [x] Log: `!!` should work like `.` with a leading `!`
 - [x] Move view filters into a custom section in the docs
+- [x] Log: Add support for shifting / reordering commits back and forth (rebase)
+      `<<`, `>>`,
 
 ## Priority 1
 
 - [ ] Configuration: make default view and number of entries configurable
 - [ ] Navigation: implement `(, ), [c, ]c and [m, ]m`
-- [ ] Log: Add support for shifting / reordering commits back and forth (rebase)
-      `<<`, `>>`,
 
 ## Priority 2
 
@@ -73,6 +73,8 @@
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
 - [ ] Feature: add support for handling PRs
+- [ ] Feature: add support for hiding certain branches from the log view, e.g.
+      renovate
 - [ ] Log: improve cursor positioning by computing an expected new position
 - [ ] Commands: prev and next `<p`, `>n`
 - [ ] Commands: granular squash via a terminal and the interactive jj UI

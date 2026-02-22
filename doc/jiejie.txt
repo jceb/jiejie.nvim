@@ -297,8 +297,20 @@ Rebase maps ~
                                                                      *jiejie_r?*
 r?                      Show help for rebase maps.
 
+                                                                     *jiejie_<<*
+[!]<<                   Shift the current change `@` before the change under
+                        the cursor. If the change under the cursor is the
+                        current change, it swaps its position with its
+                        parent.
+
+                                                                     *jiejie_>>*
+[!]>>                   Shift the current change `@` after the change under
+                        the cursor. If the change under the cursor is the
+                        current change, make it swaps its position with its
+                        child.
+
                                                                *jiejie_r<space>*
-r<space>                Populate command line with `:Jj rebase `.
+r<space>                Populate command line with `:Jj rebase`.
 
                                                         *jiejie_rbD* *jiejie_!rbD*
 [!]rbD                  Rebase the current change `@` on any one bookmark,
