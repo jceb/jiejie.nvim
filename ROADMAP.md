@@ -47,6 +47,8 @@
 - [x] Log: Add support for shifting / reordering commits back and forth (rebase)
       `<<`, `>>`,
 - [x] Log: add more status filters for authors and descriptions
+- [x] Bug: highlight mappings in header differently than other data, e.g.
+      operation or view data
 
 ## Priority 1
 
@@ -64,9 +66,15 @@
 - [ ] Navigation: implement `(, ), [c, ]c, [], ][ and [m, ]m`
 - [ ] Log: improve cursor positioning by computing an expected new position,
       e.g. via `search()`
+- [ ] Commands: sign, unsign and sign-off commit
+- [ ] Log: Add `cT` mapping to create a merge commit with a tag
 
 ## Priority 3
 
+- [ ] Log: display conflict status of files (`log --types` .. however this is
+      currently incompatible with `--summary`)
+- [ ] Log: display signature status
+- [ ] Commands: fix
 - [ ] Commands: granular squash via a terminal and the interactive jj UI
 - [ ] Commands: split via a terminal and the interactive jj UI (current
       workaround: commit one file instead of the whole change, then squash the

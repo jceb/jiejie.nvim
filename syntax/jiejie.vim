@@ -9,7 +9,8 @@ syn spell notoplevel
 syn include @jiejieDiff syntax/diff.vim
 
 syn region jiejieHeadSection start=/^[A-Za-z ]\+:/ end=/^$/ fold
-syn match jiejieHeader /^[A-Za-z ]\+:/ contained containedin=jiejieHeadSection nextgroup=jiejieHeaderValue skipwhite
+syn match jiejieHeader /^[A-Za-z ]\+:/ contained containedin=jiejieHeadSection nextgroup=jiejieHeaderMapping skipwhite
+syn match jiejieHeaderMapping /[^ ]\+/ contained nextgroup=jiejieHeaderValue
 syn match jiejieHeaderValue /[^†]*/ contained nextgroup=jiejieHeaderValueEmphasis
 syn match jiejieHeaderValueEmphasis /†/ contained conceal nextgroup=jiejieHeaderValueEmphasized
 syn match jiejieHeaderValueEmphasized /[^‡]\+/ contained nextgroup=jiejieHeaderValueReset
@@ -66,7 +67,8 @@ syn match jiejieWorkingCopy /\( current working copy\)\?/ contained conceal next
 syn match jiejieParents /[0-9]\+/ contained conceal
 
 hi def link jiejieHeader Identifier
-hi def link jiejieHeaderValue Special
+hi def link jiejieHeaderMapping Special
+hi def link jiejieHeaderValue Comment
 hi def link jiejieHeaderValueEmphasized Debug
 
 hi def link jiejieChangeEmpty String
