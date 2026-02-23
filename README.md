@@ -86,6 +86,12 @@ With Lazy, add this configuration to nvim:
 
 See [ROADMAP.md](./ROADMAP.md).
 
+## Limitations
+
+- Changing the commit log and operation log
+  [node icon style](https://docs.jj-vcs.dev/latest/config/#node-style) will
+  break the plugin!
+
 ## References
 
 There isn't too much information about Jujutus on the web, yet. Here are a
