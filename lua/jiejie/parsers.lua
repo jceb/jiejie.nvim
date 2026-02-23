@@ -3,6 +3,30 @@ local jujutsu = require("jiejie.jujutsu")
 --- Parser functions
 local M = {}
 
+--- Parse operation log change string into structured data
+--- @param line string Line containing a change string
+--- @param linenr number Line number in log buffer that contains filename
+--- @return OperationChange?
+function M.parse_oplog_change(line, linenr)
+  local match =
+    vim.fn.matchlist(line, [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \([a-z0-9]\+\) \([^ ]\+\) .*$]])
+  if #match == 0 then
+    return nil
+  end
+  local status = match[2]
+  local id = match[3]
+  local email = match[4]
+  if status == "" or id == "" or email == "" then
+    return nil
+  end
+  return {
+    status = status,
+    id = id,
+    email = email,
+    linenr = linenr,
+  }
+end
+
 --- Parse change string into structured data
 --- @param line string Line containing a change string
 --- @param linenr number Line number in log buffer that contains filename
@@ -10,7 +34,7 @@ local M = {}
 function M.parse_change(line, linenr)
   local match = vim.fn.matchlist(
     line,
-    [[^\%([╭╮├┤╰─╯│][╭╮├┤╰─╯│ ]*\)\?\([@×◆◇○]\)[╭╮├┤╰─╯│ ]*  \([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
+    [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@×◆◇○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
   )
   if #match == 0 then
     return nil
@@ -88,7 +112,7 @@ end
 --- @param linenr number Line number in log buffer that contains filename
 --- @return ModifiedFile?
 function M.parse_filename(line, linenr)
-  local match = vim.fn.matchlist(line, [[^[╭╮├┤╰─╯│][╭╮├┤╰─╯│ ]*  \([MADRC]\) \(.\+\)$]])
+  local match = vim.fn.matchlist(line, [[^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  \([MADRC]\) \(.\+\)$]])
   if #match == 0 then
     return nil
   end
@@ -111,10 +135,11 @@ end
 --- @class JiejieURL
 --- @field scheme? string URL scheme
 --- @field root string Path to the repository
---- @field revision? string Revision string - is nil for an index URL
+--- @field revision? string Revision string - is nil for log URLs
 --- @field path? string Path in the repository
 --- @field workspace string Repository workspace
---- @field is_index? boolean Whether the URL is pointing to the index
+--- @field is_log? boolean Whether the URL is pointing to the log
+--- @field is_oplog? boolean Whether the URL is pointing to the oplog
 
 --- Parse jiejie:// URL into its componentens
 --- @param url string URL
@@ -123,7 +148,7 @@ function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     return nil
   end
-  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)/\(log\|rev\)/\%(index$\|\([^/]\+\)\%(/\(.\+\)$\|$\)\?\)]])
+  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)/\(log\|oplog\|rev\)/\%(index$\|\([^/]\+\)\%(/\(.\+\)$\|$\)\?\)]])
   if #match == 0 then
     return nil
   end
@@ -132,11 +157,14 @@ function M.parse_url(url)
   if not repo_stats or repo_stats.type ~= "directory" then
     error("Error: path does not point to a directory: " .. root)
   end
-  local is_index = false
+  local is_log = false
+  local is_oplog = false
   if match[5] == "log" then
-    is_index = true
+    is_log = true
+  elseif match[5] == "oplog" then
+    is_oplog = true
   elseif match[5] == "rev" then
-    is_index = false
+    is_log = false
   else
     error("Unknown path in URL: " .. url)
   end
@@ -146,7 +174,8 @@ function M.parse_url(url)
     workspace = match[4],
     revision = match[6] ~= "" and match[6] or nil,
     path = match[7] ~= "" and match[7] or nil,
-    is_index = is_index,
+    is_log = is_log,
+    is_oplog = is_oplog,
   }
 end
 
@@ -225,8 +254,10 @@ end
 --- @return string
 function M.join_url(url)
   local filename
-  if url.is_index then
+  if url.is_log then
     filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/log/index"
+  elseif url.is_oplog then
+    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/oplog/index"
   elseif url.revision == "@" then
     filename = vim.fs.joinpath(url.root, url.path or "")
   else

@@ -155,7 +155,7 @@ function M.diff_show(ctx, file, change)
   if not diff[offset] then
     vim.notify("Diff not available for file " .. file.filename, vim.log.levels.WARN)
   else
-    local buffer = require("jiejie.log_buffer")
+    local buffer = require("jiejie.buffer")
     local data = { unpack(diff, offset) }
     buffer.buf_set_lines(ctx, data, file.linenr, file.linenr)
     set_expanded({ change_id = api.get_change_id(change), filename = file.filename, length = #data })
@@ -172,7 +172,7 @@ function M.diff_hide(ctx, file, change)
   if not expanded then
     return
   end
-  local buffer = require("jiejie.log_buffer")
+  local buffer = require("jiejie.buffer")
   buffer.buf_set_lines(ctx, {}, file.linenr, file.linenr + expanded.length)
   unset_expanded(api.get_change_id(change), file.filename)
   return true

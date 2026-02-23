@@ -448,11 +448,11 @@ sf                      Add dynamic view that lists changes for that belong to
                         For a file name, it takes into account the revset of
                         the current view and applies it to the filtered view.
 
-                                                                     *jiejie_sl*
-sl                      Open operation log in a horizontal spilt.
+                                                                     *jiejie_so*
+so                      Open operation log in a horizontal spilt.
 
-                                                                     *jiejie_sL*
-sL                      Open operation log in a vertical spilt.
+                                                                     *jiejie_sO*
+sO                      Open operation log in a vertical spilt.
 
                                                                      *jiejie_sq*
 [count]sq               Close dynamic view.
@@ -484,7 +484,7 @@ Miscellaneous maps ~
 g?                      Show help for |jiejie-maps|.
 
                                                                       *jiejie_q*
-q                       Close the summary window and the preview window, if
+q                       Close the status log window and the preview window, if
                         open.
 
                                                                      *jiejie_qq*
@@ -542,5 +542,3 @@ Grab the latest version or report a bug on GitHub:
 https://github.com/jceb/jiejie.nvim
 
 vim:tw=78:ts=8:sw=2:et:ft=help:norl:
-
-

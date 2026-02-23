@@ -1,11 +1,14 @@
 local api = require("jiejie.api")
+local helpers = require("jiejie.log_buffer_helpers")
 local jujutsu = require("jiejie.jujutsu")
 local log_diff = require("jiejie.log_diff")
-local helpers = require("jiejie.log_buffer_helpers")
 local log_view = require("jiejie.log_view")
 
+--- Log buffer mappings
+local M = {}
+
 --- @type table<string, fun(opts?: {}): fun()>
-local fns = {
+M.fns = {
   --
 
   --- @param opts {bang?: boolean}
@@ -22,6 +25,7 @@ local fns = {
   --- @param opts {backwards?: boolean}
   --- - backwards: Shift backwards
   [">"] = function(opts)
+    --- @param args WithArgs
     return helpers.search_change(function(args)
       local lopts = opts or {}
       local src_change
@@ -99,8 +103,10 @@ local fns = {
     local lopts = opts or {}
     local with_bookmarks = function(fn)
       if lopts.with_action ~= 2 ^ 0 then
+        --- @param args WithArgs
+        --- @return boolean
         return function(args)
-          helpers.with_bookmarks_or_tags(fn, {
+          return helpers.with_bookmarks_or_tags(fn, {
             src_change = not lopts.drop_change and args.src_change or nil,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch,
@@ -168,17 +174,17 @@ local fns = {
     local lopts = opts or {}
     local with_input = function(fn)
       if lopts.with_action == 2 ^ 2 then
+        --- @param args WithArgs
+        --- @return boolean
         return function(args)
-          helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), {
+          return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), {
             src_change = not lopts.drop_change and args.src_change or nil,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch,
           })(args)
         end
       elseif lopts.with_action == 2 ^ 1 then
-        return function(args)
-          helpers.with_target_change(fn)(args)
-        end
+        return helpers.with_target_change(fn)
       else
         return fn
       end
@@ -309,8 +315,9 @@ local fns = {
     local with_tags = function(fn)
       if lopts.with_action ~= 2 ^ 0 then
         --- @param args WithArgs
+        --- @return boolean
         return function(args)
-          helpers.with_bookmarks_or_tags(fn, {
+          return helpers.with_bookmarks_or_tags(fn, {
             src_change = not lopts.drop_change and args.src_change or nil,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch, -- not yet supported by jj
@@ -419,152 +426,6 @@ local fns = {
     end)
   end,
 
-  --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean}
-  --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset, 32: description, 64: author, 128: manual input author
-  --- - tags Handle tags instead of bookmarks
-  --- - args: Additional arguments
-  s = function(opts)
-    local lopts = opts or {}
-    local with_view = function(fn)
-      --- @param _args WithArgs
-      return function(_args)
-        local largs = _args or {}
-        --- @type LogView?
-        local view
-        local current_view = log_view.get_log_view_current()
-        if not current_view then
-          error("Unable to determine current view")
-        end
-        if lopts.with_action == 2 ^ 7 then
-          return vim.ui.input({ prompt = "Enter author: " }, function(author)
-            if not author or author == "" then
-              return
-            end
-            local author_escaped = vim.fn.escape(author, '"')
-            view = {
-              id = "author-" .. author,
-              revset = current_view.revset .. ' & (author(glob:"*' .. author_escaped .. '*") | committer(glob:"*' .. author_escaped .. '*"))',
-              description = author,
-            }
-            log_view.add_dynamic_view(view)
-            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
-          end)
-        elseif lopts.with_action == 2 ^ 6 then
-          local email = vim.trim(largs.src_change.email)
-          view = {
-            id = email,
-            revset = current_view.revset .. ' & (author_email("' .. email .. '") | committer_email("' .. email .. '"))',
-            description = email,
-          }
-          log_view.add_dynamic_view(view)
-        elseif lopts.with_action == 2 ^ 5 then
-          return vim.ui.input({ prompt = "Enter description: " }, function(description)
-            if not description or description == "" then
-              return
-            end
-            local description_escaped = vim.fn.escape(description, '"')
-            view = {
-              id = "desc-" .. description,
-              revset = current_view.revset .. ' & description(glob:"*' .. description_escaped .. '*")',
-              description = description,
-            }
-            log_view.add_dynamic_view(view)
-            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
-          end)
-        elseif lopts.with_action == 2 ^ 4 then
-          return vim.ui.input({ prompt = "Enter revset: " }, function(revset)
-            if not revset or revset == "" then
-              return
-            end
-            view = {
-              id = revset,
-              revset = revset,
-            }
-            log_view.add_dynamic_view(view)
-            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
-          end)
-        elseif lopts.with_action == 2 ^ 3 then
-          return helpers.search_change(helpers.search_file(function(args)
-            local revset = (args.file and current_view and (current_view.revset or "::")) or ("::" .. api.get_change_id(args.src_change))
-            local description = (args.file and vim.fs.basename(args.file.filename)) or ("::" .. args.src_change.id_short)
-            view = {
-              id = args.file and args.file.filename or args.src_change.id,
-              revset = revset,
-              paths = args.file and { args.file.filename },
-              description = description,
-            }
-            log_view.add_dynamic_view(view)
-            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
-          end, { err_continue = true }))(_args)
-        elseif lopts.with_action == 2 ^ 2 then
-          return helpers.with_bookmarks_or_tags(
-            --- @param args WithArgs
-            helpers.with_bookmark_or_tag(function(args)
-              local revset = "::" .. (lopts.tags and args.tag or args.bookmark)
-              view = {
-                id = revset,
-                revset = revset,
-              }
-              log_view.add_dynamic_view(view)
-              return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
-            end, { tags = lopts.tags }),
-            { tags = lopts.tags }
-          )(_args)
-        elseif lopts.with_action == 2 ^ 1 then
-          if vim.v.count > 0 then
-            current_view = log_view.get_log_view(vim.v.count)
-          end
-          if not current_view or not current_view.id or not log_view.remove_dynamic_view(current_view) then
-            return vim.notify("View isn't a dynamic and can't be removed", vim.log.levels.WARN)
-          end
-          if vim.v.count > 0 then
-            view = log_view.get_log_view_current()
-          end
-          if not view then
-            view = log_view.get_log_view_previous()
-          end
-          if not view then
-            view = log_view.get_log_view(1)
-          end
-          if not view then
-            return vim.notify("Previous view does not exist", vim.log.levels.WARN)
-          end
-        else
-          local view_nr
-          if vim.v.count > 0 then
-            view_nr = vim.v.count
-            view = log_view.get_log_view(view_nr)
-            if not view then
-              return vim.notify("View " .. view_nr .. " does not exist", vim.log.levels.WARN)
-            end
-          else
-            -- switch to previous view
-            view = log_view.get_log_view_previous()
-            if not view then
-              return vim.notify("Previous view does not exist, yet", vim.log.levels.WARN)
-            end
-          end
-        end
-        if view then
-          return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
-        end
-      end
-    end
-    return with_view(
-      --- @param args WithArgs
-      --- @return boolean
-      function(args)
-        if args.view then
-          log_view.set_log_view(args.view)
-          local log_dirty_check = require("jiejie.log_dirty_check")
-          log_dirty_check.dirty_mark_content(args.ctx.buf)
-          log_dirty_check.do_dirty_check()
-        end
-        return true
-      end
-    )
-  end,
-
   --- @param opts {rebase?: number, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean, tags?: boolean}
   --- - tags: List tags instead of bookmarks
   --- - rebase: 1 (default): revision, 2: with descendants, 4: branch
@@ -623,6 +484,175 @@ local fns = {
     )
   end,
 
+  --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean}
+  --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset, 32: description, 64: author, 128: manual input author
+  --- - tags Handle tags instead of bookmarks
+  --- - args: Additional arguments
+  s = function(opts)
+    local lopts = opts or {}
+    --- @param fn fun(args: WithArgs): boolean
+    local with_view = function(fn)
+      --- @param _args WithArgs
+      --- @return boolean
+      return function(_args)
+        local largs = _args or {}
+        --- @type LogView?
+        local view
+        local current_view = log_view.get_log_view_current()
+        if not current_view then
+          error("Unable to determine current view")
+        end
+        if lopts.with_action == 2 ^ 7 then
+          vim.ui.input({ prompt = "Enter author: " }, function(author)
+            if not author or author == "" then
+              return
+            end
+            local author_escaped = vim.fn.escape(author, '"')
+            view = {
+              id = "author-" .. author,
+              revset = current_view.revset .. ' & (author(glob:"*' .. author_escaped .. '*") | committer(glob:"*' .. author_escaped .. '*"))',
+              description = author,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end)
+          return true
+        elseif lopts.with_action == 2 ^ 6 then
+          local email = vim.trim(largs.src_change.email)
+          view = {
+            id = email,
+            revset = current_view.revset .. ' & (author_email("' .. email .. '") | committer_email("' .. email .. '"))',
+            description = email,
+          }
+          log_view.add_dynamic_view(view)
+        elseif lopts.with_action == 2 ^ 5 then
+          vim.ui.input({ prompt = "Enter description: " }, function(description)
+            if not description or description == "" then
+              return
+            end
+            local description_escaped = vim.fn.escape(description, '"')
+            view = {
+              id = "desc-" .. description,
+              revset = current_view.revset .. ' & description(glob:"*' .. description_escaped .. '*")',
+              description = description,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end)
+          return true
+        elseif lopts.with_action == 2 ^ 4 then
+          vim.ui.input({ prompt = "Enter revset: " }, function(revset)
+            if not revset or revset == "" then
+              return
+            end
+            view = {
+              id = revset,
+              revset = revset,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end)
+          return true
+        elseif lopts.with_action == 2 ^ 3 then
+          return helpers.search_change(helpers.search_file(function(args)
+            local revset = (args.file and current_view and (current_view.revset or "::")) or ("::" .. api.get_change_id(args.src_change))
+            local description = (args.file and vim.fs.basename(args.file.filename)) or ("::" .. args.src_change.id_short)
+            view = {
+              id = args.file and args.file.filename or args.src_change.id,
+              revset = revset,
+              paths = args.file and { args.file.filename },
+              description = description,
+            }
+            log_view.add_dynamic_view(view)
+            return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+          end, { err_continue = true }))(_args)
+        elseif lopts.with_action == 2 ^ 2 then
+          return helpers.with_bookmarks_or_tags(
+            --- @param args WithArgs
+            helpers.with_bookmark_or_tag(function(args)
+              local revset = "::" .. (lopts.tags and args.tag or args.bookmark)
+              view = {
+                id = revset,
+                revset = revset,
+              }
+              log_view.add_dynamic_view(view)
+              return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+            end, { tags = lopts.tags }),
+            { tags = lopts.tags }
+          )(_args)
+        elseif lopts.with_action == 2 ^ 1 then
+          if vim.v.count > 0 then
+            current_view = log_view.get_log_view(vim.v.count)
+          end
+          if not current_view or not current_view.id or not log_view.remove_dynamic_view(current_view) then
+            vim.notify("View isn't a dynamic and can't be removed", vim.log.levels.WARN)
+            return false
+          end
+          if vim.v.count > 0 then
+            view = log_view.get_log_view_current()
+          end
+          if not view then
+            view = log_view.get_log_view_previous()
+          end
+          if not view then
+            view = log_view.get_log_view(1)
+          end
+          if not view then
+            vim.notify("Previous view does not exist", vim.log.levels.WARN)
+            return false
+          end
+        else
+          local view_nr
+          if vim.v.count > 0 then
+            view_nr = vim.v.count
+            view = log_view.get_log_view(view_nr)
+            if not view then
+              vim.notify("View " .. view_nr .. " does not exist", vim.log.levels.WARN)
+              return false
+            end
+          else
+            -- switch to previous view
+            view = log_view.get_log_view_previous()
+            if not view then
+              vim.notify("Previous view does not exist, yet", vim.log.levels.WARN)
+              return false
+            end
+          end
+        end
+        if view then
+          return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
+        end
+        return false
+      end
+    end
+    return with_view(
+      --- @param args WithArgs
+      --- @return boolean
+      function(args)
+        if args.view then
+          log_view.set_log_view(args.view)
+          local log_dirty_check = require("jiejie.log_dirty_check")
+          log_dirty_check.dirty_mark_content(args.ctx.buf)
+          log_dirty_check.do_dirty_check()
+        end
+        return true
+      end
+    )
+  end,
+
+  --- @param opts? {vertical?: boolean, oplog?: boolean}
+  --- - vertical: Split vertically
+  so = function(opts)
+    --- @param args WithArgs
+    --- @return boolean
+    return function(args)
+      local lopts = opts or {}
+      local buffer = require("jiejie.buffer")
+      api.show_log(args.ctx, { vertical = lopts.vertical, buffer_type = lopts.oplog and buffer.BUFFER_TYPE.OPLOG or buffer.BUFFER_TYPE.LOG })
+      return true
+    end
+  end,
+
   --- @param opts {commit_id?: boolean, message_or_filename?: boolean}
   --- - commit_id: Copy commit id or else the change id if not message_or_filename
   --- - message_or_filename: Copy commit message or file name
@@ -668,9 +698,6 @@ local fns = {
   end,
 }
 
---- Log buffer mappings
-local M = {}
-
 --- @type table<number, {key: string, fn: fun(args?: WithArgs), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
 M.nmaps = {
   --
@@ -705,17 +732,17 @@ M.nmaps = {
   },
   {
     key = "o",
-    fn = fns.o({ split_direction = api.SPLIT_DIRECTION.horizontal }),
+    fn = M.fns.o({ split_direction = api.SPLIT_DIRECTION.horizontal }),
     desc = "Open the file or jiejie-object under the cursor in a new split",
   },
   {
     key = "gO",
-    fn = fns.o({ split_direction = api.SPLIT_DIRECTION.vertical }),
+    fn = M.fns.o({ split_direction = api.SPLIT_DIRECTION.vertical }),
     desc = "Open the file or jiejie-object under the cursor in a new vertical split",
   },
   {
     key = "O",
-    fn = fns.o({ split_direction = api.SPLIT_DIRECTION.tab }),
+    fn = M.fns.o({ split_direction = api.SPLIT_DIRECTION.tab }),
     desc = "Open the file or jiejie-object under the cursor in a new vertical split",
   },
   {
@@ -890,42 +917,42 @@ M.nmaps = {
   },
   {
     key = "dD",
-    fn = fns.d({ diff_commit_under_cursor = true }),
+    fn = M.fns.d({ diff_commit_under_cursor = true }),
     desc = "Perform a :Jdiffsplit on the file and change under the cursor.",
   },
   {
     key = "dd",
-    fn = fns.d(),
+    fn = M.fns.d(),
     desc = "Perform a :Jdiffsplit on the file under the cursor and change @.",
   },
   {
     key = "dV",
-    fn = fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.vertical }),
+    fn = M.fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.vertical }),
     desc = "Perform a :Jvdiffsplit on the file and change under the cursor.",
   },
   {
     key = "dv",
-    fn = fns.d({ split_direction = api.SPLIT_DIRECTION.vertical }),
+    fn = M.fns.d({ split_direction = api.SPLIT_DIRECTION.vertical }),
     desc = "Perform a :Jvdiffsplit on the file under the cursor and change @.",
   },
   {
     key = "dH",
-    fn = fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
+    fn = M.fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
     desc = "Perform a :Jhdiffsplit on the file and change under the cursor.",
   },
   {
     key = "dh",
-    fn = fns.d({ split_direction = api.SPLIT_DIRECTION.horizontal }),
+    fn = M.fns.d({ split_direction = api.SPLIT_DIRECTION.horizontal }),
     desc = "Perform a :Jhdiffsplit on the file under the cursor and change @.",
   },
   {
     key = "dS",
-    fn = fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
+    fn = M.fns.d({ diff_commit_under_cursor = true, split_direction = api.SPLIT_DIRECTION.horizontal }),
     desc = "Perform a :Jhdiffsplit on the file and change under the cursor.",
   },
   {
     key = "ds",
-    fn = fns.d({ split_direction = api.SPLIT_DIRECTION.horizontal }),
+    fn = M.fns.d({ split_direction = api.SPLIT_DIRECTION.horizontal }),
     desc = "Perform a :Jhdiffsplit on the file under the cursor and change @.",
   },
   {
@@ -953,61 +980,61 @@ M.nmaps = {
   },
   {
     key = "cbb",
-    fn = fns.cb({ with_action = 2 ^ 0 }),
+    fn = M.fns.cb({ with_action = 2 ^ 0 }),
     desc = "Alias of cbc",
   },
   {
     key = "cbc",
-    fn = fns.cb({ with_action = 2 ^ 0 }),
+    fn = M.fns.cb({ with_action = 2 ^ 0 }),
     desc = "Create new bookmark at change under the cursor",
   },
   {
     key = "cbF",
-    fn = fns.cb({ with_action = 2 ^ 2, drop_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 2, drop_change = true }),
     desc = "Forget any one bookmark locally keeping the remote intact",
   },
   {
     key = "cbf",
-    fn = fns.cb({ with_action = 2 ^ 2, limit_to_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 2, limit_to_change = true }),
     desc = "Forget bookmark locally keeping the remote intact at change under the cursor",
   },
   {
     key = "cbM",
-    fn = fns.cb({ with_action = 2 ^ 1 }),
+    fn = M.fns.cb({ with_action = 2 ^ 1 }),
     with_force = true,
     desc = "Move any one bookmark to the change under the cursor",
   },
   {
     key = "cbm",
-    fn = fns.cb({ with_action = 2 ^ 1, limit_to_branch = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 1, limit_to_branch = true }),
     with_force = true,
     desc = "Move one bookmark from the current branch to the change under the cursor",
   },
   {
     key = "cbR",
-    fn = fns.cb({ with_action = 2 ^ 4, drop_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 4, drop_change = true }),
     desc = "Rename any one bookmark",
     with_force = true,
   },
   {
     key = "cbr",
-    fn = fns.cb({ with_action = 2 ^ 4, limit_to_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 4, limit_to_change = true }),
     desc = "Rename bookmark at change under the cursor",
     with_force = true,
   },
   {
     key = "cbt",
-    fn = fns.cb({ with_action = 2 ^ 5 }),
+    fn = M.fns.cb({ with_action = 2 ^ 5 }),
     desc = "Move default bookmark (`trunk()`) to the change under the cursor",
   },
   {
     key = "cbX",
-    fn = fns.cb({ with_action = 2 ^ 3, drop_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 3, drop_change = true }),
     desc = "Delete any one bookmark including the remote boomark",
   },
   {
     key = "cbx",
-    fn = fns.cb({ with_action = 2 ^ 3, limit_to_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 3, limit_to_change = true }),
     desc = "Delete bookmark including remote boomark at change under the cursor",
   },
   {
@@ -1027,37 +1054,37 @@ M.nmaps = {
   },
   {
     key = "cpM",
-    fn = fns.cp({ with_change = 2 ^ 2 }),
+    fn = M.fns.cp({ with_change = 2 ^ 2 }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change `@` after any one bookmark",
   },
   {
     key = "cpm",
-    fn = fns.cp({ with_change = 2 ^ 2, limit_to_branch = true }),
+    fn = M.fns.cp({ with_change = 2 ^ 2, limit_to_branch = true }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change `@` after a bookmark in the current branch",
   },
   {
     key = "cpP",
-    fn = fns.cp({ with_change = 2 ^ 1 }),
+    fn = M.fns.cp({ with_change = 2 ^ 1 }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change `@` after any change ID",
   },
   {
     key = "cpp",
-    fn = fns.cp({ with_change = 2 ^ 0 }),
+    fn = M.fns.cp({ with_change = 2 ^ 0 }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change after the change under the cursor",
   },
   {
     key = "cpT",
-    fn = fns.cp({ with_change = 2 ^ 2, tags = true }),
+    fn = M.fns.cp({ with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change `@` after any one tag",
   },
   {
     key = "cpt",
-    fn = fns.cp({ with_change = 2 ^ 2, tags = true }),
+    fn = M.fns.cp({ with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Alias of cpT",
   },
@@ -1081,88 +1108,88 @@ M.nmaps = {
   },
   {
     key = "yC",
-    fn = fns.y({ commit_id = true }),
+    fn = M.fns.y({ commit_id = true }),
     desc = "Copy commit id under the cursor",
   },
   {
     key = "yc",
-    fn = fns.y({ commit_id = false }),
+    fn = M.fns.y({ commit_id = false }),
     desc = "Copy change id under the cursor",
   },
   {
     key = "yy",
-    fn = fns.y({ message_or_filename = true }),
+    fn = M.fns.y({ message_or_filename = true }),
     desc = "Copy commit message or file name under the cursor",
   },
   {
     key = "cA",
-    fn = fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
+    fn = M.fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
     with_force = true,
     desc = "No-edit append a new change after the change under the cursor and before all its children",
   },
   {
     key = "A",
-    fn = fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
+    fn = M.fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
     with_force = true,
     desc = "Alias of cA",
   },
   {
     key = "ca",
-    fn = fns.cn({ with_action = 2 ^ 1 }),
+    fn = M.fns.cn({ with_action = 2 ^ 1 }),
     with_force = true,
     desc = "No-edit append a new change after the change under the cursor and before all its children",
   },
   {
     key = "a",
-    fn = fns.cn({ with_action = 2 ^ 1 }),
+    fn = M.fns.cn({ with_action = 2 ^ 1 }),
     with_force = true,
     desc = "Alias of ca",
   },
   {
     key = "cI",
-    fn = fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
+    fn = M.fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
     with_force = true,
     desc = "Non-edit insert a new change inbetween the change under the cursor all its ancestors",
   },
   {
     key = "I",
-    fn = fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
+    fn = M.fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
     with_force = true,
     desc = "Alias of cI",
   },
   {
     key = "ci",
-    fn = fns.cn({ with_action = 2 ^ 2 }),
+    fn = M.fns.cn({ with_action = 2 ^ 2 }),
     with_force = true,
     desc = "Insert a new change inbetween the change under the cursor all its ancestors",
   },
   {
     key = "i",
-    fn = fns.cn({ with_action = 2 ^ 2 }),
+    fn = M.fns.cn({ with_action = 2 ^ 2 }),
     with_force = true,
     desc = "Alias of ci",
   },
   {
     key = "cn",
-    fn = fns.cn({ with_action = 2 ^ 0 }),
+    fn = M.fns.cn({ with_action = 2 ^ 0 }),
     with_force = true,
     desc = "Create a new change branch after the change under the cursor",
   },
   {
     key = "cB",
-    fn = fns.cm({ with_action = 2 ^ 2 }),
+    fn = M.fns.cm({ with_action = 2 ^ 2 }),
     with_force = true,
     desc = "Merge `@` with any one bookmark",
   },
   {
     key = "cm",
-    fn = fns.cm({ with_action = 2 ^ 0 }),
+    fn = M.fns.cm({ with_action = 2 ^ 0 }),
     with_force = true,
     desc = "Merge `@` with the change under the cursor",
   },
   {
     key = "cM",
-    fn = fns.cm({ with_action = 2 ^ 1 }),
+    fn = M.fns.cm({ with_action = 2 ^ 1 }),
     with_force = true,
     desc = "Merge `@` with any change ID",
   },
@@ -1245,27 +1272,27 @@ M.nmaps = {
   },
   {
     key = "ctc",
-    fn = fns.ct({ with_action = 2 ^ 0 }),
+    fn = M.fns.ct({ with_action = 2 ^ 0 }),
     desc = "Create new tag at change under the cursor",
   },
   {
     key = "ctm",
-    fn = fns.ct({ with_action = 2 ^ 1 }),
+    fn = M.fns.ct({ with_action = 2 ^ 1 }),
     desc = "Move any one tag to change under the cursor",
   },
   {
     key = "ctt",
-    fn = fns.ct({ with_action = 2 ^ 0 }),
+    fn = M.fns.ct({ with_action = 2 ^ 0 }),
     desc = "Alias of ctc",
   },
   {
     key = "ctX",
-    fn = fns.ct({ with_action = 2 ^ 2 }),
+    fn = M.fns.ct({ with_action = 2 ^ 2 }),
     desc = "Delete any one tag",
   },
   {
     key = "ctx",
-    fn = fns.ct({ with_action = 2 ^ 2, limit_to_change = true }),
+    fn = M.fns.ct({ with_action = 2 ^ 2, limit_to_change = true }),
     desc = "Delete tag at change under the cursor",
   },
   {
@@ -1365,136 +1392,136 @@ M.nmaps = {
   },
   {
     key = "<<",
-    fn = fns[">"]({ backwards = true }),
+    fn = M.fns[">"]({ backwards = true }),
     with_force = true,
     desc = "Shift the current change `@` before the change under the cursor",
   },
   {
     key = ">>",
-    fn = fns[">"](),
+    fn = M.fns[">"](),
     with_force = true,
     desc = "Shift the current change `@` after the change under the cursor",
   },
   {
     key = "rbD",
-    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 2 }),
+    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 2 }),
     with_force = true,
     desc = "Rebase the current change `@` on any one bookmark, together with its descendants",
   },
   {
     key = "rbd",
-    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 2, limit_to_branch = true }),
+    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 2, limit_to_branch = true }),
     with_force = true,
     desc = "Rebase the current change `@` on a bookmark in the current branch, together with its descendants",
   },
   {
     key = "rbH",
-    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 3 }),
+    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 3 }),
     desc = "Rebase only the current change `@` on the default bookmark (`trunk`), with its descendants",
   },
   {
     key = "rbh",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 3 }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 3 }),
     desc = "Rebase only the current change `@` on the default bookmark (`trunk`), without its descendants",
   },
   {
     key = "rbM",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
     with_force = true,
     desc = "Rebase the current change `@` on any one bookmark, together with its branch",
   },
   {
     key = "rbm",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
     with_force = true,
     desc = "Alias of rbM",
   },
   {
     key = "rbO",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2 }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2 }),
     with_force = true,
     desc = "Rebase only the current change `@` on any bookmark, without its descendants",
   },
   {
     key = "rbo",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, limit_to_branch = true }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, limit_to_branch = true }),
     with_force = true,
     desc = "Rebase only the current change `@` on a bookmark in the current branch, without its descendants",
   },
   {
     key = "rbt",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 3 }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 3 }),
     desc = "Rebase the current change `@` on the default bookmark (`trunk`), together with its branch",
   },
   {
     key = "rD",
-    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 1 }),
+    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 1 }),
     with_force = true,
     desc = "Rebase the current change `@` on any change ID, together with its descendants",
   },
   {
     key = "rd",
-    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 0 }),
+    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 0 }),
     with_force = true,
     desc = "Rebase the current change `@` on the change under the cursor, together with its descendants",
   },
   {
     key = "rO",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 1 }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 1 }),
     with_force = true,
     desc = "Rebase only the current change `@` on any change ID, without its descendants",
   },
   {
     key = "ro",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 0 }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 0 }),
     with_force = true,
     desc = "Rebase only the current change `@` on the change under the cursor, without its descendants",
   },
   {
     key = "rR",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1 }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1 }),
     with_force = true,
     desc = "Rebase the current change `@` on any change ID, together with its branch",
   },
   {
     key = "rr",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 0 }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 0 }),
     with_force = true,
     desc = "Rebase the current change `@` on the change under the cursor, together with its branch",
   },
   {
     key = "rtD",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
     with_force = true,
     desc = "Rebase the current change `@` on any one tag, together with its descendants",
   },
   {
     key = "rtd",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
     with_force = true,
     desc = "Alias of rbd",
   },
   {
     key = "rtO",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Rebase only the current change `@` on any tag, without its descendants",
   },
   {
     key = "rto",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Alias of rtO",
   },
   {
     key = "rtT",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Rebase the current change `@` on any one tag, together with its branch",
   },
   {
     key = "rtt",
-    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Alias of rbT",
   },
@@ -1539,74 +1566,84 @@ M.nmaps = {
   },
   {
     key = "sA",
-    fn = fns.s({ with_action = 2 ^ 7 }),
+    fn = M.fns.s({ with_action = 2 ^ 7 }),
     desc = "Add dynamic view that filters changes for the author of the change under the cursor",
   },
   {
     key = "sa",
-    fn = helpers.search_change(fns.s({ with_action = 2 ^ 6 })),
+    fn = helpers.search_change(M.fns.s({ with_action = 2 ^ 6 })),
     desc = "Add dynamic view that filters changes for the author of the change under the cursor",
   },
   {
     key = "sb",
-    fn = fns.s({ with_action = 2 ^ 2 }),
+    fn = M.fns.s({ with_action = 2 ^ 2 }),
     desc = "Add dynamic view that displays all changes that belong to the selected bookmark",
   },
   {
     key = "sD",
-    fn = fns.s({ with_action = 2 ^ 5 }),
+    fn = M.fns.s({ with_action = 2 ^ 5 }),
     desc = "Add dynamic view that filters changes for a description",
   },
   {
     key = "sd",
-    fn = fns.s({ with_action = 2 ^ 5 }),
+    fn = M.fns.s({ with_action = 2 ^ 5 }),
     desc = "Alias of sD",
   },
   {
     key = "sf",
-    fn = fns.s({ with_action = 2 ^ 3 }),
+    fn = M.fns.s({ with_action = 2 ^ 3 }),
     desc = "Add dynamic view that lists changes for that belong to the change or modify the file name under the cursor",
   },
   {
+    key = "so",
+    fn = M.fns.so({ oplog = true }),
+    desc = "Show operation log in a horizontal spilt",
+  },
+  {
+    key = "sO",
+    fn = M.fns.so({ vertical = true, oplog = true }),
+    desc = "Show operation log in a vertical spilt",
+  },
+  {
     key = "sq",
-    fn = fns.s({ with_action = 2 ^ 1 }),
+    fn = M.fns.s({ with_action = 2 ^ 1 }),
     desc = "Close dynamic view",
   },
   {
     key = "sr",
-    fn = fns.s({ with_action = 2 ^ 4 }),
+    fn = M.fns.s({ with_action = 2 ^ 4 }),
     desc = "Add dynamic view that filters for a revset provided by the user",
   },
   {
     key = "ss",
-    fn = fns.s({ with_action = 2 ^ 0 }),
+    fn = M.fns.s({ with_action = 2 ^ 0 }),
     desc = "Set log view or switch to the previous view, if no count is given",
   },
   {
     key = "st",
-    fn = fns.s({ with_action = 2 ^ 2, tags = true }),
+    fn = M.fns.s({ with_action = 2 ^ 2, tags = true }),
     desc = "Add dynamic view that displays all changes that belong to the selected tag",
   },
 
   -- Miscellaneous maps {{{1
   {
     key = "gq",
-    fn = fns.q({ close_current_window = false }),
+    fn = M.fns.q({ close_current_window = false }),
     desc = "Close the preview window",
   },
   {
     key = "q",
-    fn = fns.q({ close_current_window = true }),
-    desc = "Close the summary window and the preview window, if open",
+    fn = M.fns.q({ close_current_window = true }),
+    desc = "Close the status log window and the preview window, if open",
   },
   {
     key = ".",
-    fn = fns["."](),
+    fn = M.fns["."](),
     desc = "Start a : command line with the file under the cursor prepopulated",
   },
   {
     key = "!!",
-    fn = fns["."]({ bang = true }),
+    fn = M.fns["."]({ bang = true }),
     desc = "Start a :! command line with the file under the cursor prepopulated",
   },
   {
@@ -1637,12 +1674,12 @@ M.nmaps = {
   },
   {
     key = "<C-a>",
-    fn = fns.ctrl_a(),
+    fn = M.fns.ctrl_a(),
     desc = "Increase the number of displayed revisions in log",
   },
   {
     key = "<C-x>",
-    fn = fns.ctrl_a({ negate = true }),
+    fn = M.fns.ctrl_a({ negate = true }),
     desc = "Decrease the number of displayed revisions in log",
   },
 }

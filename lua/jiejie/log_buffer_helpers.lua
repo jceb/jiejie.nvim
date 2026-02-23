@@ -2,7 +2,7 @@ local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
 
---- Opeations that help with extracting data from the log buffer
+--- Opeations that help with extracting data from the status log buffer
 local M = {}
 
 --- @class WithArgs
@@ -67,7 +67,10 @@ function M.with_context(root, fn, opts)
   return function(args)
     local largs = args or {}
     local lopts = opts or {}
-    return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "ctx"] = context.get_context(root) }))
+    local ctx = context.get_context(root)
+    assert(ctx, "Couldn't establish context")
+    ctx.buf = vim.api.nvim_get_current_buf()
+    return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "ctx"] = ctx }))
   end
 end
 
@@ -304,7 +307,7 @@ function M.with_file_at_position(fn, opts)
   end
 end
 
---- Search change that position
+--- Search change at position
 --- @param fn fun(args?: WithArgs): boolean Callback function
 --- @param opts? WithOpts | {search_downwards?: boolean, linenr_from_file?: boolean, linenr_offset?: number} Options
 --- - search_downwards Search downwards, instead of upwards
@@ -488,7 +491,7 @@ function M.search_file(fn, opts)
 end
 
 --- Tests validity of buffer, returns nil if buffer is not valid, otherwise the passed in buffer id
---- @param buf number Buffer ID
+--- @param buf number? Buffer ID
 --- @return number?
 function M.is_valid(buf)
   if buf and vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) then

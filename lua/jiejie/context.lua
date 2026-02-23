@@ -7,7 +7,8 @@ local M = {}
 -- Value:
 --- @class Context
 --- @field root string Repository root
---- @field buf? number Log buffer id
+--- @field buf? number Buffer id for the current operation
+--- @field bufs? {log?: number, oplog?: number} IDs of well-known buffers
 --- @field curpos? table Cursor position on current change
 --- @field log_revisions? number Number of log revisions to display
 
@@ -22,7 +23,6 @@ function M.get_context(root)
   if root_local and vim.g.jiejie_contexts[root_local] then
     return vim.g.jiejie_contexts[root_local]
   end
-  -- local root_local = jujutsu.get_root(root_local)
   vim.g.jiejie_contexts = vim.tbl_extend("force", vim.g.jiejie_contexts, { [root_local] = {
     root = root_local,
     buf = nil,

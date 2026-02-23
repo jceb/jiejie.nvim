@@ -2,19 +2,50 @@ local context = require("jiejie.context")
 local jujutsu = require("jiejie.jujutsu")
 local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
+local buffer = require("jiejie.buffer")
 
 --- Commands
 local M = {}
+
+local commands = {
+  --- @param ctx Context context
+  --- @param args string[] Arguments for command
+  --- @param opts? {force?: boolean, vertical?: boolean} Options
+  log = function(ctx, cmd, args, opts)
+    local lopts = opts or {}
+    api.show_log(ctx, { vertical = lopts.vertical, buffer_type = buffer.BUFFER_TYPE.LOG })
+  end,
+
+  --- @param ctx Context context
+  --- @param args string[] Arguments for command
+  --- @param opts? {force?: boolean, vertical?: boolean} Options
+  oplog = function(ctx, cmd, args, opts)
+    local lopts = opts or {}
+    api.show_log(ctx, { vertical = lopts.vertical, buffer_type = buffer.BUFFER_TYPE.OPLOG })
+  end,
+
+  --- @param ctx Context context
+  --- @param args string[] Arguments for command
+  --- @param opts? {force?: boolean, vertical?: boolean} Options
+  default = function(ctx, cmd, args, opts)
+    local lopts = opts or {}
+    api.cli(ctx, cmd, { args = jujutsu.ignore_immtuable(args, { force = lopts.force }) })
+  end,
+}
 
 --- @param args vim.api.keyset.create_user_command.command_args Command arguments
 function M.Jj(args)
   local ctx = context.get_context()
   assert(ctx, "Working directory does not belong to a Jujutsu repository")
-  if #args.fargs == 0 then
-    api.show_log(ctx, { vertical = args.smods.vertical })
-  else
-    api.cli(ctx, args.fargs[1], { args = jujutsu.ignore_immtuable(vim.list_slice(args.fargs, 2), { force = args.bang }) })
+  local cmd = #args.fargs > 0 and args.fargs[1] or "log"
+  local command = commands[cmd]
+  if not command then
+    command = commands.default
   end
+  command(ctx, cmd, #args.fargs > 1 and vim.list_slice(args.fargs, 2) or {}, {
+    vertical = args.smods.vertical,
+    force = args.bang,
+  })
 end
 
 --- @param args vim.api.keyset.create_user_command.command_args Command arguments

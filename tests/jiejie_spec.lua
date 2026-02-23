@@ -4,13 +4,13 @@ local eq = assert.are.same
 describe("jiejie parse_change", function()
   --
 
-  it("When parsing an the data that doesn't have a change id, the parser shall yield nil", function()
+  it("When parsing data that doesn't have a change id, the parser shall yield nil", function()
     local result = require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴∵∶∷∼∾", 23)
     local expected = nil
     eq(expected, result)
   end)
 
-  it("When parsing an the data that has an empty string have a change id, the parser shall yield nil", function()
+  it("When parsing data that has an empty string as change id, the parser shall yield nil", function()
     local result = require("jiejie.parsers").parse_change("│ ○  tw	†(empty) ‡an empty commit⌠⌡∫∬∮∴ ∵∶∷∼∾", 23)
     local expected = nil
     eq(expected, result)
@@ -116,6 +116,40 @@ describe("jiejie parse_change", function()
       commit_id = "commitid123",
       current_working_copy = true,
       parents = 2,
+    }
+    eq(expected, result)
+  end)
+
+  --
+end)
+
+describe("jiejie parse_oplog_change", function()
+  --
+
+  it("When parsing data that doesn't have a change id, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_oplog_change("@  test@localhost now, lasted 118 milliseconds", 23)
+    local expected = nil
+    eq(expected, result)
+  end)
+
+  it("When parsing an empty change, the parser shall yield the correct status and id", function()
+    local result = require("jiejie.parsers").parse_oplog_change("@  034746053c39 test@localhost now, lasted 118 milliseconds", 23)
+    local expected = {
+      status = "@",
+      id = "034746053c39",
+      email = "test@localhost",
+      linenr = 23,
+    }
+    eq(expected, result)
+  end)
+
+  it("When parsing an empty change, the parser shall yield the correct status and id", function()
+    local result = require("jiejie.parsers").parse_oplog_change("○  034746053c39 test@localhost now, lasted 118 milliseconds", 23)
+    local expected = {
+      status = "○",
+      id = "034746053c39",
+      email = "test@localhost",
+      linenr = 23,
     }
     eq(expected, result)
   end)
@@ -336,10 +370,11 @@ describe("jiejie parse_url", function()
     eq(expected, result)
   end)
 
-  it("When parsing a URL that points to the repository index, the parser shall yield  the url", function()
-    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/log/index")
+  it("When parsing a URL that points to the oplog, the parser shall yield the url", function()
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/oplog/index")
     local expected = {
-      is_index = true,
+      is_log = false,
+      is_oplog = true,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       path = nil,
@@ -348,10 +383,24 @@ describe("jiejie parse_url", function()
     eq(expected, result)
   end)
 
-  it("When parsing a URL that doesn't contain a file path, the parser shall yield  the url, expand the root path but avoid path", function()
+  it("When parsing a URL that points to the repository index, the parser shall yield the url", function()
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/log/index")
+    local expected = {
+      is_log = true,
+      is_oplog = false,
+      scheme = "jiejie://",
+      root = vim.fn.getcwd(),
+      path = nil,
+      workspace = "default",
+    }
+    eq(expected, result)
+  end)
+
+  it("When parsing a URL that doesn't contain a file path, the parser shall yield the url, expand the root path but avoid path", function()
     local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision")
     local expected = {
-      is_index = false,
+      is_log = false,
+      is_oplog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",
@@ -365,7 +414,8 @@ describe("jiejie parse_url", function()
     function()
       local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision/")
       local expected = {
-        is_index = false,
+        is_log = false,
+        is_oplog = false,
         scheme = "jiejie://",
         root = vim.fn.getcwd(),
         revision = "revision",
@@ -378,7 +428,8 @@ describe("jiejie parse_url", function()
   it("When parsing a URL that contains all required elements, the parser shall yield the url and expand the root path", function()
     local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision/some/xy")
     local expected = {
-      is_index = false,
+      is_log = false,
+      is_oplog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",
@@ -391,7 +442,8 @@ describe("jiejie parse_url", function()
   it("When parsing a URL that contains a .jj directory in the path, the parser shall yield the url and expand the root path", function()
     local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision/some/.jj/xy")
     local expected = {
-      is_index = false,
+      is_log = false,
+      is_oplog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",

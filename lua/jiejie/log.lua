@@ -1,4 +1,7 @@
-local buffer = require("jiejie.log_buffer")
+local buffer = require("jiejie.buffer")
+local log_buffer = require("jiejie.log_buffer")
+local oplog = require("jiejie.oplog")
+local oplog_buffer = require("jiejie.oplog_buffer")
 local context = require("jiejie.context")
 local jujutsu = require("jiejie.jujutsu")
 local log_view = require("jiejie.log_view")
@@ -51,11 +54,11 @@ M.load = function(ctx, callback)
   args = vim.list_extend(args, current_log_view.paths or {})
   jujutsu.cli(ctx, cmd, {
     args = args,
-    on_exit = vim.schedule_wrap(function(res)
-      if res.code ~= 0 then
-        error("Error getting log:\n" .. res.stderr)
+    on_exit = vim.schedule_wrap(function(out)
+      if out.code ~= 0 then
+        error("Error getting log:\n" .. out.stderr)
       end
-      local data = vim.split(res.stdout, "\n")
+      local data = vim.split(out.stdout, "\n")
       local headers = {
         buffer.create_header("Help", "g?"),
         buffer.create_header("Reload", "R"),
@@ -65,11 +68,11 @@ M.load = function(ctx, callback)
         table.insert(headers, "Dynamic View: Xss " .. header_log_view_dynamic)
       end
       local cmd_op = "op"
-      local oplog = jujutsu.cli(ctx, cmd_op, {
+      local res = jujutsu.cli(ctx, cmd_op, {
         args = { "log", "-n", "1", "--no-graph", "-T", 'id.short(4) ++ " " ++ user ++ " " ++ description' },
       })
-      if oplog.code == 0 then
-        headers = vim.list_extend(headers, { buffer.create_header("Last operation", vim.trim(oplog.stdout)) })
+      if res.code == 0 then
+        headers = vim.list_extend(headers, { buffer.create_header("Last operation", "so " .. vim.trim(res.stdout)) })
       end
       ctx.curpos = buffer.render(ctx, data, headers)
       if callback then
@@ -173,15 +176,28 @@ function M.setup(id)
       if not url then
         error("Error: unknown URL: " .. ev.file)
       end
-      if url.is_index then
+      if url.is_log then
         local ctx = context.get_context(url.root)
         if not ctx then
           return
         end
-        ctx.buf = ctx.buf or ev.buf
+        ctx.buf = ev.buf
+        ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { log = ctx.buf })
         M.load(ctx, function(_ctx)
           context.set_context(_ctx)
-          buffer.setup_buffer(_ctx)
+          log_buffer.setup_buffer(_ctx)
+          vim.cmd.doau("BufReadPost")
+        end)
+      elseif url.is_oplog then
+        local ctx = context.get_context(url.root)
+        if not ctx then
+          return
+        end
+        ctx.buf = ev.buf
+        ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { oplog = ctx.buf })
+        oplog.load(ctx, function(_ctx)
+          context.set_context(_ctx)
+          oplog_buffer.setup_buffer(_ctx)
           vim.cmd.doau("BufReadPost")
         end)
       else

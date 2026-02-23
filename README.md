@@ -8,9 +8,9 @@ system. The design is heavily inspired by
 
 ## Usage
 
-jiejie provides a large amount of key mappings in the log window to expose as
-much of jujutsu's functionality as possible. For remembering the mappings more
-easily, these rules might prove helpful:
+jiejie provides a large amount of key mappings in the status log window to
+expose as much of jujutsu's functionality as possible. For remembering the
+mappings more easily, these rules might prove helpful:
 
 - The current change (`@`) is at the center of all interactions. Rebasing a
   commit, squashing changes, all references the current change.
@@ -31,22 +31,23 @@ easily, these rules might prove helpful:
 - UX very close to [tope's vim-fugitive](https://github.com/tpope/vim-fugitive)
   - Edit file (`<CR>`, `o`, `gO`, `O`)
   - Edit file at a certain revision (`:Jedit [revision]:[file]`, or by selecting
-    the file in the log summary window via `<CR>`, `o`, `gO`, `O`)
+    the file in the status log window via `<CR>`, `o`, `gO`, `O`)
   - Open full change in preview window (`K`)
   - Toggle inline diff (`=`)
   - Compare multiple versions of a file (`d?`, `:Jdiffsplit [revision]`, `dD`,
     `dd`, `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`)
   - Wraper for `jj` CLI (`:J` or `:Jj`)
   - Show help (`g?`, `c?`, `d?`, `r?`, `s?`)
-- Status log buffer (`:J` or `:Jj`)
-  - Includes the list of modified files alongside the log
+- Status log buffer (`:J`, `:Jj`, `Jj log`)
+  - Includes the list of modified files alongside the status log
   - Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sb`, `sd`, `sf`,
     `sr`, `sq`, `ss`, `1ss`, `..ss`, `st`)
   - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
   - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
-  - Close log buffer (`q`, `gq`)
+  - Close status log buffer (`q`, `gq`)
+  - Reload status log (`R`)
   - Populate a `:` or `:!` command with the file under the cursor (`.`, `!!`)
-- Modify commits from the log buffer
+- Modify commits from the status log buffer
   - Add `!` prefix to mappings when modifying immutable changes
   - Edit change (`<CR>`)
   - Pull and push changes to git (`gu`, `gp`)
@@ -70,6 +71,12 @@ easily, these rules might prove helpful:
     `cbt`, `cbX`, `cbx`)
   - Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
   - Untrack and track files (`x`, `!x`)
+  - Focus / open operation log (`so`, `sO`)
+- Modify repository from the operation log buffer (`:J oplog`, `:Jj oplog`)
+  - Focus /open status log buffer (`so`, `sO`)
+  - Restore repository at operation (`<CR>`)
+  - Close operation log buffer (`q`)
+  - Reload operation log (`R`)
 
 ## Installation
 

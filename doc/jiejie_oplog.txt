@@ -1,0 +1,37 @@
+*jiejie_oplog.txt*
+
+                             JIEJIE Operation Log
+
+MAPS                                                         *jiejie-oplog-maps*
+
+                                                  *jiejie-oplog-navigation-maps*
+Navigation maps ~
+
+                                                                   *jiejie_<CR>*
+<CR>                    Restore repository at the change under the cursor.
+
+                                                                *jiejie-oplog-s*
+Status log filter maps ~
+
+                                                               *jiejie_oplog_s?*
+s?                      Show help for operation log filter maps.
+
+                                                               *jiejie_oplog_so*
+so                      Open status log in a horizontal spilt.
+
+                                                               *jiejie_oplog_sO*
+sO                      Open status log in a vertical spilt.
+
+                                                        *jiejie-misc-oplog-maps*
+Miscellaneous maps ~
+
+                                                               *jiejie_oplog_g?*
+g?                      Show help for |jiejie-oplog-maps|.
+
+                                                                      *jiejie_q*
+q                       Close the operation log window.
+
+                                                                *jiejie_oplog_R*
+R                       Reload log.
+
+vim:tw=78:ts=8:sw=2:et:ft=help:norl:

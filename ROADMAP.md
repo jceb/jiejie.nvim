@@ -51,10 +51,9 @@
       operation or view data
 - [x] Refactor: make jiejie URLs truly unique so that the index and file paths
       can be distinguished
+- [x] New feature: operations log support
 
 ## Priority 1
-
-- [ ] New feature: operations log support
 
 ## Priority 2
 
@@ -77,6 +76,8 @@
       currently incompatible with `--summary`)
 - [ ] Log: display signature status
 - [ ] Commands: fix
+- [ ] Commands: simplify-parents
+- [ ] Commands: sparse
 - [ ] Commands: granular squash via a terminal and the interactive jj UI
 - [ ] Commands: split via a terminal and the interactive jj UI (current
       workaround: commit one file instead of the whole change, then squash the

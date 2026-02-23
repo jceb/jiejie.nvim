@@ -1,3 +1,4 @@
+local buffer = require("jiejie.buffer")
 local context = require("jiejie.context")
 local jujutsu = require("jiejie.jujutsu")
 local log_diff = require("jiejie.log_diff")
@@ -158,7 +159,17 @@ function M.reload_or_error(ctx, cmd, opts)
       end
     end
     local log_dirty_check = require("jiejie.log_dirty_check")
-    log_dirty_check.dirty_mark_content(ctx.buf)
+    -- if ctx.buf then
+    --   log_dirty_check.dirty_mark_content(ctx.buf)
+    -- else
+    if ctx.bufs then
+      if ctx.bufs.oplog then
+        log_dirty_check.dirty_mark_content(ctx.bufs.oplog)
+      end
+      if ctx.bufs.log then
+        log_dirty_check.dirty_mark_content(ctx.bufs.log)
+      end
+    end
     log_dirty_check.do_dirty_check()
     vim.schedule(function()
       vim.cmd.checktime() -- align vim's buffer status with the file system
@@ -178,6 +189,12 @@ M.CHANGE_STATUS = {
   HEAD = "○",
 }
 
+--- @enum OperationChangeStatus
+M.CHANGE_STATUS = {
+  CURRENT = "@",
+  HEAD = "○",
+}
+
 --- Notify if change is immutable and no force is applied
 --- @param change Change current change
 --- @param opts? {force?: boolean} Options
@@ -194,7 +211,7 @@ local function notify_immutable(change, opts)
 end
 
 --- @class Change
---- @field status ChangeStatus Change status, one of @ (current change), × (conflict), ◆ (root), ○ (regular change)
+--- @field status ChangeStatus Change status
 --- @field id string Change ID
 --- @field id_short string Short change ID
 --- @field empty boolean It's an empty change
@@ -211,6 +228,12 @@ end
 --- @field current_working_copy boolean True for the working-copy commit that matches the current commit
 --- @field parents number Number of parent commits
 
+--- @class OperationChange
+--- @field status OperationChangeStatus Change status
+--- @field id string Change ID
+--- @field email string Author's email address
+--- @field linenr number Line number in log buffer that contains change
+
 --- @class ModificationType
 M.MODIFICATION_TYPE = {
   DELETED = "D",
@@ -225,8 +248,10 @@ M.MODIFICATION_TYPE = {
 
 --- Show help window
 --- @param topic? string Jiejie help topic
-function M.show_help(topic)
-  vim.cmd.h("jiejie-" .. (topic or "maps"))
+--- @param opts? {buffer_type?: JiejieBufferType} Options
+function M.show_help(topic, opts)
+  local lopts = opts or {}
+  vim.cmd.h((lopts.buffer_type == buffer.BUFFER_TYPE.OPLOG and "jiejie-oplog-" or "jiejie-") .. (topic or "maps"))
 end
 
 --- Adjust the displayed number of revisions
@@ -278,16 +303,16 @@ function M.toggle_diff(ctx, change, opts)
   return true
 end
 
---- Open or focus log window
+--- Open or focus jiejie window
 --- @param ctx Context context
---- @param opts? {vertical?: boolean} Options
+--- @param opts? {vertical?: boolean, buffer_type?: JiejieBufferType} Options
 --- - vertical If a new window needs to be created, split it vertically?
+--- - buffer_type: Jiejie buffer type to show
 --- @return Context
 function M.show_log(ctx, opts)
   assert(ctx, "Context not provided: ctx")
   local lopts = opts or {}
-  local buffer = require("jiejie.log_buffer")
-  buffer.focus(ctx, lopts.vertical or false)
+  buffer.focus(ctx, { vertical = lopts.vertical or false, buffer_type = lopts.buffer_type })
   return ctx
 end
 
@@ -652,7 +677,6 @@ end
 --- @param change Change Change to restore file to
 --- @param opts? {force?: boolean} Options
 --- - force Change immutable
---- @return boolean?
 function M.file_restore(ctx, file, change, opts)
   assert(ctx, "Context not provided: ctx")
   assert(file, "File not provided: file")
@@ -672,7 +696,29 @@ function M.file_restore(ctx, file, change, opts)
       })
     ),
   })
-  return true
+end
+
+--- Restore operation
+--- @param ctx Context context
+--- @param change OperationChange Change to restore repository to
+function M.operation_restore(ctx, change)
+  assert(ctx, "Context not provided: ctx")
+  assert(change, "Change not provided: change")
+  local cmd = "operation"
+  local args = { "restore", change.id }
+  jujutsu.cli(ctx, cmd, {
+    args = jujutsu.ignore_immtuable(args),
+    -- TODO: reload regular log as well
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, args), " "),
+      vim.tbl_extend("force", {}, {
+        on_exit = function()
+          vim.notify("Restored operation " .. change.id, vim.log.levels.INFO)
+        end,
+      })
+    ),
+  })
 end
 
 --- Open or focus log window
@@ -685,6 +731,19 @@ function M.reload_log(ctx, callback)
     callback(nil)
   end
   require("jiejie.log").load(ctx, callback)
+  return true
+end
+
+--- Open or focus op log window
+--- @param ctx Context context
+--- @param callback fun(ctx: Context?) Asynchronous callback
+--- @return boolean?
+function M.reload_oplog(ctx, callback)
+  assert(ctx, "Context not provided: ctx")
+  if vim.api.nvim_get_current_buf() ~= ctx.buf then
+    callback(nil)
+  end
+  require("jiejie.oplog").load(ctx, callback)
   return true
 end
 

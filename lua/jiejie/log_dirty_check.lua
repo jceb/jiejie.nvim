@@ -30,20 +30,30 @@ function M.dirty_check()
   if not ctx then
     return
   end
+  ctx.buf = bufid
   if M.dirty_check_content(bufid) then
     local curpos_current = vim.api.nvim_win_get_cursor(0)
-    api.reload_log(ctx, function(_ctx)
-      if M.dirty_check_cursor(bufid) and _ctx.curpos then
-        vim.api.nvim_win_set_cursor(0, _ctx.curpos)
-      else
-        local buf_lines = vim.api.nvim_buf_line_count(_ctx.buf)
-        if curpos_current[1] > buf_lines then
-          curpos_current[1] = buf_lines
+    local cleanup = function(_ctx)
+      if _ctx then
+        if M.dirty_check_cursor(bufid) and _ctx.curpos then
+          vim.api.nvim_win_set_cursor(0, _ctx.curpos)
+        else
+          local buf_lines = vim.api.nvim_buf_line_count(_ctx.buf)
+          if curpos_current[1] > buf_lines then
+            curpos_current[1] = buf_lines
+          end
+          vim.api.nvim_win_set_cursor(0, curpos_current)
         end
-        vim.api.nvim_win_set_cursor(0, curpos_current)
       end
       M.dirty_clear(bufid)
-    end)
+    end
+    if vim.bo[bufid].filetype == "jiejie" then
+      api.reload_log(ctx, cleanup)
+    elseif vim.bo[bufid].filetype == "jiejie_oplog" then
+      api.reload_oplog(ctx, cleanup)
+    else
+      error("Unkown file type, can't releoad: " .. vim.bo[bufid].filetype)
+    end
   elseif M.dirty_check_cursor(bufid) then
     local curpos = M.get_dirty_cursor(bufid)
     if curpos then
