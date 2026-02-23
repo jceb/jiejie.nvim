@@ -1422,7 +1422,7 @@ M.nmaps = {
   },
   {
     key = "rr",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 0 }),
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 0 }),
     with_force = true,
     desc = "Rebase the current change `@` on the change under the cursor, together with its branch",
   },
