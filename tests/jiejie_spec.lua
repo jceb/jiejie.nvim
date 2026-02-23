@@ -336,12 +336,26 @@ describe("jiejie parse_url", function()
     eq(expected, result)
   end)
 
-  it("When parsing a URL that doesn't contain a file path, the parser shall yield  the url, expand the root path but avoid path", function()
-    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/revision")
+  it("When parsing a URL that points to the repository index, the parser shall yield  the url", function()
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/log/index")
     local expected = {
+      is_index = true,
+      scheme = "jiejie://",
+      root = vim.fn.getcwd(),
+      path = nil,
+      workspace = "default",
+    }
+    eq(expected, result)
+  end)
+
+  it("When parsing a URL that doesn't contain a file path, the parser shall yield  the url, expand the root path but avoid path", function()
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision")
+    local expected = {
+      is_index = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",
+      workspace = "default",
     }
     eq(expected, result)
   end)
@@ -349,34 +363,40 @@ describe("jiejie parse_url", function()
   it(
     "When parsing a URL that doesn't contain a file path but a trailing slash, the parser shall yield  the url, expand the root path but avoid path",
     function()
-      local result = require("jiejie.parsers").parse_url("jiejie://./.jj/revision/")
+      local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision/")
       local expected = {
+        is_index = false,
         scheme = "jiejie://",
         root = vim.fn.getcwd(),
         revision = "revision",
+        workspace = "default",
       }
       eq(expected, result)
     end
   )
 
   it("When parsing a URL that contains all required elements, the parser shall yield the url and expand the root path", function()
-    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/revision/path/xy")
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision/some/xy")
     local expected = {
+      is_index = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",
-      path = "path/xy",
+      path = "some/xy",
+      workspace = "default",
     }
     eq(expected, result)
   end)
 
   it("When parsing a URL that contains a .jj directory in the path, the parser shall yield the url and expand the root path", function()
-    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/revision/path/.jj/xy")
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/rev/revision/some/.jj/xy")
     local expected = {
+      is_index = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",
-      path = "path/.jj/xy",
+      path = "some/.jj/xy",
+      workspace = "default",
     }
     eq(expected, result)
   end)

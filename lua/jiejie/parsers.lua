@@ -111,8 +111,10 @@ end
 --- @class JiejieURL
 --- @field scheme? string URL scheme
 --- @field root string Path to the repository
---- @field revision string Revision string
+--- @field revision? string Revision string - is nil for an index URL
 --- @field path? string Path in the repository
+--- @field workspace string Repository workspace
+--- @field is_index? boolean Whether the URL is pointing to the index
 
 --- Parse jiejie:// URL into its componentens
 --- @param url string URL
@@ -121,7 +123,7 @@ function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     return nil
   end
-  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)\%(/\(.\+\)$\|$\)\?]])
+  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)/\(log\|rev\)/\%(index$\|\([^/]\+\)\%(/\(.\+\)$\|$\)\?\)]])
   if #match == 0 then
     return nil
   end
@@ -130,11 +132,21 @@ function M.parse_url(url)
   if not repo_stats or repo_stats.type ~= "directory" then
     error("Error: path does not point to a directory: " .. root)
   end
+  local is_index = false
+  if match[5] == "log" then
+    is_index = true
+  elseif match[5] == "rev" then
+    is_index = false
+  else
+    error("Unknown path in URL: " .. url)
+  end
   return {
     scheme = match[2],
     root = root,
-    revision = match[4],
-    path = match[5] ~= "" and match[5] or nil,
+    workspace = match[4],
+    revision = match[6] ~= "" and match[6] or nil,
+    path = match[7] ~= "" and match[7] or nil,
+    is_index = is_index,
   }
 end
 
@@ -213,10 +225,12 @@ end
 --- @return string
 function M.join_url(url)
   local filename
-  if url.revision == "@" then
+  if url.is_index then
+    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/log/index"
+  elseif url.revision == "@" then
     filename = vim.fs.joinpath(url.root, url.path or "")
   else
-    filename = "jiejie://" .. url.root .. "/.jj/" .. url.revision .. "/" .. (url.path or "")
+    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/rev/" .. url.revision .. "/" .. (url.path or "")
   end
   return filename
 end

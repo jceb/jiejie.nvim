@@ -49,6 +49,8 @@
 - [x] Log: add more status filters for authors and descriptions
 - [x] Bug: highlight mappings in header differently than other data, e.g.
       operation or view data
+- [x] Refactor: make jiejie URLs truly unique so that the index and file paths
+      can be distinguished
 
 ## Priority 1
 
@@ -83,8 +85,6 @@
 - [ ] Statusline: provide status line integration, e.g. file name, diff id,
       change id
 - [ ] Commands: blame / file annotate
-- [ ] Refactor: make jiejie URLs truly unique so that the index and file paths
-      can be distinguished
 - [ ] Refactor: remove notification from api.lua into log_buffer_mappings
 - [ ] Commands: absorb
 - [ ] Commands: parallelize

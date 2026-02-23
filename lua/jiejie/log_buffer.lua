@@ -81,8 +81,8 @@ function M.focus(ctx, vertical)
   ctx.buf = helpers.is_valid(ctx.buf)
   local filename = parsers.join_url({
     root = ctx.root,
-    revision = "repo",
-    path = "index",
+    is_index = true,
+    workspace = "default", -- TODO: workspace is not yet supported
   })
   if ctx.buf == nil then
     -- If buffer doesn't exist, open a new one

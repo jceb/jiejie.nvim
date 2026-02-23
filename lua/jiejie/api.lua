@@ -567,6 +567,7 @@ function M.object_edit(ctx, file, change, opts)
     root = ctx.root,
     revision = change.current_working_copy and "@" or M.get_change_id(change),
     path = file,
+    workspace = "default", -- TODO: workspace is not yet supported
   })
   local winid = vim.api.nvim_get_current_win()
   local bufid = vim.api.nvim_get_current_buf()

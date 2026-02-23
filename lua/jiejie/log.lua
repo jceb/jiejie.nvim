@@ -59,7 +59,7 @@ M.load = function(ctx, callback)
       local headers = {
         buffer.create_header("Help", "g?"),
         buffer.create_header("Reload", "R"),
-        buffer.create_header("View", "Xss " .. header_log_view),
+        buffer.create_header("View", "[C]ss " .. header_log_view),
       }
       if header_log_view_dynamic ~= "" then
         table.insert(headers, "Dynamic View: Xss " .. header_log_view_dynamic)
@@ -173,7 +173,7 @@ function M.setup(id)
       if not url then
         error("Error: unknown URL: " .. ev.file)
       end
-      if url.revision == "repo" and url.path == "index" then
+      if url.is_index then
         local ctx = context.get_context(url.root)
         if not ctx then
           return
