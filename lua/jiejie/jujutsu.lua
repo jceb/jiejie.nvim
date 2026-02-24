@@ -48,6 +48,7 @@ function M.cli(ctx, cmd, opts)
     vim.tbl_extend("keep", {
       text = true,
       cwd = ctx.root,
+      env = vim.tbl_extend("keep", { LANG = "C" }, lopts.sys_opts and lopts.sys_opts.env or {}),
     }, lopts.sys_opts or {}),
     lopts.on_exit
   )
@@ -154,6 +155,7 @@ function M.get_root(directory, err_notify, err_continue)
     .system({ "jj", "workspace", "root" }, {
       text = true,
       cwd = cwd,
+      env = { LANG = "C" },
     })
     :wait()
   if res.code ~= 0 and not err_continue then
