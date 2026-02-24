@@ -106,3 +106,4 @@ number of references that I find helpful:
     von Zweigbergk
   - GitButler's [intro](https://www.youtube.com/watch?app=desktop&v=dwyMlLYIrPk)
     and [advanced](https://www.youtube.com/watch?v=PsiXflgIC8Q) videos
+  - And [more](https://github.com/jj-vcs/jj/wiki/Media)
