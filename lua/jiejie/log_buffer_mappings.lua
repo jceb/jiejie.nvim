@@ -91,7 +91,7 @@ local fns = {
   end,
 
   --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
-  --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename
+  --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename, 32: move trunk()
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -108,6 +108,12 @@ local fns = {
         end
       end
       return fn
+    end
+    if lopts.with_action == 2 ^ 5 then
+      return helpers.search_change(function(args)
+        api.bookmark_move(args.ctx, args.src_change, "trunk()", { force = args.force, from = true })
+        return true
+      end)
     end
     --- @param args WithArgs
     return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
@@ -558,7 +564,7 @@ local fns = {
   --- @param opts {rebase?: number, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean, tags?: boolean}
   --- - tags: List tags instead of bookmarks
   --- - rebase: 1 (default): revision, 2: with descendants, 4: branch
-  --- - with_change: 1 (default): use change under cursor, 2: prompt for change id, 4: prompt for bookmark or tag
+  --- - with_change: 1 (default): use change under cursor, 2: prompt for change id, 4: prompt for bookmark or tag, 8: use trunk()
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -577,6 +583,10 @@ local fns = {
             tags = lopts.tags,
           })(args)
         end)
+      elseif lopts.with_change == 2 ^ 3 then
+        return function(args)
+          return fn(vim.tbl_extend("force", args, { dst_change = api.construct_dummy_change("trunk()") }))
+        end
       else
         return helpers.search_change(fn, { args_key = "dst_change" })
       end
@@ -978,6 +988,11 @@ M.nmaps = {
     key = "cbr",
     fn = fns.cb({ with_action = 2 ^ 4, limit_to_change = true }),
     desc = "Rename bookmark at change under the cursor",
+  },
+  {
+    key = "cbt",
+    fn = fns.cb({ with_action = 2 ^ 5 }),
+    desc = "Move default bookmark (`trunk()`) to the change under the cursor",
   },
   {
     key = "cbX",
@@ -1389,6 +1404,21 @@ M.nmaps = {
     fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, limit_to_branch = true }),
     with_force = true,
     desc = "Rebase only the current change `@` on a bookmark in the current branch, without its descendants",
+  },
+  {
+    key = "rbT",
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 3 }),
+    desc = "Rebase only the current change `@` on the default bookmark (`trunk`), without its descendants",
+  },
+  {
+    key = "rbt",
+    fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 3 }),
+    desc = "Rebase the current change `@` on the default bookmark (`trunk`), together with its branch",
+  },
+  {
+    key = "rbX",
+    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 3 }),
+    desc = "Rebase only the current change `@` on the default bookmark (`trunk`), with its descendants",
   },
   {
     key = "rD",

@@ -170,6 +170,10 @@ cbR                     Rename any one bookmark.
                                                                     *jiejie_cbr*
 cbr                     Rename bookmark at change under the cursor.
 
+                                                        *jiejie_cbt* *jiejie_!cbt*
+[!]cbt                  Move default bookmark (`trunk()`) to the change under
+                        the cursor. With <bang>, allow backwards movement.
+
                                                                     *jiejie_cbX*
 cbX                     Delete any one bookmark including the remote boomark.
 
@@ -346,6 +350,16 @@ r<space>                Populate command line with `:Jj rebase`.
                                                         *jiejie_rbo* *jiejie_!rbo*
 [!]rbo                  Rebase only the current change `@` on a bookmark in
                         the current branch, without its descendants. With
+                        <bang>, ignore immutability settings.
+
+                                                        *jiejie_rbt* *jiejie_!rbt*
+[!]rbt                  Rebase the current change `@` on the default bookmark
+                        (`trunk`), together with its branch. With <bang>, ignore
+                        immutability settings.
+
+                                                        *jiejie_rbT* *jiejie_!rbT*
+[!]rbT                  Rebase only the current change `@` on the default
+                        bookmark (`trunk`), without its descendants. With
                         <bang>, ignore immutability settings.
 
                                                           *jiejie_rO* *jiejie_!rO*

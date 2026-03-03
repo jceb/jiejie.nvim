@@ -100,7 +100,7 @@ function M.construct_dummy_change(change_id)
     tags = {},
     git_head = false,
     conflict = false,
-    immutable = change_id ~= "@" and false or true,
+    immutable = change_id ~= "@" and true or false,
     email = "",
     linenr = 0,
     divergent = false,
@@ -295,8 +295,9 @@ end
 --- @param ctx Context context
 --- @param change Change Change data
 --- @param bookmark string Name of bookmark
---- @param opts? {force?: boolean} Options
---- - force Edit immutable change
+--- @param opts? {force?: boolean, from?: boolean} Options
+--- - force: Edit immutable change
+--- - from: Move bookmark from revision
 function M.bookmark_move(ctx, change, bookmark, opts)
   assert(ctx, "Context not provided: ctx")
   assert(change, "Change not provided: change")
@@ -304,6 +305,9 @@ function M.bookmark_move(ctx, change, bookmark, opts)
   local lopts = opts or {}
   local cmd = "bookmark"
   local args = { "move", bookmark, "-t", M.get_change_id(change) }
+  if lopts.from then
+    table.insert(args, 2, "-f")
+  end
   jujutsu.cli(ctx, cmd, {
     args = jujutsu.allow_backwards(args, { force = lopts.force }),
     on_exit = M.reload_or_error(
