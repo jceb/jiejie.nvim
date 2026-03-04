@@ -1382,6 +1382,16 @@ M.nmaps = {
     desc = "Rebase the current change `@` on a bookmark in the current branch, together with its descendants",
   },
   {
+    key = "rbH",
+    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 3 }),
+    desc = "Rebase only the current change `@` on the default bookmark (`trunk`), with its descendants",
+  },
+  {
+    key = "rbh",
+    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 3 }),
+    desc = "Rebase only the current change `@` on the default bookmark (`trunk`), without its descendants",
+  },
+  {
     key = "rbM",
     fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
     with_force = true,
@@ -1406,19 +1416,9 @@ M.nmaps = {
     desc = "Rebase only the current change `@` on a bookmark in the current branch, without its descendants",
   },
   {
-    key = "rbT",
-    fn = fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 3 }),
-    desc = "Rebase only the current change `@` on the default bookmark (`trunk`), without its descendants",
-  },
-  {
     key = "rbt",
     fn = fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 3 }),
     desc = "Rebase the current change `@` on the default bookmark (`trunk`), together with its branch",
-  },
-  {
-    key = "rbX",
-    fn = fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 3 }),
-    desc = "Rebase only the current change `@` on the default bookmark (`trunk`), with its descendants",
   },
   {
     key = "rD",

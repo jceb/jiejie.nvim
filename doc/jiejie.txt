@@ -336,6 +336,16 @@ r<space>                Populate command line with `:Jj rebase`.
                         cursor, together with its descendants. With
                         <bang>, ignore immutability settings.
 
+                                                        *jiejie_rbH* *jiejie_!rbH*
+[!]rbH                  Rebase only the current change `@` on the default
+                        bookmark (`trunk`), with its descendants. With <bang>,
+                        ignore immutability settings.
+
+                                                        *jiejie_rbh* *jiejie_!rbH*
+[!]rbh                  Rebase only the current change `@` on the default
+                        bookmark (`trunk`), without its descendants. With
+                        <bang>, ignore immutability settings.
+
                                                         *jiejie_rbM* *jiejie_!rbM*
                                                         *jiejie_rbm* *jiejie_!rbm*
 [!]rbM                  Rebase the current change `@` on any one bookmark,
@@ -356,11 +366,6 @@ r<space>                Populate command line with `:Jj rebase`.
 [!]rbt                  Rebase the current change `@` on the default bookmark
                         (`trunk`), together with its branch. With <bang>, ignore
                         immutability settings.
-
-                                                        *jiejie_rbT* *jiejie_!rbT*
-[!]rbT                  Rebase only the current change `@` on the default
-                        bookmark (`trunk`), without its descendants. With
-                        <bang>, ignore immutability settings.
 
                                                           *jiejie_rO* *jiejie_!rO*
 [!]rO                   Rebase only the current change `@` on any change ID,

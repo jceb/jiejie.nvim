@@ -63,7 +63,7 @@ easily, these rules might prove helpful:
   - Revert change under the cursor (`cR`)
   - Abandon change or file under the cursor (`X`)
   - Rebase branch, tree or individual change (`r?`, `<<`, `>>`, `rbD`, `rbd`,
-    `rbM`, `rbm`, `rbO`, `rbo`, `rbt`, `rbT`, `rbX`, `rD`, `rd`, `rO`, `ro`,
+    `rbH`, `rbh`, `rbM`, `rbm`, `rbO`, `rbo`, `rbt`, `rD`, `rd`, `rO`, `ro`,
     `rR`, `rr`, `rtD`, `rtd`, `rtO`, `rto`, `rtt` `rtT`)
   - Undo last operation (`cU`)
   - Bookmark management (`cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`, `cbr`,
