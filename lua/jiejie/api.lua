@@ -185,8 +185,7 @@ M.CHANGE_STATUS = {
   CURRENT = "@",
   IMMUTABLE = "◆",
   CONFLICT = "×",
-  MUTUABLE = "◇",
-  HEAD = "○",
+  MUTUABLE = "○",
 }
 
 --- @enum OperationChangeStatus

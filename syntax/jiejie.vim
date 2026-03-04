@@ -18,16 +18,15 @@ syn match jiejieHeaderValueReset /‡/ contained conceal nextgroup=jiejieHeaderV
 
 syn match jiejieElided /^\~  .*$/
 
-syn region jiejieChangeSection start=/^\%( \?[╭╮├┤╰─╯│] \?\)*[@×◆◇○]\%( \?[╭╮├┤╰─╯│] \?\)*  / end=/^\%(\%( \?[╭╮├┤╰─╯│] \?\)*[@×◆◇○]\)\@=/ fold
+syn region jiejieChangeSection start=/^\%( \?[╭╮├┤╰─╯│] \?\)*[@×◆○]\%( \?[╭╮├┤╰─╯│] \?\)*  / end=/^\%(\%( \?[╭╮├┤╰─╯│] \?\)*[@×◆○]\)\@=/ fold
 syn match jiejieChangeGraph /\%( \?[╭╮├┤╰─╯│] \?\)*  / contained nextgroup=jiejieChangeIdShort,jiejieChangeIdShortDivergent skipwhite
 syn match jiejieChangeGraphHead /^\%( \?[╭╮├┤╰─╯│] \?\)*/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeStatusHead,jiejieChangeStatusMutable,jiejieChangeStatusCurrent,jiejieChangeStatusConflict,jiejieChangeStatusImmutable
-syn match jiejieChangeStatusHead /○/ contained nextgroup=jiejieChangeGraph skipwhite
-syn match jiejieChangeStatusMutable /◇/ contained nextgroup=jiejieChangeGraph skipwhite
+syn match jiejieChangeStatusMutable /○/ contained nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusCurrent /@/ contained nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusConflict /×/ contained nextgroup=jiejieChangeGraph skipwhite
 syn match jiejieChangeStatusImmutable /◆/ contained nextgroup=jiejieChangeGraph skipwhite
 
-syn region jiejieFileSection start=/^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  [MADRC]/ end=/^\%(\%([╭╮├┤╰─╯│@×◆◇○]\|\%( \?[╭╮├┤╰─╯│] \?\)*[@×◆◇○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \)\@=/ containedin=jiejieChangeSection contained
+syn region jiejieFileSection start=/^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  [MADRC]/ end=/^\%(\%([╭╮├┤╰─╯│@×◆○]\|\%( \?[╭╮├┤╰─╯│] \?\)*[@×◆○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \)\@=/ containedin=jiejieChangeSection contained
 syn match jiejieFileGraph /^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  / contained containedin=jiejieFileSection nextgroup=jiejieFileModified,jiejieFileDeleted,jiejieFileAdded,jiejieFileRenamed,jiejieFileCopied
 syn match jiejieFileModified /M/ contained nextgroup=jiejieFilename skipwhite
 syn match jiejieFileDeleted /D/ contained nextgroup=jiejieFilename skipwhite
@@ -35,7 +34,7 @@ syn match jiejieFileAdded /A\ze / contained nextgroup=jiejieFilename skipwhite
 syn match jiejieFileRenamed /R/ contained nextgroup=jiejieFilename skipwhite
 syn match jiejieFileCopied /C/ contained nextgroup=jiejieFilename skipwhite
 syn match jiejieFilename /.*$/ contained nextgroup=jiejieHunkSection skipnl
-syn region jiejieHunkSection start=/^\%(@@\+ -\|Binary files \)\@=/ end=/^\%(\%([╭╮├┤╰─╯│@×◆◇○]\|\%( \?[╭╮├┤╰─╯│] \?\)*[@×◆◇○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \)\@=/ contains=diffLine,diffRemoved,diffAdded,diffNoEOL,diffBDiffer contained fold
+syn region jiejieHunkSection start=/^\%(@@\+ -\|Binary files \)\@=/ end=/^\%(\%([╭╮├┤╰─╯│@×◆○]\|\%( \?[╭╮├┤╰─╯│]\%([╭╮├┤╰─╯│] \?\)*\)\?[@×◆○]\)\%([╭╮├┤╰─╯│] \?\)*  \)\@=/ contains=diffLine,diffRemoved,diffAdded,diffNoEOL,diffBDiffer contained fold
 
 syn match jiejieEmptyChangeSeparator /†/ contained conceal nextgroup=jiejieChangeEmpty skipwhite
 syn match jiejieMessageSeparator /‡/ contained conceal nextgroup=jiejieChangeMessageEmpty,jiejieChangeMessage skipwhite
@@ -80,7 +79,6 @@ hi def link jiejieChangeMessageEmpty String
 hi def link jiejieChangeStatusConflict Error
 hi def link jiejieChangeStatusCurrent Todo
 hi def link jiejieChangeStatusMutable Normal
-hi def link jiejieChangeStatusHead Function
 hi def link jiejieChangeStatusImmutable Constant
 
 hi def link jiejieFileModified Type
