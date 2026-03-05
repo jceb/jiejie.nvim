@@ -119,8 +119,12 @@ local fns = {
     return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
       if lopts.with_action == 2 ^ 4 then
         helpers.with_bookmark_or_tag(function(__args)
+          cargs = { "rename", args.bookmark, __args.bookmark }
+          if __args.force then
+            table.insert(cargs, "--overwrite-existing")
+          end
           api.cli(args.ctx, "bookmark", {
-            args = { "rename", args.bookmark, __args.bookmark },
+            args = cargs,
             on_exit = function()
               vim.notify("Bookmark renamed: " .. args.bookmark, vim.log.levels.INFO)
             end,
@@ -983,11 +987,13 @@ M.nmaps = {
     key = "cbR",
     fn = fns.cb({ with_action = 2 ^ 4, drop_change = true }),
     desc = "Rename any one bookmark",
+    with_force = true,
   },
   {
     key = "cbr",
     fn = fns.cb({ with_action = 2 ^ 4, limit_to_change = true }),
     desc = "Rename bookmark at change under the cursor",
+    with_force = true,
   },
   {
     key = "cbt",

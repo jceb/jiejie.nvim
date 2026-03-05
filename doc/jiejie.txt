@@ -165,10 +165,13 @@ cbf                     Forget bookmark locally keeping the remote intact at
                         movement.
 
                                                                     *jiejie_cbR*
-cbR                     Rename any one bookmark.
+[!]cbR                  Rename any one bookmark. With <bang>, allow renaming
+                        to overwrite an existing bookmark.
 
                                                                     *jiejie_cbr*
-cbr                     Rename bookmark at change under the cursor.
+[!]cbr                  Rename bookmark at change under the cursor. With
+                        <bang>, allow renaming to overwrite an existing
+                        bookmark.
 
                                                         *jiejie_cbt* *jiejie_!cbt*
 [!]cbt                  Move default bookmark (`trunk()`) to the change under
@@ -434,7 +437,7 @@ sa                      Add dynamic view that filters changes for the author
 sb                      Add dynamic view that displays all changes that belong
                         to the selected bookmark.
 
-                                                                     *jiejie_sd*
+                                                           *jiejie_sD* *jiejie_sd*
 sD                      Add dynamic view that filters changes for a
 sd                      description. The revset of the current view is taken
                         into account and applied it to the filtered view.
@@ -445,12 +448,18 @@ sf                      Add dynamic view that lists changes for that belong to
                         For a file name, it takes into account the revset of
                         the current view and applies it to the filtered view.
 
-                                                                     *jiejie_sr*
-sr                      Add dynamic view that filters for a revset provided by
-                        the user.
+                                                                     *jiejie_sl*
+sl                      Open operation log in a horizontal spilt.
+
+                                                                     *jiejie_sL*
+sL                      Open operation log in a vertical spilt.
 
                                                                      *jiejie_sq*
 [count]sq               Close dynamic view.
+
+                                                                     *jiejie_sr*
+sr                      Add dynamic view that filters for a revset provided by
+                        the user.
 
                                                                      *jiejie_ss*
 [count]ss               Set log view or switch to the previous view, if no
