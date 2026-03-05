@@ -119,7 +119,7 @@ local fns = {
     return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
       if lopts.with_action == 2 ^ 4 then
         helpers.with_bookmark_or_tag(function(__args)
-          cargs = { "rename", args.bookmark, __args.bookmark }
+          local cargs = { "rename", args.bookmark, __args.bookmark }
           if __args.force then
             table.insert(cargs, "--overwrite-existing")
           end
