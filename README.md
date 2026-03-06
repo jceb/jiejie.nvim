@@ -28,7 +28,7 @@ mappings more easily, these rules might prove helpful:
 
 ## Features
 
-- UX very close to [tope's vim-fugitive](https://github.com/tpope/vim-fugitive)
+- UX very close to [tpope's vim-fugitive](https://github.com/tpope/vim-fugitive)
   - Edit file (`<CR>`, `o`, `gO`, `O`)
   - Edit file at a certain revision (`:Jedit [revision]:[file]`, or by selecting
     the file in the status log window via `<CR>`, `o`, `gO`, `O`)
