@@ -36,7 +36,6 @@ function M.parse_change(line, linenr)
     line,
     [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@×◆○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \+\([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
   )
-  print("match", vim.inspect(match))
   if #match == 0 then
     return nil
   end
