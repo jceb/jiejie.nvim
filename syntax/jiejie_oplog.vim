@@ -18,8 +18,8 @@ syn match jiejieHeaderValueReset /‡/ contained conceal nextgroup=jiejieHeaderV
 
 syn match jiejieElided /^\~  .*$/
 
-syn region jiejieChangeSection start=/^\%( \?[╭╮├┤╰─╯│] \?\)*[@○]\%( \?[╭╮├┤╰─╯│] \?\)*  / end=/^\%(\%( \?[╭╮├┤╰─╯│] \?\)*[@○]\)\@=/ fold
-syn match jiejieChangeGraph /\%( \?[╭╮├┤╰─╯│] \?\)*  / contained nextgroup=jiejieCommitId,jiejieArgs, skipwhite
+syn region jiejieChangeSection start=/^\%( \?[╭╮├┤╰─╯│] \?\)*[@○]\%( \?[╭╮├┤╰─╯│] \?\)*  \+/ end=/^\%(\%( \?[╭╮├┤╰─╯│] \?\)*[@○]\)\@=/ fold
+syn match jiejieChangeGraph /\%( \?[╭╮├┤╰─╯│] \?\)*  \+/ contained nextgroup=jiejieCommitId,jiejieArgs, skipwhite
 syn match jiejieChangeGraphHead /^\%( \?[╭╮├┤╰─╯│] \?\)*/ contained containedin=jiejieChangeSection nextgroup=jiejieChangeStatusMutable,jiejieChangeStatusCurrent
 syn match jiejieChangeStatusMutable /○/ contained nextgroup=jiejieChangeGraph
 syn match jiejieChangeStatusCurrent /@/ contained nextgroup=jiejieChangeGraph
@@ -39,8 +39,7 @@ syn match jiejieChangeStatusConflict /(conflict)/ contained nextgroup=jiejieChan
 syn match jiejieChangeMessageEmpty /(no description set)/ contained skipwhite
 syn match jiejieChangeMessage /.*/ contained
 
-" INFO: Slightly different from jiejie.vim, \+ was added to support arbitrary withespace before the change indicator
-syn region jiejieFileSection start=/^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  \+[MADRC] / end=/^\%(\%([╭╮├┤╰─╯│@○]\|\%( \?[╭╮├┤╰─╯│] \?\)*[@○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \)\@=/ containedin=jiejieChangeSection contained
+syn region jiejieFileSection start=/^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  \+[MADRC]/ end=/^\%([╭╮├┤╰─╯│@×◆○][^@]\)\@=/ containedin=jiejieChangeSection contained
 syn match jiejieFileGraph /^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  \+/ contained containedin=jiejieFileSection nextgroup=jiejieFileModified,jiejieFileDeleted,jiejieFileAdded,jiejieFileRenamed,jiejieFileCopied
 syn match jiejieFileModified /M/ contained nextgroup=jiejieFilename skipwhite
 syn match jiejieFileDeleted /D/ contained nextgroup=jiejieFilename skipwhite

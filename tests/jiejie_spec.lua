@@ -120,6 +120,32 @@ describe("jiejie parse_change", function()
     eq(expected, result)
   end)
 
+  it("When parsing a change with a conflict, the parser shall yield the correct status and id", function()
+    local result = require("jiejie.parsers").parse_change(
+      "×    zp	†(empty) ‡conflict⌠⌡∫∬ conflict∮∴zplkxtnmsxsqwqouxsqwukmqompttzyx∵ test@localhost∶∷dcb3f36628d22c44e4c40a92595a0c63e4bd7f91∼∾2",
+      23
+    )
+    local expected = {
+      status = "×",
+      id = "zplkxtnmsxsqwqouxsqwukmqompttzyx",
+      id_short = "zp",
+      empty = true,
+      description_first_line = "conflict",
+      bookmarks = {},
+      tags = {},
+      git_head = false,
+      conflict = true,
+      immutable = false,
+      email = "test@localhost",
+      linenr = 23,
+      divergent = false,
+      commit_id = "dcb3f36628d22c44e4c40a92595a0c63e4bd7f91",
+      current_working_copy = false,
+      parents = 2,
+    }
+    eq(expected, result)
+  end)
+
   --
 end)
 

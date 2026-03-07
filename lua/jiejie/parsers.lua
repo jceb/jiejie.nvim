@@ -9,7 +9,7 @@ local M = {}
 --- @return OperationChange?
 function M.parse_oplog_change(line, linenr)
   local match =
-    vim.fn.matchlist(line, [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \([a-z0-9]\+\) \([^ ]\+\) .*$]])
+    vim.fn.matchlist(line, [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \+\([a-z0-9]\+\) \([^ ]\+\) .*$]])
   if #match == 0 then
     return nil
   end
@@ -34,8 +34,9 @@ end
 function M.parse_change(line, linenr)
   local match = vim.fn.matchlist(
     line,
-    [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@×◆○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
+    [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@×◆○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \+\([a-z]\+\)\%(??\)\?\t†\([^‡]*\)‡\([^⌠]*\)⌠\([^⌡]*\)⌡\([^∫]*\)∫\([^∬]*\)∬\([^∮]*\)\(∮.*\)$]]
   )
+  print("match", vim.inspect(match))
   if #match == 0 then
     return nil
   end
@@ -56,7 +57,7 @@ function M.parse_change(line, linenr)
   local conflict = match[9] == " conflict"
   local immutable = match2[2] == " immutable"
   local id = match2[3]
-  local email = match2[4]
+  local email = vim.trim(match2[4])
   local divergent = match2[5] == " divergent"
   local commit_id = match2[6]
   local current_working_copy = match2[7] == " current working copy"
@@ -112,7 +113,7 @@ end
 --- @param linenr number Line number in log buffer that contains filename
 --- @return ModifiedFile?
 function M.parse_filename(line, linenr)
-  local match = vim.fn.matchlist(line, [[^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  \([MADRC]\) \(.\+\)$]])
+  local match = vim.fn.matchlist(line, [[^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  \+\([MADRC]\) \(.\+\)$]])
   if #match == 0 then
     return nil
   end
