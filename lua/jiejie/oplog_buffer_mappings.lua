@@ -62,15 +62,10 @@ M.nmaps = {
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = function(args)
       local _winid = vim.api.nvim_get_current_win()
-      local bufid = vim.api.nvim_win_get_buf(_winid)
       local pos = vim.api.nvim_win_get_cursor(_winid)
       api.reload_oplog(args.ctx, function()
         vim.notify("Log reloaded", vim.log.levels.INFO)
-        local buf_lines = vim.api.nvim_buf_line_count(bufid)
-        if pos[1] > buf_lines then
-          pos[1] = buf_lines
-        end
-        vim.api.nvim_win_set_cursor(_winid, pos)
+        api.set_cursor(_winid, pos)
       end)
       return true
     end,

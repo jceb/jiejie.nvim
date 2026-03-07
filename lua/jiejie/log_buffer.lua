@@ -1,3 +1,4 @@
+local api = require("jiejie.api")
 local helpers = require("jiejie.log_buffer_helpers")
 
 --- Opeations that manipulate the log buffer
@@ -28,7 +29,7 @@ function M.setup_buffer(ctx)
   vim.wo[winid][0].listchars = "tab:  "
   -- Place cursor on the current change
   if ctx.curpos then
-    vim.api.nvim_win_set_cursor(winid, ctx.curpos)
+    api.set_cursor(winid, ctx.curpos)
   end
   for _, key in ipairs({ "a", "A", "c", "C", "d", "D", "i", "I", "r", "R", "s", "S", "x", "X", "p", "P" }) do
     -- disable keys that would cause a modification of the buffer

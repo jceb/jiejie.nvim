@@ -36,13 +36,9 @@ function M.dirty_check()
     local cleanup = function(_ctx)
       if _ctx then
         if M.dirty_check_cursor(bufid) and _ctx.curpos then
-          vim.api.nvim_win_set_cursor(0, _ctx.curpos)
+          api.set_cursor(0, _ctx.curpos)
         else
-          local buf_lines = vim.api.nvim_buf_line_count(_ctx.buf)
-          if curpos_current[1] > buf_lines then
-            curpos_current[1] = buf_lines
-          end
-          vim.api.nvim_win_set_cursor(0, curpos_current)
+          api.set_cursor(0, curpos_current)
         end
       end
       M.dirty_clear(bufid)
@@ -55,9 +51,9 @@ function M.dirty_check()
       error("Unkown file type, can't releoad: " .. vim.bo[bufid].filetype)
     end
   elseif M.dirty_check_cursor(bufid) then
-    local curpos = M.get_dirty_cursor(bufid)
-    if curpos then
-      vim.api.nvim_win_set_cursor(0, curpos)
+    local pos = M.get_dirty_cursor(bufid)
+    if pos then
+      api.set_cursor(0, pos)
     end
     M.dirty_clear(bufid)
   end

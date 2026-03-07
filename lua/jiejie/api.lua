@@ -76,6 +76,18 @@ end
 --- Commands that manipulate the log
 local M = {}
 
+--- Places cursor at the provided position, if it doesn't exceed the buffer's length
+--- @param winid number Window id
+--- @param pos [number, number] Cursor position
+function M.set_cursor(winid, pos)
+  local bufid = vim.api.nvim_win_get_buf(winid)
+  local buf_lines = vim.api.nvim_buf_line_count(bufid)
+  if pos[1] > buf_lines then
+    pos[1] = buf_lines
+  end
+  vim.api.nvim_win_set_cursor(winid, pos)
+end
+
 --- Get the correct change ID if case the commit diverges
 --- @param change Change Change
 --- @param short? boolean Whether to return the short ID
@@ -294,9 +306,9 @@ function M.toggle_diff(ctx, change, opts)
   local bufid = vim.api.nvim_win_get_buf(winid)
   if bufid == ctx.buf then
     if lopts.file then
-      vim.api.nvim_win_set_cursor(winid, { lopts.file.linenr, pos[2] })
+      M.set_cursor(winid, { lopts.file.linenr, pos[2] })
     else
-      vim.api.nvim_win_set_cursor(winid, { change.linenr, pos[2] })
+      M.set_cursor(winid, { change.linenr, pos[2] })
     end
   end
   return true
@@ -645,7 +657,7 @@ function M.object_edit(ctx, file, change, opts)
     -- local lines = #(vim.fn.getbufline(_bufid, 1, "$"))
     -- if lines >= cursor_line then
     if not vim.startswith(filename, "jiejie://") then
-      vim.api.nvim_win_set_cursor(vim.api.nvim_get_current_win(), { cursor_line, 0 })
+      M.set_cursor(0, { cursor_line, 0 })
       if lopts.callback then
         lopts.callback(winid_new)
       end
@@ -655,7 +667,7 @@ function M.object_edit(ctx, file, change, opts)
         buffer = _bufid,
         callback = function()
           vim.api.nvim_del_autocmd(id)
-          vim.api.nvim_win_set_cursor(vim.api.nvim_get_current_win(), { cursor_line, 0 })
+          M.set_cursor(0, { cursor_line, 0 })
           if lopts.callback then
             lopts.callback(winid_new)
           end
