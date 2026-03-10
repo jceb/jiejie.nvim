@@ -7,7 +7,7 @@ MAPS                                                         *jiejie-oplog-maps*
                                                   *jiejie-oplog-navigation-maps*
 Navigation maps ~
 
-                                                                   *jiejie_<CR>*
+                                                             *jiejie_oplog_<CR>*
 <CR>                    Restore repository at the change under the cursor.
 
                                                                 *jiejie-oplog-s*
@@ -28,7 +28,7 @@ Miscellaneous maps ~
                                                                *jiejie_oplog_g?*
 g?                      Show help for |jiejie-oplog-maps|.
 
-                                                                      *jiejie_q*
+                                                                *jiejie_oplog_q*
 q                       Close the operation log window.
 
                                                                 *jiejie_oplog_R*

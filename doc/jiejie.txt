@@ -344,7 +344,7 @@ r<space>                Populate command line with `:Jj rebase`.
                         bookmark (`trunk`), with its descendants. With <bang>,
                         ignore immutability settings.
 
-                                                        *jiejie_rbh* *jiejie_!rbH*
+                                                        *jiejie_rbh* *jiejie_!rbh*
 [!]rbh                  Rebase only the current change `@` on the default
                         bookmark (`trunk`), without its descendants. With
                         <bang>, ignore immutability settings.
