@@ -443,7 +443,7 @@ sd                      description. The revset of the current view is taken
                         into account and applied it to the filtered view.
 
                                                                      *jiejie_sf*
-sf                      Add dynamic view that lists changes for that belong to
+sf                      Add dynamic view that lists changes that belong to
                         the change or modify the file name under the cursor.
                         For a file name, it takes into account the revset of
                         the current view and applies it to the filtered view.

@@ -1,6 +1,6 @@
 local api = require("jiejie.api")
 local log_buffer_mappings = require("jiejie.log_buffer_mappings")
-local helpers = require("jiejie.oplog_buffer_helpers")
+local helpers = require("jiejie.evolog_buffer_helpers")
 local buffer = require("jiejie.buffer")
 
 --- Log buffer mappings
@@ -32,12 +32,12 @@ M.nmaps = {
 
   -- Operation log filter maps {{{1
   {
-    key = "sO",
+    key = "sE",
     fn = log_buffer_mappings.fns.so({ vertical = true, log = buffer.BUFFER_TYPE.LOG }),
     desc = "Show log in a vertical spilt",
   },
   {
-    key = "so",
+    key = "se",
     fn = log_buffer_mappings.fns.so({ log = buffer.BUFFER_TYPE.LOG }),
     desc = "Show log in a horizontal spilt",
   },
@@ -46,7 +46,7 @@ M.nmaps = {
   {
     key = "g?",
     fn = function()
-      api.show_help(nil, { buffer_type = buffer.BUFFER_TYPE.OPLOG })
+      api.show_help(nil, { buffer_type = buffer.BUFFER_TYPE.EVOLOG })
     end,
     desc = "Show help",
   },
@@ -57,6 +57,7 @@ M.nmaps = {
     fn = log_buffer_mappings.fns.q({ close_current_window = true }),
     desc = "Close the operation log window",
   },
+
   {
     key = "R",
     fn = log_buffer_mappings.fns.R,

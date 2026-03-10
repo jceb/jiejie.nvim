@@ -76,11 +76,12 @@ end
 M.BUFFER_TYPE = {
   LOG = 2 ^ 0,
   OPLOG = 2 ^ 1,
+  EVOLOG = 2 ^ 2,
 }
 
 --- Focus buffer in current tab
 --- @param ctx Context context
---- @param opts? {vertical?: boolean, buffer_type?: JiejieBufferType}
+--- @param opts? {vertical?: boolean, buffer_type?: JiejieBufferType, change?: Change}
 --- - vertical: Split window vertically, instead of horizontally
 --- - buffer_type: Jiejie buffer type to focus
 --- @return Context
@@ -89,6 +90,8 @@ function M.focus(ctx, opts)
   local lopts = opts or {}
   if lopts.buffer_type == M.BUFFER_TYPE.OPLOG then
     ctx.buf = ctx.bufs and ctx.bufs.oplog and ctx.bufs.oplog
+  elseif lopts.buffer_type == M.BUFFER_TYPE.EVOLOG then
+    ctx.buf = ctx.bufs and ctx.bufs.evolog and ctx.bufs.evolog
   else
     ctx.buf = ctx.bufs and ctx.bufs.log and ctx.bufs.log
   end
@@ -97,6 +100,8 @@ function M.focus(ctx, opts)
     root = ctx.root,
     is_log = lopts.buffer_type == M.BUFFER_TYPE.LOG,
     is_oplog = lopts.buffer_type == M.BUFFER_TYPE.OPLOG,
+    is_evolog = lopts.buffer_type == M.BUFFER_TYPE.EVOLOG,
+    revision = lopts.change and lopts.change.id,
     workspace = "default", -- TODO: workspace is not yet supported
   })
   if ctx.buf == nil then
@@ -116,6 +121,9 @@ function M.focus(ctx, opts)
   for _, winid in ipairs(wins) do
     if vim.api.nvim_win_get_buf(winid) == ctx.buf then
       vim.api.nvim_tabpage_set_win(0, winid)
+      if lopts.buffer_type == M.BUFFER_TYPE.EVOLOG and vim.fn.expand("%") ~= filename then
+        vim.cmd.e(filename)
+      end
       return ctx
     end
   end
@@ -127,6 +135,9 @@ function M.focus(ctx, opts)
   if lopts.buffer_type == M.BUFFER_TYPE.OPLOG then
     local oplog_buffer = require("jiejie.oplog_buffer")
     oplog_buffer.setup_buffer(ctx)
+  elseif lopts.buffer_type == M.BUFFER_TYPE.EVOLOG then
+    local evolog_buffer = require("jiejie.evolog_buffer")
+    evolog_buffer.setup_buffer(ctx)
   else
     local log_buffer = require("jiejie.log_buffer")
     log_buffer.setup_buffer(ctx)

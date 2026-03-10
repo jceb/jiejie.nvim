@@ -16,11 +16,11 @@ Status log filter maps ~
                                                                *jiejie_oplog_s?*
 s?                      Show help for operation log filter maps.
 
-                                                               *jiejie_oplog_so*
-so                      Open status log in a horizontal spilt.
-
                                                                *jiejie_oplog_sO*
 sO                      Open status log in a vertical spilt.
+
+                                                               *jiejie_oplog_so*
+so                      Open status log in a horizontal spilt.
 
                                                         *jiejie-misc-oplog-maps*
 Miscellaneous maps ~

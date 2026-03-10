@@ -396,11 +396,27 @@ describe("jiejie parse_url", function()
     eq(expected, result)
   end)
 
+  it("When parsing a URL that points to the evolog, the parser shall yield the url", function()
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/evolog/revision")
+    local expected = {
+      is_log = false,
+      is_oplog = false,
+      is_evolog = true,
+      scheme = "jiejie://",
+      revision = "revision",
+      root = vim.fn.getcwd(),
+      path = nil,
+      workspace = "default",
+    }
+    eq(expected, result)
+  end)
+
   it("When parsing a URL that points to the oplog, the parser shall yield the url", function()
     local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/oplog/index")
     local expected = {
       is_log = false,
       is_oplog = true,
+      is_evolog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       path = nil,
@@ -414,6 +430,7 @@ describe("jiejie parse_url", function()
     local expected = {
       is_log = true,
       is_oplog = false,
+      is_evolog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       path = nil,
@@ -427,6 +444,7 @@ describe("jiejie parse_url", function()
     local expected = {
       is_log = false,
       is_oplog = false,
+      is_evolog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",
@@ -442,6 +460,7 @@ describe("jiejie parse_url", function()
       local expected = {
         is_log = false,
         is_oplog = false,
+        is_evolog = false,
         scheme = "jiejie://",
         root = vim.fn.getcwd(),
         revision = "revision",
@@ -456,6 +475,7 @@ describe("jiejie parse_url", function()
     local expected = {
       is_log = false,
       is_oplog = false,
+      is_evolog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",
@@ -470,6 +490,7 @@ describe("jiejie parse_url", function()
     local expected = {
       is_log = false,
       is_oplog = false,
+      is_evolog = false,
       scheme = "jiejie://",
       root = vim.fn.getcwd(),
       revision = "revision",

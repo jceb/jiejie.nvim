@@ -8,7 +8,7 @@ local M = {}
 --- @class Context
 --- @field root string Repository root
 --- @field buf? number Buffer id for the current operation
---- @field bufs? {log?: number, oplog?: number} IDs of well-known buffers
+--- @field bufs? {log?: number, oplog?: number, evolog?: number} IDs of well-known buffers
 --- @field curpos? table Cursor position on current change
 --- @field log_revisions? number Number of log revisions to display
 

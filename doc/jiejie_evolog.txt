@@ -1,0 +1,37 @@
+*jiejie_evolog.txt*
+
+                             JIEJIE Evolution Log
+
+MAPS                                                        *jiejie-evolog-maps*
+
+                                                 *jiejie-evolog-navigation-maps*
+Navigation maps ~
+
+                                                            *jiejie_evolog_<CR>*
+<CR>                    Restore repository at the change under the cursor.
+
+                                                               *jiejie-evolog-s*
+Status log filter maps ~
+
+                                                              *jiejie_evolog_s?*
+s?                      Show help for operation log filter maps.
+
+                                                              *jiejie_evolog_sE*
+sE                      Open status log in a vertical spilt.
+
+                                                              *jiejie_evolog_se*
+se                      Open status log in a horizontal spilt.
+
+                                                       *jiejie-misc-evolog-maps*
+Miscellaneous maps ~
+
+                                                              *jiejie_evolog_g?*
+g?                      Show help for |jiejie-evolog-maps|.
+
+                                                               *jiejie_evolog_q*
+q                       Close the operation log window.
+
+                                                               *jiejie_evolog_R*
+R                       Reload log.
+
+vim:tw=78:ts=8:sw=2:et:ft=help:norl:

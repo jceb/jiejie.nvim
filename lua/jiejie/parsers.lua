@@ -9,7 +9,7 @@ local M = {}
 --- @return OperationChange?
 function M.parse_oplog_change(line, linenr)
   local match =
-    vim.fn.matchlist(line, [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \+\([a-z0-9]\+\) \([^ ]\+\) .*$]])
+    vim.fn.matchlist(line, [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@×◆○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \+\([a-z0-9]\+\) \([^ ]\+\) .*$]])
   if #match == 0 then
     return nil
   end
@@ -139,6 +139,7 @@ end
 --- @field path? string Path in the repository
 --- @field workspace string Repository workspace
 --- @field is_log? boolean Whether the URL is pointing to the log
+--- @field is_evolog? boolean Whether the URL is pointing to an evolog
 --- @field is_oplog? boolean Whether the URL is pointing to the oplog
 
 --- Parse jiejie:// URL into its componentens
@@ -148,7 +149,7 @@ function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     return nil
   end
-  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)/\(log\|oplog\|rev\)/\%(index$\|\([^/]\+\)\%(/\(.\+\)$\|$\)\?\)]])
+  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)/\(log\|evolog\|oplog\|rev\)/\%(index$\|\([^/]\+\)\%(/\(.\+\)$\|$\)\?\)]])
   if #match == 0 then
     return nil
   end
@@ -158,9 +159,12 @@ function M.parse_url(url)
     error("Error: path does not point to a directory: " .. root)
   end
   local is_log = false
+  local is_evolog = false
   local is_oplog = false
   if match[5] == "log" then
     is_log = true
+  elseif match[5] == "evolog" then
+    is_evolog = true
   elseif match[5] == "oplog" then
     is_oplog = true
   elseif match[5] == "rev" then
@@ -175,6 +179,7 @@ function M.parse_url(url)
     revision = match[6] ~= "" and match[6] or nil,
     path = match[7] ~= "" and match[7] or nil,
     is_log = is_log,
+    is_evolog = is_evolog,
     is_oplog = is_oplog,
   }
 end
@@ -258,6 +263,8 @@ function M.join_url(url)
     filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/log/index"
   elseif url.is_oplog then
     filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/oplog/index"
+  elseif url.is_evolog then
+    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/evolog/" .. url.revision
   elseif url.revision == "@" then
     filename = vim.fs.joinpath(url.root, url.path or "")
   else

@@ -43,10 +43,8 @@ function M.dirty_check()
       end
       M.dirty_clear(bufid)
     end
-    if vim.bo[bufid].filetype == "jiejie" then
-      api.reload_log(ctx, cleanup)
-    elseif vim.bo[bufid].filetype == "jiejie_oplog" then
-      api.reload_oplog(ctx, cleanup)
+    if vim.startswith(vim.bo[bufid].filetype, "jiejie") then
+      api.reload(ctx, cleanup)
     else
       error("Unkown file type, can't releoad: " .. vim.bo[bufid].filetype)
     end

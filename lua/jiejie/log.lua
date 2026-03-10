@@ -1,5 +1,7 @@
 local buffer = require("jiejie.buffer")
 local log_buffer = require("jiejie.log_buffer")
+local evolog = require("jiejie.evolog")
+local evolog_buffer = require("jiejie.evolog_buffer")
 local oplog = require("jiejie.oplog")
 local oplog_buffer = require("jiejie.oplog_buffer")
 local context = require("jiejie.context")
@@ -59,13 +61,14 @@ M.load = function(ctx, callback)
         error("Error getting log:\n" .. out.stderr)
       end
       local data = vim.split(out.stdout, "\n")
+      local dynamic_view_key = "[C]ss "
       local headers = {
         buffer.create_header("Help", "g?"),
         buffer.create_header("Reload", "R"),
-        buffer.create_header("View", "[C]ss " .. header_log_view),
+        buffer.create_header("View", dynamic_view_key .. header_log_view),
       }
       if header_log_view_dynamic ~= "" then
-        table.insert(headers, "Dynamic View: Xss " .. header_log_view_dynamic)
+        table.insert(headers, "Dynamic View", dynamic_view_key .. header_log_view_dynamic)
       end
       local cmd_op = "op"
       local res = jujutsu.cli(ctx, cmd_op, {
@@ -176,30 +179,32 @@ function M.setup(id)
       if not url then
         error("Error: unknown URL: " .. ev.file)
       end
-      if url.is_log then
+      if url.is_log or url.is_evolog or url.is_oplog then
         local ctx = context.get_context(url.root)
         if not ctx then
           return
         end
         ctx.buf = ev.buf
-        ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { log = ctx.buf })
-        M.load(ctx, function(_ctx)
-          context.set_context(_ctx)
-          log_buffer.setup_buffer(_ctx)
-          vim.cmd.doau("BufReadPost")
-        end)
-      elseif url.is_oplog then
-        local ctx = context.get_context(url.root)
-        if not ctx then
-          return
+        if url.is_log then
+          ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { log = ctx.buf })
+          M.load(ctx, function(_ctx)
+            context.set_context(_ctx)
+            log_buffer.setup_buffer(_ctx)
+          end)
+        elseif url.is_evolog then
+          ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { evolog = ctx.buf })
+          evolog.load(ctx, url.revision, function(_ctx)
+            context.set_context(_ctx)
+            evolog_buffer.setup_buffer(_ctx)
+          end)
+        elseif url.is_oplog then
+          ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { oplog = ctx.buf })
+          oplog.load(ctx, function(_ctx)
+            context.set_context(_ctx)
+            oplog_buffer.setup_buffer(_ctx)
+          end)
         end
-        ctx.buf = ev.buf
-        ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { oplog = ctx.buf })
-        oplog.load(ctx, function(_ctx)
-          context.set_context(_ctx)
-          oplog_buffer.setup_buffer(_ctx)
-          vim.cmd.doau("BufReadPost")
-        end)
+        vim.cmd.doau("BufReadPost")
       else
         vim.bo[ev.buf].buftype = "nofile"
         M.load_object({ root = url.root, buf = ev.buf, curpos = nil }, url, function()

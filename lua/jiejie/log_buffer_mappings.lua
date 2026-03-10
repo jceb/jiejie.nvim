@@ -3,6 +3,7 @@ local helpers = require("jiejie.log_buffer_helpers")
 local jujutsu = require("jiejie.jujutsu")
 local log_diff = require("jiejie.log_diff")
 local log_view = require("jiejie.log_view")
+local buffer = require("jiejie.buffer")
 
 --- Log buffer mappings
 local M = {}
@@ -484,6 +485,17 @@ M.fns = {
     )
   end,
 
+  --- @type fun(args?: WithArgs): boolean Callback function
+  R = function(args)
+    local _winid = vim.api.nvim_get_current_win()
+    local pos = vim.api.nvim_win_get_cursor(_winid)
+    api.reload(args.ctx, function()
+      vim.notify("Log reloaded", vim.log.levels.INFO)
+      api.set_cursor(_winid, pos)
+    end)
+    return true
+  end,
+
   --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean}
   --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset, 32: description, 64: author, 128: manual input author
   --- - tags Handle tags instead of bookmarks
@@ -640,15 +652,14 @@ M.fns = {
     )
   end,
 
-  --- @param opts? {vertical?: boolean, oplog?: boolean}
+  --- @param opts? {vertical?: boolean, log?: JiejieBufferType}
   --- - vertical: Split vertically
   so = function(opts)
     --- @param args WithArgs
     --- @return boolean
     return function(args)
       local lopts = opts or {}
-      local buffer = require("jiejie.buffer")
-      api.show_log(args.ctx, { vertical = lopts.vertical, buffer_type = lopts.oplog and buffer.BUFFER_TYPE.OPLOG or buffer.BUFFER_TYPE.LOG })
+      api.show_log(args.ctx, { vertical = lopts.vertical, buffer_type = lopts.log, change = args.src_change })
       return true
     end
   end,
@@ -1595,14 +1606,24 @@ M.nmaps = {
     desc = "Add dynamic view that lists changes for that belong to the change or modify the file name under the cursor",
   },
   {
-    key = "so",
-    fn = M.fns.so({ oplog = true }),
-    desc = "Show operation log in a horizontal spilt",
+    key = "sE",
+    fn = helpers.search_change(M.fns.so({ vertical = true, log = buffer.BUFFER_TYPE.EVOLOG })),
+    desc = "Show evolog in a vertical spilt",
+  },
+  {
+    key = "se",
+    fn = helpers.search_change(M.fns.so({ log = buffer.BUFFER_TYPE.EVOLOG })),
+    desc = "Show evolog in a horizontal spilt",
   },
   {
     key = "sO",
-    fn = M.fns.so({ vertical = true, oplog = true }),
+    fn = M.fns.so({ vertical = true, log = buffer.BUFFER_TYPE.OPLOG }),
     desc = "Show operation log in a vertical spilt",
+  },
+  {
+    key = "so",
+    fn = M.fns.so({ log = buffer.BUFFER_TYPE.OPLOG }),
+    desc = "Show operation log in a horizontal spilt",
   },
   {
     key = "sq",
@@ -1655,16 +1676,7 @@ M.nmaps = {
   },
   {
     key = "R",
-    --- @type fun(args?: WithArgs): boolean Callback function
-    fn = function(args)
-      local _winid = vim.api.nvim_get_current_win()
-      local pos = vim.api.nvim_win_get_cursor(_winid)
-      api.reload_log(args.ctx, function()
-        vim.notify("Log reloaded", vim.log.levels.INFO)
-        api.set_cursor(_winid, pos)
-      end)
-      return true
-    end,
+    fn = M.fns.R,
     desc = "Reload log",
   },
   {

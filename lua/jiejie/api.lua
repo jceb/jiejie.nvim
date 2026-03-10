@@ -262,7 +262,15 @@ M.MODIFICATION_TYPE = {
 --- @param opts? {buffer_type?: JiejieBufferType} Options
 function M.show_help(topic, opts)
   local lopts = opts or {}
-  vim.cmd.h((lopts.buffer_type == buffer.BUFFER_TYPE.OPLOG and "jiejie-oplog-" or "jiejie-") .. (topic or "maps"))
+  local prefix
+  if lopts.buffer_type == buffer.BUFFER_TYPE.OPLOG then
+    prefix = "jiejie-oplog-"
+  elseif lopts.buffer_type == buffer.BUFFER_TYPE.EVOLOG then
+    prefix = "jiejie-evolog-"
+  else
+    prefix = "jiejie-"
+  end
+  vim.cmd.h(prefix .. (topic or "maps"))
 end
 
 --- Adjust the displayed number of revisions
@@ -316,14 +324,14 @@ end
 
 --- Open or focus jiejie window
 --- @param ctx Context context
---- @param opts? {vertical?: boolean, buffer_type?: JiejieBufferType} Options
+--- @param opts? {vertical?: boolean, buffer_type?: JiejieBufferType, change?: Change} Options
 --- - vertical If a new window needs to be created, split it vertically?
 --- - buffer_type: Jiejie buffer type to show
 --- @return Context
 function M.show_log(ctx, opts)
   assert(ctx, "Context not provided: ctx")
   local lopts = opts or {}
-  buffer.focus(ctx, { vertical = lopts.vertical or false, buffer_type = lopts.buffer_type })
+  buffer.focus(ctx, { vertical = lopts.vertical or false, buffer_type = lopts.buffer_type, change = lopts.change })
   return ctx
 end
 
@@ -732,29 +740,29 @@ function M.operation_restore(ctx, change)
   })
 end
 
---- Open or focus log window
+--- Open log window
 --- @param ctx Context context
 --- @param callback fun(ctx: Context?) Asynchronous callback
 --- @return boolean?
-function M.reload_log(ctx, callback)
+function M.reload(ctx, callback)
   assert(ctx, "Context not provided: ctx")
   if vim.api.nvim_get_current_buf() ~= ctx.buf then
     callback(nil)
   end
-  require("jiejie.log").load(ctx, callback)
-  return true
-end
-
---- Open or focus op log window
---- @param ctx Context context
---- @param callback fun(ctx: Context?) Asynchronous callback
---- @return boolean?
-function M.reload_oplog(ctx, callback)
-  assert(ctx, "Context not provided: ctx")
-  if vim.api.nvim_get_current_buf() ~= ctx.buf then
-    callback(nil)
+  if vim.o.filetype == "jiejie" then
+    require("jiejie.log").load(ctx, callback)
+  elseif vim.o.filetype == "jiejie_oplog" then
+    require("jiejie.oplog").load(ctx, callback)
+  elseif vim.o.filetype == "jiejie_evolog" then
+    local filename = vim.fn.expand("%")
+    local url = parsers.parse_url(filenamy)
+    if url and url.revision then
+      require("jiejie.evolog").load(ctx, url.revision, callback)
+    else
+      vim.notify("Error identifying change ID in filename " .. filename, vim.log.levels.ERROR)
+      callback(nil)
+    end
   end
-  require("jiejie.oplog").load(ctx, callback)
   return true
 end
 
