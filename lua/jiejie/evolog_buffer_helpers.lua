@@ -3,19 +3,15 @@ local parsers = require("jiejie.parsers")
 --- Opeations that help with extracting data from the operation log buffer
 local M = {}
 
---- @class WithOpArgs
---- @field ctx Context Context
---- @field src_change? OperationChange Source change
-
 --- Search change at position
---- @param fn fun(args?: WithOpArgs): boolean Callback function
+--- @param fn fun(args?: WithArgs): boolean Callback function
 --- @param opts? WithOpts | {search_downwards?: boolean, linenr_from_file?: boolean, linenr_offset?: number} Options
 --- - search_downwards Search downwards, instead of upwards
 --- - linenr_from_file Line number the search should start from, if not provided, the cursor position is used
 --- - linenr_offset Offset that is added to line numer, e.g. 1 to start search in the next / previous line
 --- @return function
 function M.search_change(fn, opts)
-  --- @param args? WithOpArgs Arguments
+  --- @param args? WithArgs Arguments
   --- @return boolean?
   return function(args)
     local largs = args or {}
@@ -33,14 +29,14 @@ function M.search_change(fn, opts)
     if lopts.search_downwards then
       ---@diagnostic disable-next-line: param-type-mismatch
       for idx, line in ipairs(vim.fn.getbufline(largs.ctx.buf, linenr, "$")) do
-        change = parsers.parse_oplog_change(line, linenr + idx - 1)
+        change = parsers.parse_evolog_change(line, linenr + idx - 1)
         if change then
           break
         end
       end
     else
       while linenr > 0 do
-        change = parsers.parse_oplog_change(vim.fn.getbufoneline(largs.ctx.buf, linenr), linenr)
+        change = parsers.parse_evolog_change(vim.fn.getbufoneline(largs.ctx.buf, linenr), linenr)
         if change then
           break
         end

@@ -50,8 +50,8 @@ syn match jiejieCommitIdSeparator /∷/ contained conceal nextgroup=jiejieCommit
 syn match jiejieWorkingCopySeparator /∼/ contained conceal nextgroup=jiejieWorkingCopy
 syn match jiejieParentsSeparator /∾/ contained conceal nextgroup=jiejieParents
 
-syn match jiejieChangeIdShort /[a-z]\+\t/ contained nextgroup=jiejieEmptyChangeSeparator
-syn match jiejieChangeIdShortDivergent /[a-z]\+??\t/ contained nextgroup=jiejieEmptyChangeSeparator
+syn match jiejieChangeIdShort /[a-z]\+\%(\/[0-9]\+\)\?\t/ contained nextgroup=jiejieEmptyChangeSeparator
+syn match jiejieChangeIdShortDivergent /[a-z]\+\%(\/[0-9]\+\)\???\t/ contained nextgroup=jiejieEmptyChangeSeparator
 syn match jiejieChangeEmpty /\((empty) \)\?/ contained nextgroup=jiejieMessageSeparator
 syn match jiejieChangeMessage /[^⌠]*/ contained nextgroup=jiejieBookmarkSeparator
 syn match jiejieChangeMessageEmpty /(no description set)/ contained nextgroup=jiejieBookmarkSeparator

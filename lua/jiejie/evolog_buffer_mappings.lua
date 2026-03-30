@@ -29,6 +29,15 @@ M.nmaps = {
     end),
     desc = "Restore repository at the change under the cursor",
   },
+  {
+    key = "K",
+    fn = helpers.search_change(function(args)
+      args.src_change.current_working_copy = false -- force the revision to be displayed
+      api.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit })
+      return true
+    end),
+    desc = "Open change under the cursor",
+  },
 
   -- Operation log filter maps {{{1
   {

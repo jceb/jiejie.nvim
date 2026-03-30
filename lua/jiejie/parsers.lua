@@ -3,6 +3,44 @@ local jujutsu = require("jiejie.jujutsu")
 --- Parser functions
 local M = {}
 
+--- Parse evo log change string into structured data
+--- @param line string Line containing a change string
+--- @param linenr number Line number in log buffer that contains filename
+--- @return Change?
+function M.parse_evolog_change(line, linenr)
+  local match = vim.fn.matchlist(
+    line,
+    [[^\%( \?[╭╮├┤╰─╯│] \?\)*\([@×◆○]\)\%( \?[╭╮├┤╰─╯│] \?\)*  \+\([a-z0-9]\+\%(\/[0-9]\+\)\?\) \([^ ]\+\) .*$]]
+  )
+  if #match == 0 then
+    return nil
+  end
+  local status = match[2]
+  local id = match[3]
+  local email = match[4]
+  if status == "" or id == "" or email == "" then
+    return nil
+  end
+  return {
+    status = status,
+    id = id,
+    id_short = id,
+    -- empty = empty,
+    -- description_first_line = description_first_line,
+    -- bookmarks = bookmarks,
+    -- tags = tags,
+    -- git_head = git_head,
+    -- conflict = conflict,
+    -- immutable = immutable,
+    email = email,
+    linenr = linenr,
+    -- divergent = divergent,
+    -- commit_id = commit_id,
+    -- current_working_copy = current_working_copy,
+    -- parents = parents,
+  }
+end
+
 --- Parse operation log change string into structured data
 --- @param line string Line containing a change string
 --- @param linenr number Line number in log buffer that contains filename
@@ -271,7 +309,7 @@ function M.join_url(url)
   else
     jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/rev/" .. revision .. "/" .. (url.path or "")
   end
-  return jiejie_url
+  return vim.fn.fnameescape(jiejie_url)
 end
 
 return M

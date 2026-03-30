@@ -10,6 +10,9 @@ Navigation maps ~
                                                             *jiejie_evolog_<CR>*
 <CR>                    Restore repository at the change under the cursor.
 
+                                                                      *jiejie_K*
+K                       Open change under the cursor.
+
                                                                *jiejie-evolog-s*
 Status log filter maps ~
 

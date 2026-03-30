@@ -1,6 +1,6 @@
 local api = require("jiejie.api")
 local log_buffer_mappings = require("jiejie.log_buffer_mappings")
-local helpers = require("jiejie.oplog_buffer_helpers")
+local helpers = require("jiejie.evolog_buffer_helpers")
 local buffer = require("jiejie.buffer")
 
 --- Log buffer mappings
@@ -28,6 +28,15 @@ M.nmaps = {
       return true
     end),
     desc = "Restore repository at the change under the cursor",
+  },
+  {
+    key = "K",
+    fn = helpers.search_change(function(args)
+      args.src_change.current_working_copy = false -- force the revision to be displayed
+      api.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit })
+      return true
+    end),
+    desc = "Open change under the cursor",
   },
 
   -- Operation log filter maps {{{1

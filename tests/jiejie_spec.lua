@@ -149,6 +149,44 @@ describe("jiejie parse_change", function()
   --
 end)
 
+describe("jiejie parse_evolog_change", function()
+  --
+
+  it("When parsing data that doesn't have a change id, the parser shall yield nil", function()
+    local result = require("jiejie.parsers").parse_evolog_change("│  -- operation ecdd9134f978 describe commit d4674573653a566b274ddd8a704f52695cac7e52", 23)
+    local expected = nil
+    eq(expected, result)
+  end)
+
+  it("When parsing an empty change, the parser shall yield the correct status and id", function()
+    local result = require("jiejie.parsers").parse_evolog_change("@  ts test@localhost 2026-03-10 12:20:04 default@ 5a3ce4f3", 23)
+    local expected = {
+      status = "@",
+      id = "ts",
+      id_short = "ts",
+      -- commit_id = "5a3ce4f3",
+      email = "test@localhost",
+      linenr = 23,
+    }
+    eq(expected, result)
+  end)
+
+  it("When parsing an empty change, the parser shall yield the correct status and id", function()
+    local result = require("jiejie.parsers").parse_evolog_change("○  ts/1 test@localhost 2026-03-10 12:19:57 d4674573 (hidden)", 23)
+    local expected = {
+      status = "○",
+      id = "ts/1",
+      id_short = "ts/1",
+      -- commit_id = "d4674573",
+      email = "test@localhost",
+      linenr = 23,
+    }
+    eq(expected, result)
+  end)
+
+  --
+end)
+
 describe("jiejie parse_oplog_change", function()
   --
 
@@ -363,6 +401,49 @@ describe("jiejie parse_filename", function()
   --
 end)
 
+describe("jiejie join_url", function()
+  --
+
+  it("When parsing a URL that is constructed via join_url, the parser shall yield the url and decode the revision", function()
+    local result = require("jiejie.parsers").parse_url(require("jiejie.parsers").join_url({
+      is_log = false,
+      is_oplog = false,
+      is_evolog = false,
+      root = ".",
+      revision = "revision/2",
+      path = "x/y",
+      workspace = "default",
+    }))
+    local expected = {
+      is_log = false,
+      is_oplog = false,
+      is_evolog = false,
+      scheme = "jiejie://",
+      revision = "revision\\/2",
+      root = vim.fn.getcwd(),
+      path = "x/y",
+      workspace = "default",
+    }
+    eq(expected, result)
+  end)
+
+  it("When joining a URL, special characters shall be escaped in the resulting filename", function()
+    local result = require("jiejie.parsers").join_url({
+      is_log = false,
+      is_oplog = false,
+      is_evolog = false,
+      root = ".",
+      revision = "revision/2",
+      path = "x/y",
+      workspace = "default",
+    })
+    local expected = "jiejie://./.jj/default/rev/revision\\%2F2/x/y"
+    eq(expected, result)
+  end)
+
+  --
+end)
+
 describe("jiejie parse_url", function()
   --
 
@@ -412,13 +493,13 @@ describe("jiejie parse_url", function()
   end)
 
   it("When parsing a URL that points to the evolog with a url-encoded revision, the parser shall yield the url and decode the revision", function()
-    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/log/revision%2F2")
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/log/revision\\%2F2")
     local expected = {
       is_log = true,
       is_oplog = false,
       is_evolog = false,
       scheme = "jiejie://",
-      revision = "revision/2",
+      revision = "revision\\/2",
       root = vim.fn.getcwd(),
       path = nil,
       workspace = "default",
@@ -441,7 +522,7 @@ describe("jiejie parse_url", function()
       is_oplog = false,
       is_evolog = false,
       scheme = "jiejie://",
-      revision = "revision/2",
+      revision = "revision\\/2",
       root = vim.fn.getcwd(),
       path = "x/y",
       workspace = "default",
