@@ -176,7 +176,7 @@ function M.parse_url(url)
     scheme = match[2],
     root = root,
     workspace = match[4],
-    revision = match[6] ~= "" and match[6] or nil,
+    revision = match[6] ~= "" and string.gsub(match[6], "%%2F", "/") or nil,
     path = match[7] ~= "" and match[7] or nil,
     is_log = is_log,
     is_evolog = is_evolog,
@@ -258,19 +258,20 @@ end
 --- @param url JiejieURL
 --- @return string
 function M.join_url(url)
-  local filename
+  local jiejie_url
+  local revision = url.revision and string.gsub(url.revision, "/", "%%2F") or ""
   if url.is_log then
-    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/log/index"
+    jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/log/index"
   elseif url.is_oplog then
-    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/oplog/index"
+    jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/oplog/index"
   elseif url.is_evolog then
-    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/evolog/" .. url.revision
+    jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/evolog/" .. revision
   elseif url.revision == "@" then
-    filename = vim.fs.joinpath(url.root, url.path or "")
+    jiejie_url = vim.fs.joinpath(url.root, url.path or "")
   else
-    filename = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/rev/" .. url.revision .. "/" .. (url.path or "")
+    jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/rev/" .. revision .. "/" .. (url.path or "")
   end
-  return filename
+  return jiejie_url
 end
 
 return M

@@ -411,6 +411,44 @@ describe("jiejie parse_url", function()
     eq(expected, result)
   end)
 
+  it("When parsing a URL that points to the evolog with a url-encoded revision, the parser shall yield the url and decode the revision", function()
+    local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/log/revision%2F2")
+    local expected = {
+      is_log = true,
+      is_oplog = false,
+      is_evolog = false,
+      scheme = "jiejie://",
+      revision = "revision/2",
+      root = vim.fn.getcwd(),
+      path = nil,
+      workspace = "default",
+    }
+    eq(expected, result)
+  end)
+
+  it("When parsing a URL that is constructed via join_url, the parser shall yield the url and decode the revision", function()
+    local result = require("jiejie.parsers").parse_url(require("jiejie.parsers").join_url({
+      is_log = false,
+      is_oplog = false,
+      is_evolog = false,
+      root = ".",
+      revision = "revision/2",
+      path = "x/y",
+      workspace = "default",
+    }))
+    local expected = {
+      is_log = false,
+      is_oplog = false,
+      is_evolog = false,
+      scheme = "jiejie://",
+      revision = "revision/2",
+      root = vim.fn.getcwd(),
+      path = "x/y",
+      workspace = "default",
+    }
+    eq(expected, result)
+  end)
+
   it("When parsing a URL that points to the oplog, the parser shall yield the url", function()
     local result = require("jiejie.parsers").parse_url("jiejie://./.jj/default/oplog/index")
     local expected = {
