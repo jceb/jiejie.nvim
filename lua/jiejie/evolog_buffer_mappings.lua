@@ -1,5 +1,6 @@
 local api = require("jiejie.api")
 local log_buffer_mappings = require("jiejie.log_buffer_mappings")
+-- local log_diff = require("jiejie.log_diff")
 local helpers = require("jiejie.evolog_buffer_helpers")
 local buffer = require("jiejie.buffer")
 
@@ -16,18 +17,50 @@ M.nmaps = {
   --
 
   -- Navigation maps {{{1
+  -- {
+  --   key = "<CR>",
+  --   fn = helpers.with_change_at_position(
+  --     helpers.search_hunk(
+  --       helpers.search_file(
+  --         helpers.search_change(function(args)
+  --           if args.pos_change then
+  --             api.change_edit(args.ctx, args.pos_change, { force = args.force })
+  --           elseif args.file then
+  --             log_diff.diff_close(args.ctx)
+  --             api.object_edit(args.ctx, args.file.filename, args.src_change, { previous_win = true, hunk = args.hunk })
+  --           else
+  --             vim.schedule(function()
+  --               vim.notify("No file or change found under the curor", vim.log.levels.WARN)
+  --             end)
+  --           end
+  --           return true
+  --         end),
+  --         { err_continue = true }
+  --       ),
+  --       { err_continue = true }
+  --     ),
+  --     { err_continue = true, args_key = "pos_change" }
+  --   ),
+  --   with_force = true,
+  --   desc = "Edit change or file under the cursor",
+  -- },
   {
     key = "<CR>",
-    --- @param args WithOpArgs
     fn = helpers.search_change(function(args)
-      if args.src_change.status == "@" then
-        vim.notify("Repository is at the current operation, no need to revert it", vim.log.levels.WARN)
-        return false
+      if args.pos_change then
+        api.change_edit(args.ctx, args.pos_change, { force = args.force })
+      elseif args.file then
+        log_diff.diff_close(args.ctx)
+        api.object_edit(args.ctx, args.file.filename, args.src_change, { previous_win = true, hunk = args.hunk })
+      else
+        vim.schedule(function()
+          vim.notify("No file or change found under the curor", vim.log.levels.WARN)
+        end)
       end
-      api.operation_restore(args.ctx, args.src_change)
       return true
-    end),
-    desc = "Restore repository at the change under the cursor",
+    end, { args_key = "pos_change" }),
+    with_force = true,
+    desc = "Edit change under the cursor",
   },
   {
     key = "K",
@@ -71,6 +104,16 @@ M.nmaps = {
     key = "R",
     fn = log_buffer_mappings.fns.R,
     desc = "Reload log",
+  },
+  {
+    key = "<C-a>",
+    fn = log_buffer_mappings.fns.ctrl_a(),
+    desc = "Increase the number of displayed revisions in log",
+  },
+  {
+    key = "<C-x>",
+    fn = log_buffer_mappings.fns.ctrl_a({ negate = true }),
+    desc = "Decrease the number of displayed revisions in log",
   },
 }
 

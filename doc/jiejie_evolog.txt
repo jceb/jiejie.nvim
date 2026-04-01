@@ -7,10 +7,11 @@ MAPS                                                        *jiejie-evolog-maps*
                                                  *jiejie-evolog-navigation-maps*
 Navigation maps ~
 
-                                                            *jiejie_evolog_<CR>*
-<CR>                    Restore repository at the change under the cursor.
+                                        *jiejie_evolog_<CR>* *jiejie_evolog_!<CR>*
+[!]<CR>                 Edit change under the cursor. With <bang>, ignore
+                        immutability settings.
 
-                                                                      *jiejie_K*
+                                                               *jiejie_evolog_K*
 K                       Open change under the cursor.
 
                                                                *jiejie-evolog-s*
@@ -36,5 +37,11 @@ q                       Close the operation log window.
 
                                                                *jiejie_evolog_R*
 R                       Reload log.
+
+                                                           *jiejie_evolog_<C-a>*
+<C-a>                   Increase the number of displayed revisions in log.
+
+                                                           *jiejie_evolog_<C-x>*
+<C-x>                   Decrease the number of displayed revisions in log.
 
 vim:tw=78:ts=8:sw=2:et:ft=help:norl:

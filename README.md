@@ -72,11 +72,20 @@ mappings more easily, these rules might prove helpful:
   - Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
   - Untrack and track files (`x`, `!x`)
   - Focus / open operation log (`so`, `sO`)
+  - Focus / open evolog (`se`, `sE`)
 - Modify repository from the operation log buffer (`:J oplog`, `:Jj oplog`)
-  - Focus /open status log buffer (`so`, `sO`)
+  - Focus / open status log buffer (`so`, `sO`)
   - Restore repository at operation (`<CR>`)
   - Close operation log buffer (`q`)
   - Reload operation log (`R`)
+  - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
+- Modify repository from the evolog buffer (`:J evolog`, `:Jj evolog`)
+  - Focus / open status log buffer (`se`, `sE`)
+  - Edit change (`<CR>`)
+  - Close operation log buffer (`q`)
+  - Reload operation log (`R`)
+  - Open full change in preview window (`K`)
+  - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
 
 ## Installation
 

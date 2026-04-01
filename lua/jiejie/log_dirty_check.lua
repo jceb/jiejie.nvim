@@ -30,7 +30,7 @@ function M.dirty_check()
   if not ctx then
     return
   end
-  ctx.buf = bufid
+  ctx.buf = bufid -- work on the local buffer
   if M.dirty_check_content(bufid) then
     local curpos_current = vim.api.nvim_win_get_cursor(0)
     local cleanup = function(_ctx)
