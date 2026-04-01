@@ -1587,7 +1587,7 @@ M.nmaps = {
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = function(args)
       api.cli(args.ctx, "git", {
-        args = { "push", "--all" },
+        args = { "push", "--all", "--deleted" },
         on_exit = function()
           vim.notify("Changes pushed.", vim.log.levels.INFO)
         end,
