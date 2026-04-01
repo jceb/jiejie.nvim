@@ -96,7 +96,7 @@ M.fns = {
   end,
 
   --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
-  --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename, 32: move trunk()
+  --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename, 32: move trunk(), 64: move closest bookmark
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -116,7 +116,18 @@ M.fns = {
       end
       return fn
     end
-    if lopts.with_action == 2 ^ 5 then
+    if lopts.with_action == 2 ^ 6 then
+      return helpers.search_change(function(args)
+        local cargs = { "advance", "-t", api.get_change_id(args.src_change) }
+        api.cli(args.ctx, "bookmark", {
+          args = cargs,
+          on_exit = function()
+            vim.notify("Bookmark advanced to change" .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)
+    elseif lopts.with_action == 2 ^ 5 then
       return helpers.search_change(function(args)
         api.bookmark_move(args.ctx, args.src_change, "trunk()", { force = args.force, from = true })
         return true
@@ -988,6 +999,11 @@ M.nmaps = {
       vim.fn.feedkeys(":Jj commit ", "n")
     end,
     desc = 'Populate command line with ":Jj commit "',
+  },
+  {
+    key = "cba",
+    fn = M.fns.cb({ with_action = 2 ^ 6 }),
+    desc = "Advance closest bookmark to change under the cursor",
   },
   {
     key = "cbb",

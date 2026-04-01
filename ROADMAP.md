@@ -53,6 +53,7 @@
       can be distinguished
 - [x] New feature: operations log support
 - [x] Commands: evolog
+- [x] Commands: Add jj advance
 
 ## Priority 1
 

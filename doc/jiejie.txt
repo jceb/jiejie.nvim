@@ -143,8 +143,12 @@ c?                      Show help for commit maps.
                                                                *jiejie_c<space>*
 c<space>                Populate command line with ":Jj commit ".
 
-                                                                    *jiejie_cbc*
+                                                                    *jiejie_cba*
+cba                     Advance closest bookmark to change under the cursor.
+
+                                                         *jiejie_cbc* *jiejie_cbb*
 cbc                     Create new bookmark at change under the cursor.
+cbb
 
                                                                     *jiejie_cbF*
 cbF                     Forget any one bookmark locally keeping the remote
