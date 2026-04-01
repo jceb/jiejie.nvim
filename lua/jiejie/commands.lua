@@ -27,6 +27,16 @@ local commands = {
   --- @param ctx Context context
   --- @param args string[] Arguments for command
   --- @param opts? {force?: boolean, vertical?: boolean} Options
+  evolog = function(ctx, cmd, args, opts)
+    local lopts = opts or {}
+    local largs = args or {}
+    local change = #largs > 0 and api.construct_dummy_change(largs[1]) or api.construct_dummy_change("@")
+    api.show_log(ctx, { vertical = lopts.vertical, buffer_type = buffer.BUFFER_TYPE.EVOLOG, change = change })
+  end,
+
+  --- @param ctx Context context
+  --- @param args string[] Arguments for command
+  --- @param opts? {force?: boolean, vertical?: boolean} Options
   default = function(ctx, cmd, args, opts)
     local lopts = opts or {}
     api.cli(ctx, cmd, { args = jujutsu.ignore_immtuable(args, { force = lopts.force }) })
