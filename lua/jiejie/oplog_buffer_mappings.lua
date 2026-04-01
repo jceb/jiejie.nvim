@@ -71,6 +71,16 @@ M.nmaps = {
     fn = log_buffer_mappings.fns.R,
     desc = "Reload log",
   },
+  {
+    key = "<C-a>",
+    fn = log_buffer_mappings.fns.ctrl_a(),
+    desc = "Increase the number of displayed revisions in log",
+  },
+  {
+    key = "<C-x>",
+    fn = log_buffer_mappings.fns.ctrl_a({ negate = true }),
+    desc = "Decrease the number of displayed revisions in log",
+  },
 }
 
 return M

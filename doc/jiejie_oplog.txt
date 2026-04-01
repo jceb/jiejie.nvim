@@ -34,4 +34,10 @@ q                       Close the operation log window.
                                                                 *jiejie_oplog_R*
 R                       Reload log.
 
+                                                            *jiejie_oplog_<C-a>*
+<C-a>                   Increase the number of displayed revisions in log.
+
+                                                            *jiejie_oplog_<C-x>*
+<C-x>                   Decrease the number of displayed revisions in log.
+
 vim:tw=78:ts=8:sw=2:et:ft=help:norl:
