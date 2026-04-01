@@ -1323,7 +1323,7 @@ M.nmaps = {
     desc = "Delete tag at change under the cursor",
   },
   {
-    key = "cU",
+    key = "u",
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = function(args)
       api.cli(args.ctx, "op", {
@@ -1334,7 +1334,21 @@ M.nmaps = {
       })
       return true
     end,
-    desc = "Revert last operation",
+    desc = "Undo last operation",
+  },
+  {
+    key = "<C-r>",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = function(args)
+      api.cli(args.ctx, "op", {
+        args = { "revert" },
+        on_exit = function()
+          vim.notify("Operation reverted.", vim.log.levels.INFO)
+        end,
+      })
+      return true
+    end,
+    desc = "Redo last operation",
   },
   {
     key = "X",

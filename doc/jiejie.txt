@@ -289,8 +289,9 @@ ctX                     Delete any one tag.
                                                                     *jiejie_ctx*
 ctx                     Delete tag at change under the cursor.
 
-                                                                     *jiejie_cU*
-cU                      Revert last operation.
+                                                         *jiejie_u* *jiejie_<C-r>*
+u                       Undo / redo last operation. See also |jiejie_so| and
+<C-r>                   |jiejie-oplog-maps|.
 
                                                             *jiejie_x* *jiejie_!x*
 [!]x                    Untrack the file under the cursor.

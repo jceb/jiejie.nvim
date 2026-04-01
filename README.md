@@ -66,7 +66,7 @@ mappings more easily, these rules might prove helpful:
   - Rebase branch, tree or individual change (`r?`, `<<`, `>>`, `rbD`, `rbd`,
     `rbH`, `rbh`, `rbM`, `rbm`, `rbO`, `rbo`, `rbt`, `rD`, `rd`, `rO`, `ro`,
     `rR`, `rr`, `rtD`, `rtd`, `rtO`, `rto`, `rtt` `rtT`)
-  - Undo last operation (`cU`)
+  - Undo / redo last operation (`u`, `<C-r>`)
   - Bookmark management (`cba`, `cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`,
     `cbr`, `cbt`, `cbX`, `cbx`)
   - Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
