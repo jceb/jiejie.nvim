@@ -51,7 +51,7 @@ mappings more easily, these rules might prove helpful:
 - Reload status log (`R`)
 - Populate a `:` or `:!` command with the file under the cursor (`.`, `!!`)
 
-### Modify commits from the status log buffer
+#### Modify commits from the status log buffer
 
 - Add `!` prefix to mappings when modifying immutable changes
 - Edit change (`<CR>`)
