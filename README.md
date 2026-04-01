@@ -28,64 +28,73 @@ mappings more easily, these rules might prove helpful:
 
 ## Features
 
-- UX very close to [tpope's vim-fugitive](https://github.com/tpope/vim-fugitive)
-  - Edit file (`<CR>`, `o`, `gO`, `O`)
-  - Edit file at a certain revision (`:Jedit [revision]:[file]`, or by selecting
-    the file in the status log window via `<CR>`, `o`, `gO`, `O`)
-  - Open full change in preview window (`K`)
-  - Toggle inline diff (`=`)
-  - Compare multiple versions of a file (`d?`, `:Jdiffsplit [revision]`, `dD`,
-    `dd`, `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`)
-  - Wraper for `jj` CLI (`:J` or `:Jj`)
-  - Show help (`g?`, `c?`, `d?`, `r?`, `s?`)
-- Status log buffer (`:J`, `:Jj`, `Jj log`)
-  - Includes the list of modified files alongside the status log
-  - Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sb`, `sd`, `sf`,
-    `sr`, `sq`, `ss`, `1ss`, `..ss`, `st`)
-  - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
-  - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
-  - Close status log buffer (`q`, `gq`)
-  - Reload status log (`R`)
-  - Populate a `:` or `:!` command with the file under the cursor (`.`, `!!`)
-- Modify commits from the status log buffer
-  - Add `!` prefix to mappings when modifying immutable changes
-  - Edit change (`<CR>`)
-  - Pull and push changes to git (`gu`, `gp`)
-  - Modify change description in an editor window (`ce`) or quick edit the first
-    line (`cd`)
-  - Copy change description of change / commit ID (`yy`, `yc`, `yC`)
-  - Create a new change (`c?`, `A`, `a`, `cA`, `ca`, `cI`, `ci`, `i`, `I`, `cn`)
-  - Create a merge commit (`cB`, `cm`, `cM`)
-  - Commit change or file under the cursor (`cc`)
-  - Squash change or file into parent or into the change under the cursor (`cs`,
-    `cS`)
-  - Duplicate / cherry-pick change under the cursor (`cpP`, `cpp`, `cpM`, `cpm`,
-    `cpT`, `cpt`)
-  - Revert change under the cursor (`cR`)
-  - Abandon change or file under the cursor (`X`)
-  - Rebase branch, tree or individual change (`r?`, `<<`, `>>`, `rbD`, `rbd`,
-    `rbH`, `rbh`, `rbM`, `rbm`, `rbO`, `rbo`, `rbt`, `rD`, `rd`, `rO`, `ro`,
-    `rR`, `rr`, `rtD`, `rtd`, `rtO`, `rto`, `rtt` `rtT`)
-  - Undo / redo last operation (`u`, `<C-r>`)
-  - Bookmark management (`cba`, `cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`,
-    `cbr`, `cbt`, `cbX`, `cbx`)
-  - Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
-  - Untrack and track files (`x`, `!x`)
-  - Focus / open operation log (`so`, `sO`)
-  - Focus / open evolog (`se`, `sE`)
-- Modify repository from the operation log buffer (`:J oplog`, `:Jj oplog`)
-  - Focus / open status log buffer (`so`, `sO`)
-  - Restore repository at operation (`<CR>`)
-  - Close operation log buffer (`q`)
-  - Reload operation log (`R`)
-  - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
-- Modify repository from the evolog buffer (`:J evolog`, `:Jj evolog`)
-  - Focus / open status log buffer (`se`, `sE`)
-  - Edit change (`<CR>`)
-  - Close operation log buffer (`q`)
-  - Reload operation log (`R`)
-  - Open full change in preview window (`K`)
-  - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
+### UX very close to [tpope's vim-fugitive](https://github.com/tpope/vim-fugitive)
+
+- Edit file (`<CR>`, `o`, `gO`, `O`)
+- Edit file at a certain revision (`:Jedit [revision]:[file]`, or by selecting
+  the file in the status log window via `<CR>`, `o`, `gO`, `O`)
+- Open full change in preview window (`K`)
+- Toggle inline diff (`=`)
+- Compare multiple versions of a file (`d?`, `:Jdiffsplit [revision]`, `dD`,
+  `dd`, `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`)
+- Wraper for `jj` CLI (`:J` or `:Jj`)
+- Show help (`g?`, `c?`, `d?`, `r?`, `s?`)
+
+### Status log buffer (`:J`, `:Jj`, `Jj log`)
+
+- Includes the list of modified files alongside the status log
+- Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sb`, `sd`, `sf`,
+  `sr`, `sq`, `ss`, `1ss`, `..ss`, `st`)
+- Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
+- Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
+- Close status log buffer (`q`, `gq`)
+- Reload status log (`R`)
+- Populate a `:` or `:!` command with the file under the cursor (`.`, `!!`)
+
+### Modify commits from the status log buffer
+
+- Add `!` prefix to mappings when modifying immutable changes
+- Edit change (`<CR>`)
+- Pull and push changes to git (`gu`, `gp`)
+- Modify change description in an editor window (`ce`) or quick edit the first
+  line (`cd`)
+- Copy change description of change / commit ID (`yy`, `yc`, `yC`)
+- Create a new change (`c?`, `A`, `a`, `cA`, `ca`, `cI`, `ci`, `i`, `I`, `cn`)
+- Create a merge commit (`cB`, `cm`, `cM`)
+- Commit change or file under the cursor (`cc`)
+- Squash change or file into parent or into the change under the cursor (`cs`,
+  `cS`)
+- Duplicate / cherry-pick change under the cursor (`cpP`, `cpp`, `cpM`, `cpm`,
+  `cpT`, `cpt`)
+- Revert change under the cursor (`cR`)
+- Abandon change or file under the cursor (`X`)
+- Rebase branch, tree or individual change (`r?`, `<<`, `>>`, `rbD`, `rbd`,
+  `rbH`, `rbh`, `rbM`, `rbm`, `rbO`, `rbo`, `rbt`, `rD`, `rd`, `rO`, `ro`, `rR`,
+  `rr`, `rtD`, `rtd`, `rtO`, `rto`, `rtt` `rtT`)
+- Undo / redo last operation (`u`, `<C-r>`)
+- Bookmark management (`cba`, `cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`,
+  `cbr`, `cbt`, `cbX`, `cbx`)
+- Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
+- Untrack and track files (`x`, `!x`)
+- Focus / open operation log (`so`, `sO`)
+- Focus / open evolog (`se`, `sE`)
+
+### Operation log buffer (`:J oplog`, `:Jj oplog`)
+
+- Focus / open status log buffer (`so`, `sO`)
+- Restore repository at operation (`<CR>`)
+- Close operation log buffer (`q`)
+- Reload operation log (`R`)
+- Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
+
+### Evolog buffer (`:J evolog`, `:Jj evolog`)
+
+- Focus / open status log buffer (`se`, `sE`)
+- Edit change (`<CR>`)
+- Close operation log buffer (`q`)
+- Reload operation log (`R`)
+- Open full change in preview window (`K`)
+- Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
 
 ## Installation
 
