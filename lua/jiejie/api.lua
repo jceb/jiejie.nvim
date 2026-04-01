@@ -755,7 +755,7 @@ function M.reload(ctx, callback)
     require("jiejie.oplog").load(ctx, callback)
   elseif vim.o.filetype == "jiejie_evolog" then
     local filename = vim.fn.expand("%")
-    local url = parsers.parse_url(filenamy)
+    local url = parsers.parse_url(filename)
     if url and url.revision then
       require("jiejie.evolog").load(ctx, url.revision, callback)
     else
