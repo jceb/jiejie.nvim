@@ -52,6 +52,7 @@
 - [x] Refactor: make jiejie URLs truly unique so that the index and file paths
       can be distinguished
 - [x] New feature: operations log support
+- [x] Commands: evolog
 
 ## Priority 1
 
@@ -63,12 +64,14 @@
 - [ ] Bug: make log reload when `!` commands are executed
 - [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
       the quickfix/location list see issue #1
-- [ ] Commands: evolog
 - [ ] Navigation: implement `(, ), [c, ]c, [], ][ and [m, ]m`
+- [ ] Navigation: unify navigation across log types: oplog, evolog and status
+      log
 - [ ] Log: improve cursor positioning by computing an expected new position,
       e.g. via `search()`
 - [ ] Commands: sign, unsign and sign-off commit
 - [ ] Log: Add `cT` mapping to create a merge commit with a tag
+- [ ] Evolog: make evolog work like the status log with `=`, file editing, etc.
 
 ## Priority 3
 
