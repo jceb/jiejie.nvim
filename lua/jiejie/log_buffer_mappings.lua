@@ -1543,7 +1543,7 @@ M.nmaps = {
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = function(args)
       api.cli(args.ctx, "git", {
-        args = { "fetch" },
+        args = { "fetch", "--all-remotes" },
         on_exit = function()
           vim.notify("Changes fetched.", vim.log.levels.INFO)
         end,
@@ -1557,7 +1557,7 @@ M.nmaps = {
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = function(args)
       api.cli(args.ctx, "git", {
-        args = { "push" },
+        args = { "push", "--all" },
         on_exit = function()
           vim.notify("Changes pushed.", vim.log.levels.INFO)
         end,
