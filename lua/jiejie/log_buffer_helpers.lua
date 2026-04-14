@@ -130,10 +130,10 @@ function M.with_target_change(fn, opts)
         target = lopts.defualt_target
       end
       if not target or target == "" then
-        return fn(largs)
+        fn(largs)
       else
         -- TODO: verify existence of id before passing it on + generate a proper Change object
-        return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "dst_change"] = { id = target, id_short = target } }))
+        fn(vim.tbl_extend("force", largs, { [lopts.args_key or "dst_change"] = { id = target, id_short = target } }))
       end
     end)
   end

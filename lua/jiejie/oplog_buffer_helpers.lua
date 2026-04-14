@@ -6,6 +6,7 @@ local M = {}
 --- @class WithOpArgs
 --- @field ctx Context Context
 --- @field src_change? OperationChange Source change
+--- @field file? ModifiedFile Modified file
 
 --- Search change at position
 --- @param fn fun(args?: WithOpArgs): boolean Callback function

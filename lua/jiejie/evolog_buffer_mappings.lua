@@ -1,6 +1,6 @@
 local api = require("jiejie.api")
 local log_buffer_mappings = require("jiejie.log_buffer_mappings")
--- local log_diff = require("jiejie.log_diff")
+local log_diff = require("jiejie.log_diff")
 local helpers = require("jiejie.evolog_buffer_helpers")
 local buffer = require("jiejie.buffer")
 
