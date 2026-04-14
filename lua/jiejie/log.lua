@@ -61,14 +61,14 @@ M.load = function(ctx, callback)
         error("Error getting log:\n" .. out.stderr)
       end
       local data = vim.split(out.stdout, "\n")
-      local dynamic_view_key = "[C]ss "
+      local dynamic_view_key = "[count]ss "
       local headers = {
         buffer.create_header("Help", "g?"),
         buffer.create_header("Reload", "R"),
         buffer.create_header("View", dynamic_view_key .. header_log_view),
       }
       if header_log_view_dynamic ~= "" then
-        table.insert(headers, "Dynamic View", dynamic_view_key .. header_log_view_dynamic)
+        table.insert(headers, buffer.create_header("Dynamic View", dynamic_view_key .. header_log_view_dynamic))
       end
       local cmd_op = "op"
       local res = jujutsu.cli(ctx, cmd_op, {
