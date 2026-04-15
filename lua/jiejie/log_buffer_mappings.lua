@@ -594,10 +594,10 @@ M.fns = {
           return helpers.with_bookmarks_or_tags(
             --- @param args WithArgs
             helpers.with_bookmark_or_tag(function(args)
-              local revset = "::" .. (lopts.tags and args.tag or args.bookmark) .. " | " .. (lopts.tags and args.tag or args.bookmark)
+              local revset = "::" .. (lopts.tags and args.tag or args.bookmark) .. " | " .. (lopts.tags and args.tag or args.bookmark) .. "+"
               view = {
                 id = revset,
-                revset = revset .. ":: | @",
+                revset = revset .. " | @",
                 description = revset,
               }
               log_view.add_dynamic_view(view)
