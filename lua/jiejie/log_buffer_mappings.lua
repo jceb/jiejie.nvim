@@ -595,7 +595,7 @@ M.fns = {
             --- @param args WithArgs
             helpers.with_bookmark_or_tag(function(args)
               local bm_revset = "::" .. (lopts.tags and args.tag or args.bookmark)
-              local revset = bm_revset .. " | " .. (lopts.tags and args.tag or args.bookmark) .. (lopts.args and lopts.args or "+")
+              local revset = bm_revset .. " | " .. (lopts.tags and args.tag or args.bookmark) .. (lopts.args and lopts.args or "")
               view = {
                 id = revset,
                 revset = revset,
