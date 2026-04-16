@@ -16,20 +16,23 @@ M.LOG_VIEWS = {
     revset = "::@",
   },
   {
-    revset = "visible_heads() | @",
+    revset = "::trunk()",
+  },
+  {
+    revset = "visible_heads()",
     description = "visible_heads()",
   },
   {
     -- all heads that don't have a bookmark or tag attached
-    revset = "visible_heads() ~ bookmarks() ~ tags() | @",
+    revset = "visible_heads() ~ bookmarks() ~ tags()",
     description = "detached_heads()",
   },
   {
-    revset = "bookmarks() | @",
+    revset = "bookmarks()",
     description = "bookmarks()",
   },
   {
-    revset = "tags() | @",
+    revset = "tags()",
     description = "tags()",
   },
 }

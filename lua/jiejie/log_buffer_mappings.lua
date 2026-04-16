@@ -533,7 +533,7 @@ M.fns = {
             local author_escaped = vim.fn.escape(author, '"')
             view = {
               id = "author-" .. author,
-              revset = current_view.revset .. ' & (author(glob:"*' .. author_escaped .. '*") | committer(glob:"*' .. author_escaped .. '*")) | @',
+              revset = current_view.revset .. ' & (author(glob:"*' .. author_escaped .. '*") | committer(glob:"*' .. author_escaped .. '*"))',
               description = author,
             }
             log_view.add_dynamic_view(view)
@@ -544,7 +544,7 @@ M.fns = {
           local email = vim.trim(largs.src_change.email)
           view = {
             id = email,
-            revset = current_view.revset .. ' & (author_email("' .. email .. '") | committer_email("' .. email .. '")) | @',
+            revset = current_view.revset .. ' & (author_email("' .. email .. '") | committer_email("' .. email .. '"))',
             description = email,
           }
           log_view.add_dynamic_view(view)
@@ -556,7 +556,7 @@ M.fns = {
             local description_escaped = vim.fn.escape(description, '"')
             view = {
               id = "desc-" .. description,
-              revset = current_view.revset .. ' & description(glob:"*' .. description_escaped .. '*") | @',
+              revset = current_view.revset .. ' & description(glob:"*' .. description_escaped .. '*")',
               description = description,
             }
             log_view.add_dynamic_view(view)
@@ -570,7 +570,7 @@ M.fns = {
             end
             view = {
               id = revset,
-              revset = revset .. " | @",
+              revset = revset,
               description = revset,
             }
             log_view.add_dynamic_view(view)
@@ -583,7 +583,7 @@ M.fns = {
             local description = (args.file and vim.fs.basename(args.file.filename)) or ("::" .. args.src_change.id_short)
             view = {
               id = args.file and args.file.filename or args.src_change.id,
-              revset = revset .. " | @",
+              revset = revset,
               paths = args.file and { args.file.filename },
               description = description,
             }
@@ -597,7 +597,7 @@ M.fns = {
               local revset = "::" .. (lopts.tags and args.tag or args.bookmark) .. " | " .. (lopts.tags and args.tag or args.bookmark) .. "+"
               view = {
                 id = revset,
-                revset = revset .. " | @",
+                revset = revset,
                 description = revset,
               }
               log_view.add_dynamic_view(view)
