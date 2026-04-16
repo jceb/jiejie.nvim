@@ -1,6 +1,8 @@
 --- Opeations that help managing the log view
 local M = {}
 
+M.EXCLUDED_REVSET = 'bookmarks(glob:"renovate/*") | tracked_remote_bookmarks(glob:"renovate/*") | untracked_remote_bookmarks(glob:"renovate/*")'
+
 --- @class LogView
 --- @field id? string Unique id
 --- @field revset string Revset that is referenced, see https://docs.jj-vcs.dev/latest/revsets/

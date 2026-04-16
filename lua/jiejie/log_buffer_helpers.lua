@@ -2,6 +2,7 @@ local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
 local jujutsu = require("jiejie.jujutsu")
+local log_view = require("jiejie.log_view")
 
 --- Opeations that help with extracting data from the status log buffer
 local M = {}
@@ -216,11 +217,10 @@ function M.with_bookmark_or_tag(fn, opts)
           prompt = prompt,
           format_item = function(item)
             return item.name
-              .. (item.remote and ("@" .. item.remote .. " ") or "")
-              .. " ("
-              .. (item.id_short or "")
-              .. ") "
-              .. (item.description_first_line or "")
+              .. (item.remote and item.remote ~= "" and ("@" .. item.remote) or "")
+              .. (item.id_short ~= "" and (" (" .. item.id_short .. ")") or item.id and (" (" .. item.id .. ")") or "")
+              .. (not item.tracked and item.remote and item.remote ~= "" and " untracked!" or "")
+              .. (item.description_first_line and (" " .. item.description_first_line) or "")
           end,
         }, function(bt, _)
           if not bt and not lopts.err_continue then
@@ -256,11 +256,10 @@ end
 
 --- Retrieve bookmarks or tags
 --- @param fn fun(args?: WithArgs): boolean Callback function
---- @param opts? WithOpts | {_local?: boolean, remote?: boolean, remote_tracked?: boolean, tags?: boolean, src_change?: Change, limit_to_change?: boolean, limit_to_branch?: boolean} Options
+--- @param opts? WithOpts | {tracked?: boolean, untracked?: boolean, tags?: boolean, src_change?: Change, limit_to_change?: boolean, limit_to_branch?: boolean} Options
 --- - tags: List tags instead of bookmarks
---- - _local: List local bookmarks - if nil, list local bookmarks
---- - remote: List remote bookmarks - if nil, don't list remote bookmarks
---- - remote_tracked: List remote bookmarks that are tracked - if nil, don't list remote bookmarks that are tracked
+--- - tracked: List tracked bookmarks - if set to false, don't list tracked bookmarks
+--- - untracked: List untracked bookmarks - if set to nil or false, don't list untracked bookmarks
 --- - src_change: Anchor point for bookmark selection, if missing, consider bookmarks on all (::) commits
 --- - limit_to_change: Limits bookmark search to the current change
 --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
@@ -277,10 +276,12 @@ function M.with_bookmarks_or_tags(fn, opts)
     if not lopts.tags then
       _args = vim.list_extend(_args, {
         "-r",
-        (lopts.src_change and lopts.limit_to_change and api.get_change_id(lopts.src_change))
-          or (lopts.src_change and lopts.limit_to_branch and ("::" .. api.get_change_id(lopts.src_change) .. "- | " .. api.get_change_id(lopts.src_change) .. "+::"))
-          or (lopts.src_change and (":: ~" .. api.get_change_id(lopts.src_change)))
-          or "::",
+        "("
+          .. ((lopts.src_change and lopts.limit_to_change and api.get_change_id(lopts.src_change)) or (lopts.src_change and lopts.limit_to_branch and ("::" .. api.get_change_id(
+            lopts.src_change
+          ) .. "- | " .. api.get_change_id(lopts.src_change) .. "+::")) or (lopts.src_change and (":: ~" .. api.get_change_id(lopts.src_change))) or "::")
+          .. ")"
+          .. (log_view.EXCLUDED_REVSET ~= "" and (" ~ (" .. log_view.EXCLUDED_REVSET .. ")") or ""),
         "--all-remotes",
         "--sort",
         "committer-date-,name",
@@ -307,11 +308,11 @@ function M.with_bookmarks_or_tags(fn, opts)
         local bts = {}
         for _, line in ipairs(vim.split(out.stdout, "\n")) do
           local bt = parsers.parse_bookmark_or_tag(line)
-          if bt and bt.present then
-            -- if local is disabled, then drop local bookmarks
-            -- if remote is disabled, then drop remote bookmarks
-            -- if remote_tracked is disabled, then drop remote bookmarks that are tracked
-            if lopts._local == false and not bt.remote or not lopts.remote and bt.remote or not lopts.remote_tracked and bt.tracked then
+          if bt and bt.present and bt.remote ~= "" then
+            -- if tracked is explicitly set to false, then drop tracked bookmarks
+            -- if untracked is nil or false, then drop untracked bookmarks
+            if (lopts.tracked == false and bt.tracked) or (not lopts.untracked and not bt.tracked) then
+              vim.print("ignoring bookmark")
               -- noop
             else
               bts = vim.list_extend(bts, { bt })

@@ -51,7 +51,7 @@ M.load = function(ctx, callback)
     "-T",
     M.template,
     "-r",
-    "(" .. current_log_view.revset .. " | @)",
+    "(" .. current_log_view.revset .. " | @)" .. (log_view.EXCLUDED_REVSET ~= "" and (" ~ (" .. log_view.EXCLUDED_REVSET .. ")") or ""),
   }
   args = vim.list_extend(args, current_log_view.paths or {})
   jujutsu.cli(ctx, cmd, {
