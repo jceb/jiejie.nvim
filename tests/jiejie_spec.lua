@@ -368,6 +368,26 @@ describe("jiejie parse_filename", function()
     eq(expected, result)
   end)
 
+  it("When parsing an empty source directory, the parser shall adjust and yield the filename", function()
+    local result = require("jiejie.parsers").parse_filename("│  R lua/jiejie/{ => log_duff}.lua", 23)
+    local expected = {
+      modification = "R",
+      filename = "lua/jiejie/log_duff.lua",
+      linenr = 23,
+    }
+    eq(expected, result)
+  end)
+
+  it("When parsing an empty target directory, the parser shall adjust and yield the filename", function()
+    local result = require("jiejie.parsers").parse_filename("│  R lua/jiejie/{log_duff => }.lua", 23)
+    local expected = {
+      modification = "R",
+      filename = "lua/jiejie/.lua",
+      linenr = 23,
+    }
+    eq(expected, result)
+  end)
+
   it("When parsing a copied filename, the parser shall adjust and yield the filename", function()
     local result = require("jiejie.parsers").parse_filename("│  C lua/{jiejie => test}/log_diff.lua", 23)
     local expected = {

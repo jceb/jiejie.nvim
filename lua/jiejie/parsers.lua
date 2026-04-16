@@ -161,7 +161,7 @@ function M.parse_filename(line, linenr)
   end
   if modification == "R" or modification == "C" then
     -- adjust filename that is provided in jj's rname format
-    filename = vim.fn.substitute(filename, [[{[^=]* => \([^}]\+\)}]], [[\1]], "g")
+    filename = vim.fn.substitute(filename, [[{[^=]* => \([^}]*\)}]], [[\1]], "g")
   end
   return {
     modification = modification,
