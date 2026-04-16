@@ -594,11 +594,12 @@ M.fns = {
           return helpers.with_bookmarks_or_tags(
             --- @param args WithArgs
             helpers.with_bookmark_or_tag(function(args)
-              local revset = "::" .. (lopts.tags and args.tag or args.bookmark) .. " | " .. (lopts.tags and args.tag or args.bookmark) .. "+"
+              local bm_revset = "::" .. (lopts.tags and args.tag or args.bookmark)
+              local revset = bm_revset .. " | " .. (lopts.tags and args.tag or args.bookmark) .. (lopts.args and lopts.args or "+")
               view = {
                 id = revset,
                 revset = revset,
-                description = revset,
+                description = bm_revset,
               }
               log_view.add_dynamic_view(view)
               return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
@@ -1618,9 +1619,14 @@ M.nmaps = {
     desc = "Add dynamic view that filters changes for the author of the change under the cursor",
   },
   {
+    key = "sB",
+    fn = M.fns.s({ with_action = 2 ^ 2, args = "::" }),
+    desc = "Add dynamic view that displays all changes that belong to the selected bookmark and all its children",
+  },
+  {
     key = "sb",
-    fn = M.fns.s({ with_action = 2 ^ 2 }),
-    desc = "Add dynamic view that displays all changes that belong to the selected bookmark",
+    fn = M.fns.s({ with_action = 2 ^ 2, args = "+" }),
+    desc = "Add dynamic view that displays all changes that belong to the selected bookmark and its direct children",
   },
   {
     key = "sD",
@@ -1673,9 +1679,14 @@ M.nmaps = {
     desc = "Set log view or switch to the previous view, if no count is given",
   },
   {
+    key = "sT",
+    fn = M.fns.s({ with_action = 2 ^ 2, tags = true, args = "::" }),
+    desc = "Add dynamic view that displays all changes that belong to the selected tag and all its children",
+  },
+  {
     key = "st",
-    fn = M.fns.s({ with_action = 2 ^ 2, tags = true }),
-    desc = "Add dynamic view that displays all changes that belong to the selected tag",
+    fn = M.fns.s({ with_action = 2 ^ 2, tags = true, args = "+" }),
+    desc = "Add dynamic view that displays all changes that belong to the selected tag and its direct children",
   },
 
   -- Miscellaneous maps {{{1

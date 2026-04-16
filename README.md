@@ -43,8 +43,8 @@ mappings more easily, these rules might prove helpful:
 ### Status log buffer (`:J`, `:Jj`, `Jj log`)
 
 - Includes the list of modified files alongside the status log
-- Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sb`, `sd`, `sf`,
-  `sr`, `sq`, `ss`, `1ss`, `..ss`, `st`)
+- Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sB`,`sb`, `sd`, `sf`,
+  `sr`, `sq`, `ss`, `1ss`, `..ss`, `sT`, `st`)
 - Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
 - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
 - Close status log buffer (`q`, `gq`)

@@ -438,9 +438,13 @@ sa                      Add dynamic view that filters changes for the author
                         current view is taken into account and applied it to
                         the filtered view.
 
+                                                                     *jiejie_sB*
+sB                      Add dynamic view that displays all changes that belong
+                        to the selected bookmark and all its children.
+
                                                                      *jiejie_sb*
 sb                      Add dynamic view that displays all changes that belong
-                        to the selected bookmark.
+                        to the selected bookmark and its direct children.
 
                                                            *jiejie_sD* *jiejie_sd*
 sD                      Add dynamic view that filters changes for a
@@ -470,9 +474,13 @@ sr                      Add dynamic view that filters for a revset provided by
 [count]ss               Set log view or switch to the previous view, if no
                         count is given.
 
+                                                                     *jiejie_sT*
+sT                      Add dynamic view that displays all changes that belong
+                        to the selected tag and all its children.
+
                                                                      *jiejie_st*
 st                      Add dynamic view that displays all changes that belong
-                        to the selected tag.
+                        to the selected tag and its direct children.
 
                                                               *jiejie-misc-maps*
 Miscellaneous maps ~
