@@ -13,14 +13,16 @@ M.LOG_VIEWS = {
     revset = "::",
   },
   {
-    revset = "::@",
+    revset = "::@ | @+",
+    description = "::@",
   },
   {
-    revset = "::trunk()",
+    -- display all commits that were made on top of trunk, without any commit that belongs to another bookmark / branch
+    revset = "(::trunk() | trunk()::) ~ trunk()+..bookmarks()",
+    description = "::trunk()",
   },
   {
     revset = "visible_heads()",
-    description = "visible_heads()",
   },
   {
     -- all heads that don't have a bookmark or tag attached
@@ -29,11 +31,9 @@ M.LOG_VIEWS = {
   },
   {
     revset = "bookmarks()",
-    description = "bookmarks()",
   },
   {
     revset = "tags()",
-    description = "tags()",
   },
 }
 
