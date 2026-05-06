@@ -1600,6 +1600,44 @@ M.nmaps = {
     desc = "Push changes to remote",
   },
   {
+    key = "grB",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = helpers.search_change(function(_args)
+      helpers.with_bookmarks_or_tags(
+        helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
+          api.cli(args.ctx, "git", {
+            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
+            on_exit = function()
+              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote .. ".", vim.log.levels.INFO)
+            end,
+          })
+          return true
+        end)),
+        { src_change = _args.src_change }
+      )(_args)
+    end),
+    desc = "Push any bookmark to a specific git remote",
+  },
+  {
+    key = "grb",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = helpers.search_change(function(_args)
+      helpers.with_bookmarks_or_tags(
+        helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
+          api.cli(args.ctx, "git", {
+            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
+            on_exit = function()
+              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote .. ".", vim.log.levels.INFO)
+            end,
+          })
+          return true
+        end)),
+        { src_change = _args.src_change, limit_to_change = true }
+      )(_args)
+    end),
+    desc = "Push the bookmark under the cursor to a specific git remote",
+  },
+  {
     key = "grT",
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = helpers.with_remote(function(args)
