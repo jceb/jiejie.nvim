@@ -74,7 +74,7 @@ M.fns = {
             end,
           }, function(change, _)
             if not change then
-              return vim.notify("Selection failed.", vim.log.levels.WARN)
+              return vim.notify("Selection failed", vim.log.levels.WARN)
             end
             action(change)
           end)
@@ -1281,14 +1281,14 @@ M.nmaps = {
               end,
             }, function(change, _)
               if not change then
-                return vim.notify("Selection failed.", vim.log.levels.WARN)
+                return vim.notify("Selection failed", vim.log.levels.WARN)
               end
               action(change)
             end)
           elseif #ancestors > 0 then
             action(ancestors[1])
           else
-            vim.notify("No ancestors found.", vim.log.levels.ERROR)
+            vim.notify("No ancestors found", vim.log.levels.ERROR)
           end
         else
           action(dst_change)
@@ -1332,7 +1332,7 @@ M.nmaps = {
       api.cli(args.ctx, "op", {
         args = { "revert" },
         on_exit = function()
-          vim.notify("Operation reverted.", vim.log.levels.INFO)
+          vim.notify("Operation reverted", vim.log.levels.INFO)
         end,
       })
       return true
@@ -1346,7 +1346,7 @@ M.nmaps = {
       api.cli(args.ctx, "op", {
         args = { "revert" },
         on_exit = function()
-          vim.notify("Operation reverted.", vim.log.levels.INFO)
+          vim.notify("Operation reverted", vim.log.levels.INFO)
         end,
       })
       return true
@@ -1373,14 +1373,14 @@ M.nmaps = {
                 end,
               }, function(change, _)
                 if not change then
-                  return vim.notify("Selection failed.", vim.log.levels.WARN)
+                  return vim.notify("Selection failed", vim.log.levels.WARN)
                 end
                 action(change)
               end)
             elseif #ancestors > 0 then
               action(ancestors[1])
             else
-              vim.notify("No ancestors found.", vim.log.levels.ERROR)
+              vim.notify("No ancestors found", vim.log.levels.ERROR)
             end
           else
             vim.schedule(function()
@@ -1578,7 +1578,7 @@ M.nmaps = {
       api.cli(args.ctx, "git", {
         args = { "fetch", "--all-remotes" },
         on_exit = function()
-          vim.notify("Changes fetched.", vim.log.levels.INFO)
+          vim.notify("Changes fetched", vim.log.levels.INFO)
         end,
       })
       return true
@@ -1592,7 +1592,7 @@ M.nmaps = {
       api.cli(args.ctx, "git", {
         args = { "push", "--tracked", "--deleted" },
         on_exit = function()
-          vim.notify("Changes pushed.", vim.log.levels.INFO)
+          vim.notify("Changes pushed", vim.log.levels.INFO)
         end,
       })
       return true
@@ -1606,7 +1606,7 @@ M.nmaps = {
       api.cli(args.ctx, "git", {
         args = { "push", "--all", "--deleted", "--remote", args.remote },
         on_exit = function()
-          vim.notify("All bookmarks pushed to remote " .. args.remote .. ".", vim.log.levels.INFO)
+          vim.notify("All bookmarks pushed to remote " .. args.remote, vim.log.levels.INFO)
         end,
       })
       return true
@@ -1620,7 +1620,7 @@ M.nmaps = {
       api.cli(args.ctx, "git", {
         args = { "push", "--all", "--deleted" },
         on_exit = function()
-          vim.notify("All bookmarks pushed.", vim.log.levels.INFO)
+          vim.notify("All bookmarks pushed", vim.log.levels.INFO)
         end,
       })
       return true
@@ -1636,7 +1636,7 @@ M.nmaps = {
           api.cli(args.ctx, "git", {
             args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
             on_exit = function()
-              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote .. ".", vim.log.levels.INFO)
+              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
             end,
           })
           return true
@@ -1655,7 +1655,7 @@ M.nmaps = {
           api.cli(args.ctx, "git", {
             args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
             on_exit = function()
-              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote .. ".", vim.log.levels.INFO)
+              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
             end,
           })
           return true
@@ -1673,7 +1673,7 @@ M.nmaps = {
       api.exec(args.ctx, "git", {
         args = { "push", "--tags", remote },
         on_exit = function()
-          vim.notify("Tags pushed " .. "to remote " .. remote .. ".", vim.log.levels.INFO)
+          vim.notify("Tags pushed " .. "to remote " .. remote, vim.log.levels.INFO)
         end,
       })
       return true
@@ -1687,7 +1687,7 @@ M.nmaps = {
       api.exec(args.ctx, "git", {
         args = { "push", "--tags" },
         on_exit = function()
-          vim.notify("Tags pushed.", vim.log.levels.INFO)
+          vim.notify("Tags pushed", vim.log.levels.INFO)
         end,
       })
       return true
