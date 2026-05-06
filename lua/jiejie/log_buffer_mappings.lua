@@ -1590,7 +1590,7 @@ M.nmaps = {
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = function(args)
       api.cli(args.ctx, "git", {
-        args = { "push", "--all", "--deleted" },
+        args = { "push", "--tracked", "--deleted" },
         on_exit = function()
           vim.notify("Changes pushed.", vim.log.levels.INFO)
         end,
@@ -1598,6 +1598,34 @@ M.nmaps = {
       return true
     end,
     desc = "Push changes to remote",
+  },
+  {
+    key = "grA",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = helpers.with_remote(function(args)
+      api.cli(args.ctx, "git", {
+        args = { "push", "--all", "--deleted", "--remote", args.remote },
+        on_exit = function()
+          vim.notify("All bookmarks pushed to remote " .. args.remote .. ".", vim.log.levels.INFO)
+        end,
+      })
+      return true
+    end),
+    desc = "Push all bookmarks to a specific git remote",
+  },
+  {
+    key = "gra",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = function(args)
+      api.cli(args.ctx, "git", {
+        args = { "push", "--all", "--deleted" },
+        on_exit = function()
+          vim.notify("All bookmarks pushed.", vim.log.levels.INFO)
+        end,
+      })
+      return true
+    end,
+    desc = "Push all bookmarks",
   },
   {
     key = "grB",
@@ -1650,7 +1678,7 @@ M.nmaps = {
       })
       return true
     end),
-    desc = "Push git tags to a specific remote",
+    desc = "Push git tags to a specific git remote",
   },
   {
     key = "grt",

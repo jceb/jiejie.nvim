@@ -422,6 +422,12 @@ gu                      Fetch changes from git remote.
                                                                      *jiejie_gp*
 gp                      Push changes to git remote.
 
+                                                                    *jiejie_grA*
+grA                     Push all bookmarks to a specific git remote.
+
+                                                                    *jiejie_gra*
+gra                     Push all bookmarks.
+
                                                                     *jiejie_grB*
 grB                     Push any bookmark to a specific git remote.
 
@@ -430,7 +436,7 @@ grb                     Push the bookmark under the cursor to a specific git
                         remote.
 
                                                                     *jiejie_grT*
-grT                     Push git tags to a specific remote.
+grT                     Push git tags to a specific git remote.
 
                                                                     *jiejie_grt*
 grt                     Push git tags.
