@@ -1,6 +1,7 @@
 local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
+local jujutsu = require("jiejie.jujutsu")
 
 --- Opeations that help with extracting data from the status log buffer
 local M = {}
@@ -17,6 +18,7 @@ local M = {}
 --- @field hunk? Hunk Hunk that has been found
 --- @field bookmark? string Bookmark
 --- @field bookmarks? BookmarkTag[] Selection of bookmarks to choose from
+--- @field remote? string Git remote
 --- @field tag? string Tag
 --- @field tags? BookmarkTag[] Selection of tags to choose from - opts.tags must be set for tags to be used
 --- @field force? boolean Sets force
@@ -53,6 +55,53 @@ function M.with_force(fn, opts)
     local largs = args or {}
     local lopts = opts or {}
     return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "force"] = true }))
+  end
+end
+
+--- Request a specific git remote
+--- @param fn fun(args?: WithArgs): boolean Callback function
+--- @param opts? WithOpts | {prompt?: string} Options
+--- - prompt Prompt string
+--- - tags Handle tags instead of bookmarks
+--- @return function
+function M.with_remote(fn, opts)
+  --- @param args? WithArgs Arguments
+  --- @return boolean?
+  return function(args)
+    local largs = args or {}
+    local lopts = opts or {}
+    assert(largs.ctx, "Context not provided: ctx")
+    local prompt = lopts.prompt or "Select remote: "
+    jujutsu.cli(largs.ctx, "git", {
+      args = { "remote", "list" },
+      on_exit = vim.schedule_wrap(function(out)
+        local remotes = {}
+        for _, line in ipairs(vim.split(out.stdout or "", "\n")) do
+          local elems = vim.split(line, " ")
+          if #elems == 2 then
+            remotes = vim.list_extend(remotes, { { name = elems[1], url = elems[2] } })
+          end
+        end
+        vim.ui.select(remotes, {
+          prompt = prompt,
+          format_item = function(item)
+            return item.name .. " " .. item.url
+          end,
+        }, function(remote, _)
+          if not remote and not lopts.err_continue then
+            if lopts.err_notify or lopts.err_notify == nil then
+              vim.notify("Selection failed.", vim.log.levels.WARN)
+            end
+            return
+          end
+          if not remote then
+            fn(largs)
+          else
+            fn(vim.tbl_extend("force", largs, { [lopts.args_key or "remote"] = remote.name }))
+          end
+        end)
+      end),
+    })
   end
 end
 
@@ -214,7 +263,6 @@ function M.with_bookmarks_or_tags(fn, opts)
     local largs = args or {}
     local lopts = opts or {}
     assert(largs.ctx, "Context not provided: ctx")
-    local jujutsu = require("jiejie.jujutsu")
     local cmd = lopts.tags and "tag" or "bookmark"
     local _args = { "list" }
     if not lopts.tags then

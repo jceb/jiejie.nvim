@@ -422,6 +422,12 @@ gu                      Fetch changes from git remote.
                                                                      *jiejie_gp*
 gp                      Push changes to git remote.
 
+                                                                    *jiejie_grT*
+grT                     Push git tags to a specific remote.
+
+                                                                    *jiejie_grt*
+grt                     Push git tags.
+
                                                                       *jiejie-s*
 Status log filter maps ~
 

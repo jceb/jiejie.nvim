@@ -4,6 +4,7 @@ local jujutsu = require("jiejie.jujutsu")
 local log_diff = require("jiejie.log_diff")
 local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
+local system = require("jiejie.system")
 
 --- Start dummy editor in the background
 --- @param ctx Context context
@@ -867,6 +868,41 @@ function M.cli(ctx, cmd, opts)
     end
   end
   return jujutsu.cli(ctx, cmd, {
+    args = lopts.args,
+    sys_opts = {
+      stdout = output_collector,
+      stderr = output_collector,
+    },
+    on_exit = M.reload_or_error(
+      ctx,
+      table.concat(vim.list_extend({ cmd }, lopts.args), " "),
+      vim.tbl_extend("keep", lopts, {
+        on_exit = vim.schedule_wrap(function()
+          vim.notify(output, vim.log.levels.INFO)
+        end),
+      })
+    ),
+  })
+end
+
+--- Command executes any commands, returns exit code
+--- @param ctx Context context
+--- @param cmd string List of CLI arguments
+--- @param opts? {on_exit?: fun(out: vim.SystemCompleted), args: string[]} Options
+--- - on_exit Callback function is executed in a scheduled context
+--- - args string[] List of CLI arguments
+--- @return table
+function M.exec(ctx, cmd, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(cmd, "Command not provided: cmd")
+  local lopts = opts or {}
+  local output = ""
+  local output_collector = function(_, data)
+    if data then
+      output = output .. "\n" .. data
+    end
+  end
+  return system.exec(ctx, cmd, {
     args = lopts.args,
     sys_opts = {
       stdout = output_collector,

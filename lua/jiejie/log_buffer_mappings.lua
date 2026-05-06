@@ -1599,6 +1599,35 @@ M.nmaps = {
     end,
     desc = "Push changes to remote",
   },
+  {
+    key = "grT",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = helpers.with_remote(function(args)
+      local remote = args.remote or "origin"
+      api.exec(args.ctx, "git", {
+        args = { "push", "--tags", remote },
+        on_exit = function()
+          vim.notify("Tags pushed " .. "to remote " .. remote .. ".", vim.log.levels.INFO)
+        end,
+      })
+      return true
+    end),
+    desc = "Push git tags to a specific remote",
+  },
+  {
+    key = "grt",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = function(args)
+      api.exec(args.ctx, "git", {
+        args = { "push", "--tags" },
+        on_exit = function()
+          vim.notify("Tags pushed.", vim.log.levels.INFO)
+        end,
+      })
+      return true
+    end,
+    desc = "Push git tags",
+  },
 
   -- Status log filter maps {{{1
   {
