@@ -82,24 +82,28 @@ function M.with_remote(fn, opts)
             remotes = vim.list_extend(remotes, { { name = elems[1], url = elems[2] } })
           end
         end
-        vim.ui.select(remotes, {
-          prompt = prompt,
-          format_item = function(item)
-            return item.name .. " " .. item.url
-          end,
-        }, function(remote, _)
-          if not remote and not lopts.err_continue then
-            if lopts.err_notify or lopts.err_notify == nil then
-              vim.notify("Selection failed.", vim.log.levels.WARN)
+        if #remotes == 1 then
+          fn(vim.tbl_extend("force", largs, { [lopts.args_key or "remote"] = remotes[1].name }))
+        else
+          vim.ui.select(remotes, {
+            prompt = prompt,
+            format_item = function(item)
+              return item.name .. " " .. item.url
+            end,
+          }, function(remote, _)
+            if not remote and not lopts.err_continue then
+              if lopts.err_notify or lopts.err_notify == nil then
+                vim.notify("Selection failed.", vim.log.levels.WARN)
+              end
+              return
             end
-            return
-          end
-          if not remote then
-            fn(largs)
-          else
-            fn(vim.tbl_extend("force", largs, { [lopts.args_key or "remote"] = remote.name }))
-          end
-        end)
+            if not remote then
+              fn(largs)
+            else
+              fn(vim.tbl_extend("force", largs, { [lopts.args_key or "remote"] = remote.name }))
+            end
+          end)
+        end
       end),
     })
   end
@@ -205,29 +209,33 @@ function M.with_bookmark_or_tag(fn, opts)
     local bts = lopts.tags and largs.tags or largs.bookmarks
     local prompt = lopts.prompt or (bts and ("Select " .. title .. ": ") or ("Enter " .. title .. " name: "))
     if bts then
-      vim.ui.select(bts, {
-        prompt = prompt,
-        format_item = function(item)
-          return item.name
-            .. (item.remote and ("@" .. item.remote .. " ") or "")
-            .. " ("
-            .. (item.id_short or "")
-            .. ") "
-            .. (item.description_first_line or "")
-        end,
-      }, function(bt, _)
-        if not bt and not lopts.err_continue then
-          if lopts.err_notify or lopts.err_notify == nil then
-            vim.notify("Selection failed.", vim.log.levels.WARN)
+      if #bts == 1 then
+        fn(vim.tbl_extend("force", largs, { [lopts.args_key or "remote"] = bts[1].name }))
+      else
+        vim.ui.select(bts, {
+          prompt = prompt,
+          format_item = function(item)
+            return item.name
+              .. (item.remote and ("@" .. item.remote .. " ") or "")
+              .. " ("
+              .. (item.id_short or "")
+              .. ") "
+              .. (item.description_first_line or "")
+          end,
+        }, function(bt, _)
+          if not bt and not lopts.err_continue then
+            if lopts.err_notify or lopts.err_notify == nil then
+              vim.notify("Selection failed.", vim.log.levels.WARN)
+            end
+            return
           end
-          return
-        end
-        if not bt then
-          fn(largs)
-        else
-          fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bt.name }))
-        end
-      end)
+          if not bt then
+            fn(largs)
+          else
+            fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bt.name }))
+          end
+        end)
+      end
     else
       vim.ui.input({ prompt = prompt }, function(bt)
         if not bt and not lopts.err_continue then
