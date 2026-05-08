@@ -103,7 +103,7 @@ M.fns = {
   cb = function(opts)
     local lopts = opts or {}
     local with_bookmarks = function(fn)
-      if lopts.with_action ~= 2 ^ 0 or lopts.with_action ~= 2 ^ 2 or lopts.with_action ~= 2 ^ 3 or lopts.with_action ~= 2 ^ 4 then
+      if lopts.with_action ~= 2 ^ 0 then
         --- @param args WithArgs
         --- @return boolean
         return function(args)
@@ -507,10 +507,11 @@ M.fns = {
     return true
   end,
 
-  --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean}
+  --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean, untracked?: boolean}
   --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset, 32: description, 64: author, 128: manual input author
   --- - tags Handle tags instead of bookmarks
   --- - args: Additional arguments
+  --- - untrackd: List untracked bookmarks - not relevant for tags
   s = function(opts)
     local lopts = opts or {}
     --- @param fn fun(args: WithArgs): boolean
@@ -604,7 +605,7 @@ M.fns = {
               log_view.add_dynamic_view(view)
               return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
             end, { tags = lopts.tags }),
-            { tags = lopts.tags, remote = true }
+            { tags = lopts.tags, untracked = lopts.untracked }
           )(_args)
         elseif lopts.with_action == 2 ^ 1 then
           if vim.v.count > 0 then
@@ -1631,7 +1632,7 @@ M.nmaps = {
     key = "grB",
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = helpers.search_change(function(_args)
-      helpers.with_bookmarks_or_tags(
+      return helpers.with_bookmarks_or_tags(
         helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
           api.cli(args.ctx, "git", {
             args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
@@ -1650,7 +1651,7 @@ M.nmaps = {
     key = "grb",
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = helpers.search_change(function(_args)
-      helpers.with_bookmarks_or_tags(
+      return helpers.with_bookmarks_or_tags(
         helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
           api.cli(args.ctx, "git", {
             args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
@@ -1715,12 +1716,12 @@ M.nmaps = {
   },
   {
     key = "sB",
-    fn = M.fns.s({ with_action = 2 ^ 2, args = "::" }),
+    fn = M.fns.s({ with_action = 2 ^ 2, args = "::", untracked = true }),
     desc = "Add dynamic view that displays all changes that belong to the selected bookmark and all its children",
   },
   {
     key = "sb",
-    fn = M.fns.s({ with_action = 2 ^ 2, args = "+" }),
+    fn = M.fns.s({ with_action = 2 ^ 2, args = "+", untracked = true }),
     desc = "Add dynamic view that displays all changes that belong to the selected bookmark and its direct children",
   },
   {
