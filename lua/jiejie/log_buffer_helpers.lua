@@ -210,7 +210,7 @@ function M.with_bookmark_or_tag(fn, opts)
     local prompt = lopts.prompt or (bts and ("Select " .. title .. ": ") or ("Enter " .. title .. " name: "))
     if bts then
       if #bts == 1 then
-        fn(vim.tbl_extend("force", largs, { [lopts.args_key or "remote"] = bts[1].name }))
+        fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bts[1].name }))
       else
         vim.ui.select(bts, {
           prompt = prompt,

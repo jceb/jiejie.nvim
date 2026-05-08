@@ -103,7 +103,7 @@ M.fns = {
   cb = function(opts)
     local lopts = opts or {}
     local with_bookmarks = function(fn)
-      if lopts.with_action ~= 2 ^ 0 then
+      if lopts.with_action ~= 2 ^ 0 or lopts.with_action ~= 2 ^ 2 or lopts.with_action ~= 2 ^ 3 or lopts.with_action ~= 2 ^ 4 then
         --- @param args WithArgs
         --- @return boolean
         return function(args)
@@ -144,11 +144,11 @@ M.fns = {
           api.cli(args.ctx, "bookmark", {
             args = cargs,
             on_exit = function()
-              vim.notify("Bookmark renamed: " .. args.bookmark, vim.log.levels.INFO)
+              vim.notify("Bookmark renamed: " .. args.bookmark .. " → " .. __args.bookmark, vim.log.levels.INFO)
             end,
           })
           return true
-        end, { prompt = "Enter new name: " })({ ctx = args.ctx })
+        end, { prompt = "Enter new name for bookmark " .. args.bookmark .. ": " })({ ctx = args.ctx, args_key = "bookmark" })
       elseif lopts.with_action == 2 ^ 3 then
         api.cli(args.ctx, "bookmark", {
           args = { "delete", args.bookmark },
