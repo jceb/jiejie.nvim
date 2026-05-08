@@ -604,7 +604,7 @@ M.fns = {
               log_view.add_dynamic_view(view)
               return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
             end, { tags = lopts.tags }),
-            { tags = lopts.tags }
+            { tags = lopts.tags, remote = true }
           )(_args)
         elseif lopts.with_action == 2 ^ 1 then
           if vim.v.count > 0 then
