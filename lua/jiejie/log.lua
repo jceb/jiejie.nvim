@@ -8,6 +8,7 @@ local context = require("jiejie.context")
 local jujutsu = require("jiejie.jujutsu")
 local log_view = require("jiejie.log_view")
 local parsers = require("jiejie.parsers")
+local config = require("jiejie.config")
 
 --- Jujutsu log related operations
 local M = {}
@@ -44,6 +45,7 @@ M.load = function(ctx, callback)
   end
   local header_log_view = build_log_view(log_view.LOG_VIEWS)
   local header_log_view_dynamic = build_log_view(log_view.LOG_VIEWS_DYNAMIC)
+  local excluded_revset = config.get().excluded_revset
   local args = {
     "-n",
     tostring(ctx.log_revisions or 10), -- TODO: make default number of revisions configurable
@@ -51,7 +53,7 @@ M.load = function(ctx, callback)
     "-T",
     M.template,
     "-r",
-    "(" .. current_log_view.revset .. " | @)" .. (log_view.EXCLUDED_REVSET ~= "" and (" ~ (" .. log_view.EXCLUDED_REVSET .. ")") or ""),
+    "(" .. current_log_view.revset .. " | @)" .. (excluded_revset ~= "" and (" ~ (" .. excluded_revset .. ")") or ""),
   }
   args = vim.list_extend(args, current_log_view.paths or {})
   jujutsu.cli(ctx, cmd, {

@@ -3,6 +3,7 @@ local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
 local jujutsu = require("jiejie.jujutsu")
 local log_view = require("jiejie.log_view")
+local config = require("jiejie.config")
 
 --- Opeations that help with extracting data from the status log buffer
 local M = {}
@@ -273,6 +274,7 @@ function M.with_bookmarks_or_tags(fn, opts)
     assert(largs.ctx, "Context not provided: ctx")
     local cmd = lopts.tags and "tag" or "bookmark"
     local _args = { "list" }
+    local excluded_revset = config.get().excluded_revset
     if not lopts.tags then
       _args = vim.list_extend(_args, {
         "-r",
@@ -281,7 +283,7 @@ function M.with_bookmarks_or_tags(fn, opts)
             lopts.src_change
           ) .. "- | " .. api.get_change_id(lopts.src_change) .. "+::")) or (lopts.src_change and (":: ~" .. api.get_change_id(lopts.src_change))) or "::")
           .. ")"
-          .. (log_view.EXCLUDED_REVSET ~= "" and (" ~ (" .. log_view.EXCLUDED_REVSET .. ")") or ""),
+          .. (excluded_revset ~= "" and (" ~ (" .. excluded_revset .. ")") or ""),
         "--all-remotes",
         "--sort",
         "committer-date-,name",
@@ -312,7 +314,6 @@ function M.with_bookmarks_or_tags(fn, opts)
             -- if tracked is explicitly set to false, then drop tracked bookmarks
             -- if untracked is nil or false, then drop untracked bookmarks
             if (lopts.tracked == false and bt.tracked) or (not lopts.untracked and not bt.tracked) then
-              vim.print("ignoring bookmark")
               -- noop
             else
               bts = vim.list_extend(bts, { bt })

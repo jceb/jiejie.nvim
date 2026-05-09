@@ -50,6 +50,8 @@ mappings more easily, these rules might prove helpful:
 - Close status log buffer (`q`, `gq`)
 - Reload status log (`R`)
 - Populate a `:` or `:!` command with the file under the cursor (`.`, `!!`)
+- Exclude revsets, e.g. bookmarks, from being displayed via configuration
+  options.
 
 #### Modify commits from the status log buffer
 
@@ -103,8 +105,40 @@ With Lazy, add this configuration to nvim:
 
 ```lua
 {
+  -- https://github.com/jceb/jiejie.nvim
+  "jceb/jiejie.nvim",
+}
+```
+
+With vim.pack add this configuration to nvim:
+
+```lua
+vim.pack.add({ "https://github.com/jceb/jiejie.nvim" })
+```
+
+## Configuration
+
+Available configuration options: see
+<https://github.com/jceb/jiejie.nvim/blob/feat/exclude-revsets/lua/jiejie/config.lua>
+
+With Lazy:
+
+```lua
+{
   -- https://github.com/jceb/jiejie.nvim.git
   "jceb/jiejie.nvim",
+  -- Custom configuration settings
+  opts = {
+    excluded_revset = 'bookmarks(glob:"renovate/*") | tracked_remote_bookmarks(glob:"renovate/*") | untracked_remote_bookmarks(glob:"renovate/*")',
+  }
+}
+```
+
+With vim.pack:
+
+```lua
+vim.g.jiejie_config = {
+    excluded_revset = 'bookmarks(glob:"renovate/*") | tracked_remote_bookmarks(glob:"renovate/*") | untracked_remote_bookmarks(glob:"renovate/*")',
 }
 ```
 
