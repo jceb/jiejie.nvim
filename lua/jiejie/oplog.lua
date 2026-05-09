@@ -1,5 +1,6 @@
 local buffer = require("jiejie.buffer")
 local jujutsu = require("jiejie.jujutsu")
+local config = require("jiejie.config")
 
 --- Jujutsu operation log related operations
 local M = {}
@@ -12,7 +13,7 @@ M.load = function(ctx, callback)
   local args = {
     "log",
     "-n",
-    tostring(ctx.log_revisions or 10), -- TODO: make default number of revisions configurable
+    tostring(ctx.log_revisions or config.get().log_revisions),
     "-s",
   }
   jujutsu.cli(ctx, cmd, {

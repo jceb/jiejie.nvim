@@ -48,7 +48,7 @@ M.load = function(ctx, callback)
   local excluded_revset = config.get().excluded_revset
   local args = {
     "-n",
-    tostring(ctx.log_revisions or 10), -- TODO: make default number of revisions configurable
+    tostring(ctx.log_revisions or config.get().log_revisions),
     "-s",
     "-T",
     M.template,

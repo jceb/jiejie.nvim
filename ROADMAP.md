@@ -54,6 +54,9 @@
 - [x] New feature: operations log support
 - [x] Commands: evolog
 - [x] Commands: Add jj advance
+- [x] Configuration: make default view configurable
+- [x] Configuration: make default dynamic views configurable
+- [x] Configuration: the number of log entries configurable
 
 ## Priority 1
 
@@ -61,7 +64,6 @@
 
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
-- [ ] Configuration: make default view and number of entries configurable
 - [ ] Bug: make log reload when `!` commands are executed
 - [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
       the quickfix/location list see issue #1

@@ -5,6 +5,7 @@ local log_diff = require("jiejie.log_diff")
 local parsers = require("jiejie.parsers")
 local timer = require("jiejie.timer")
 local system = require("jiejie.system")
+local config = require("jiejie.config")
 
 --- Start dummy editor in the background
 --- @param ctx Context context
@@ -774,7 +775,7 @@ end
 function M.log_revisions_adjust(ctx, opts)
   assert(ctx, "Context not provided: ctx")
   local lopts = opts or {}
-  local log_revisions = (ctx.log_revisions or 10) + lopts.adjustment
+  local log_revisions = (ctx.log_revisions or config.get().log_revisions) + lopts.adjustment
   ctx.log_revisions = log_revisions > 0 and log_revisions or 1
   context.set_context(ctx)
   local log_dirty_check = require("jiejie.log_dirty_check")

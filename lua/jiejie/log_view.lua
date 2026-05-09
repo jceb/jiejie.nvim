@@ -40,6 +40,9 @@ M.LOG_VIEWS = {
 --- @type table<LogView>
 M.LOG_VIEWS_DYNAMIC = {}
 
+--- @type integer
+M.LOG_DEFAULT_VIEW = 1
+
 --- Get previous log view
 --- @return LogView?
 function M.get_log_view_previous()
@@ -51,7 +54,7 @@ end
 --- Get previous log view
 --- @return LogView?
 function M.get_log_view_current()
-  return M.get_log_view(vim.b.jiejie_log_view or 1)
+  return M.get_log_view(vim.b.jiejie_log_view or M.LOG_DEFAULT_VIEW)
 end
 
 --- Get current or specific log view
@@ -150,6 +153,30 @@ end
 function M.setup_buffer(ctx)
   vim.b.jiejie_log_view = 1
   return ctx
+end
+
+--- Setup log view
+function M.setup()
+  local config = require("jiejie.config")
+  local cfg = config.get()
+  for _, v in ipairs((cfg.dynamic_views or {})) do
+    if v and v.revset then
+      if not v.id then
+        v.id = v.revset
+      end
+      M.add_dynamic_view(v)
+    else
+      vim.notify("jiejie config dynamic_views contains invalid view, revset missing: " .. vim.inspect(v), vim.log.levels.WARN)
+    end
+  end
+  if cfg.default_view ~= nil then
+    local default_view = M.get_log_view(cfg.default_view)
+    if default_view then
+      M.LOG_DEFAULT_VIEW = cfg.default_view
+    else
+      vim.notify("jiejie config default_view doesn't exist: " .. cfg.default_view, vim.log.levels.WARN)
+    end
+  end
 end
 
 return M
