@@ -57,11 +57,10 @@
 - [x] Configuration: make default view configurable
 - [x] Configuration: make default dynamic views configurable
 - [x] Configuration: the number of log entries configurable
+- [x] Commands: jj log [FILE] :JcLog/:JlLog for loading the commit history into
+      the quickfix/location list see issue #1
 
 ## Priority 1
-
-- [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
-      the quickfix/location list see issue #1
 
 ## Priority 2
 

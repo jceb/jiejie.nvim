@@ -449,7 +449,7 @@ end
 
 --- Squash changes
 --- @param ctx Context context
---- @param src_change Change Soruce change
+--- @param src_change Change Source change
 --- @param opts? {dst_change?: Change, files?: string[], force?: boolean} Options
 --- - dst_change Destination change
 --- - files List of file names relative to the root of the repository
@@ -919,6 +919,78 @@ function M.exec(ctx, cmd, opts)
         end),
       })
     ),
+  })
+end
+
+--- Load history into quickfix or location list
+--- @param ctx Context context
+--- @param src_change Change Source change
+--- @param opts? {on_exit?: fun(out: vim.SystemCompleted), file?: JiejieURL, jump?: boolean, location_list?: boolean} Options
+--- - on_exit Callback function is executed in a scheduled context
+--- - file ModifiedFile File name to limit the history retrieval to
+--- - jump boolean Jump to the first entry found
+--- - location_list boolean If true, load history into location list instead of the quickfix list
+function M.load_history(ctx, src_change, opts)
+  assert(ctx, "Context not provided: ctx")
+  assert(src_change, "Command not provided: src_change")
+  local lopts = opts or {}
+  local log = require("jiejie.log")
+  local cmd = "log"
+  local args = {
+    -- "-n",
+    -- tostring(ctx.log_revisions or config.get().log_revisions),
+    "-T",
+    log.template,
+    "-r",
+    "::" .. M.get_change_id(src_change),
+  }
+  if lopts.file then
+    args = vim.list_extend(args, { lopts.file.path })
+  end
+  jujutsu.cli(ctx, cmd, {
+    args = args,
+    on_exit = vim.schedule_wrap(function(out)
+      if out.code ~= 0 then
+        error("Error getting change history:\n" .. out.stderr)
+      end
+      local data = vim.split(out.stdout, "\n")
+      local change_list = {}
+      for _, line in ipairs(data) do
+        local change = parsers.parse_change(line, 23)
+        if change then
+          local filename = parsers.join_url({
+            root = ctx.root,
+            revision = change.id,
+            workspace = "default", -- TODO: workspace is not yet supported
+            path = lopts.file and lopts.file.path,
+          })
+          local bufnr = vim.fn.bufadd(filename)
+          change_list = vim.list_extend(change_list, {
+            {
+              module = M.get_change_id(change, true) .. (lopts.file and (":" .. lopts.file.path) or ""),
+              bufnr = bufnr,
+              text = change.description_first_line,
+              valid = 1,
+            },
+          })
+        end
+      end
+      if #change_list > 0 then
+        if lopts.location_list then
+          vim.fn.setloclist(0, change_list)
+          vim.cmd.lopen()
+          if lopts.jump then
+            vim.cmd.ll()
+          end
+        else
+          vim.fn.setqflist(change_list)
+          vim.cmd.copen()
+          if lopts.jump then
+            vim.cmd.cc()
+          end
+        end
+      end
+    end),
   })
 end
 

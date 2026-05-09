@@ -55,6 +55,18 @@ COMMANDS                                                       *jiejie-commands*
                                                                         *:Jedit*
 :Jedit [object]         |:edit| a |jiejie-object|.
 
+                                                                       *:JcLog!*
+:JcLog[!] [fname]       Load the change history into the |quickfix| list.
+                        Jumps to the first commit unless [!] is given. This
+                        command wraps |:cfile|. Use :0JcLog to target the
+                        entire file or provide a specific file name {fname}.
+
+                                                                       *:JlLog!*
+:JlLog[!] [fname]       Load the change history into the location list. Jumps
+                        to the first commit unless [!] is given. This command
+                        wraps |:cfile|. Use :0JlLog to target the entire file.
+                        or provide a specific file name {fname}.
+
 MAPS                                                               *jiejie-maps*
 
                                                         *jiejie-navigation-maps*

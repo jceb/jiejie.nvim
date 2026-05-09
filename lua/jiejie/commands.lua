@@ -4,6 +4,26 @@ local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
 local buffer = require("jiejie.buffer")
 
+--- Helper command to retrieve a file object from a parameter
+local getFile = function(filename)
+  local file = {}
+  file.filename = vim.fn.fnamemodify(filename, ":p")
+  if vim.startswith(file.filename, "jiejie://") then
+    local url = parsers.parse_url(file.filename)
+    assert(url, "Unknown URL: " .. file.filename)
+    assert(url.path, "Path not specified in URL: " .. file.filename)
+    file.path = url.path
+    file.change_id = url.revision
+    file.root = url.root
+  else
+    local directory = vim.fn.fnamemodify(file.filename, ":h")
+    file.root = jujutsu.get_root(directory)
+    assert(file.filename and file.root and vim.startswith(file.filename, file.root), "Unable to determine Jujutsu root directory for. File: " .. file.filename)
+    file.path = vim.fn.trim(vim.fn.strpart(file.filename, #file.root), "/", 1)
+  end
+  return file
+end
+
 --- Commands
 local M = {}
 
@@ -13,7 +33,12 @@ local commands = {
   --- @param opts? {force?: boolean, vertical?: boolean} Options
   log = function(ctx, cmd, args, opts)
     local lopts = opts or {}
-    api.show_log(ctx, { vertical = lopts.vertical, buffer_type = buffer.BUFFER_TYPE.LOG })
+    if #args == 1 then
+      ---@diagnostic disable-next-line: missing-fields ingore missing fields, because they're not used
+      M.Jlog({ fargs = args })
+    else
+      api.show_log(ctx, { vertical = lopts.vertical, buffer_type = buffer.BUFFER_TYPE.LOG })
+    end
   end,
 
   --- @param ctx Context context
@@ -89,21 +114,7 @@ end
 function M.Jdiffsplit(args)
   local spilt_direction = args.name == "Jvdiffsplit" and M.SPLIT_DIRECTION.vertical or args.name == "Jhdiffsplit" and M.SPLIT_DIRECTION.horizontal or nil
   local files = {}
-  local src = {}
-  src.filename = vim.fn.fnamemodify(vim.fn.expand("%"), ":p")
-  if vim.startswith(src.filename, "jiejie://") then
-    local url = parsers.parse_url(src.filename)
-    assert(url, "Unknown URL: " .. src.filename)
-    assert(url.path, "Path not specified in URL: " .. src.filename)
-    src.path = url.path
-    src.change_id = url.revision
-    src.root = url.root
-  else
-    local directory = vim.fn.fnamemodify(src.filename, ":h")
-    src.root = jujutsu.get_root(directory)
-    assert(src.filename and src.root and not vim.startswith(src.filename, src.root), "Unable to determine Jujutsu root directory for. File: " .. src.filename)
-    src.path = vim.fn.trim(vim.fn.strpart(src.filename, #src.root), "/", 1)
-  end
+  local src = getFile(vim.fn.expand("%"))
   table.insert(files, { path = src.path, M.construct_dummy_change(src.change_id or "@") })
   local ctx = context.get_context(src.root)
   assert(ctx, "Working directory does not belong to a Jujutsu repository. File: " .. src.filename)
@@ -119,6 +130,28 @@ function M.Jdiffsplit(args)
     end
   end
   api.diff_split(ctx, files, { split_direction = spilt_direction })
+end
+
+--- @param args vim.api.keyset.create_user_command.command_args Command arguments
+function M.Jlog(args)
+  local file = nil
+  local src_change = api.construct_dummy_change("@")
+  -- FIMXE: apparently args.count is 1 even is 0 is supplied!
+  if args.count == 1 then
+    file = getFile(vim.fn.expand("%"))
+  elseif #args.fargs == 1 then
+    file = getFile(args.fargs[1])
+  end
+  if file and file.change_id then
+    src_change = api.construct_dummy_change(file.revision)
+  end
+  local ctx = context.get_context(file and file.root)
+  assert(ctx, "Working directory does not belong to a Jujutsu repository. Directory: " .. vim.fn.getcwd())
+  api.load_history(ctx, src_change, {
+    file = file,
+    jump = not args.bang,
+    location_list = args.name == "JlLog",
+  })
 end
 
 --- Configure commands
@@ -139,6 +172,16 @@ function M.setup()
     "Jhdiffsplit",
     M.Jdiffsplit,
     { desc = "Perform a vimdiff against the given file, but always split horizontally", nargs = "?", bang = true }
+  )
+  vim.api.nvim_create_user_command(
+    "JcLog",
+    M.Jlog,
+    { desc = "Load the change history into the quickfix list.", nargs = "?", bang = true, range = true, complete = "file" }
+  )
+  vim.api.nvim_create_user_command(
+    "JlLog",
+    M.Jlog,
+    { desc = "Load the change history into the location list.", nargs = "?", bang = true, range = true, complete = "file" }
   )
   local id = vim.api.nvim_create_augroup("Jiejie", {})
   require("jiejie.log").setup(id)

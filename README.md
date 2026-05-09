@@ -39,6 +39,8 @@ mappings more easily, these rules might prove helpful:
   `dd`, `dV`, `dv`, `dS`, `ds`, `dH`, `dh`, `dq`)
 - Wraper for `jj` CLI (`:J` or `:Jj`)
 - Show help (`g?`, `c?`, `d?`, `r?`, `s?`)
+- Use quickfix and location list to navigate the change history via `JcLog` and
+  `JlLog`
 
 ### Status log buffer (`:J`, `:Jj`, `Jj log`)
 
