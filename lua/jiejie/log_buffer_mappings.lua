@@ -95,8 +95,10 @@ M.fns = {
     end, { args_key = "dst_change" })
   end,
 
-  --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+  --- @param opts {with_action?: number, remote?: boolean, tracked?: boolean, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename, 32: move trunk(), 64: move closest bookmark
+  --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+  --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -109,6 +111,8 @@ M.fns = {
         return function(args)
           return helpers.with_bookmarks_or_tags(fn, {
             src_change = not lopts.drop_change and args.src_change or nil,
+            remote = lopts.remote,
+            tracked = lopts.tracked,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch,
           })(args)
@@ -177,8 +181,10 @@ M.fns = {
     end)))
   end,
 
-  --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+  --- @param opts {with_action?: number, remote?: boolean, tracked?: boolean, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): simple merge, 2: pick change id, 4: pick bookmark
+  --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+  --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -191,6 +197,8 @@ M.fns = {
         return function(args)
           return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn), {
             src_change = not lopts.drop_change and args.src_change or nil,
+            remote = lopts.remote,
+            tracked = lopts.tracked,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch,
           })(args)
@@ -271,9 +279,11 @@ M.fns = {
     end)
   end,
 
-  --- @param opts {tags?: boolean, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+  --- @param opts {tags?: boolean, with_change?: number, remote?: boolean, tracked?: boolean, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - tags: List tags instead of bookmarks
   --- - with_change: 1 (default): use change under cursor, 2: prompt for change id, 4: prompt for bookmark
+  --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+  --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -288,6 +298,8 @@ M.fns = {
           return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn, { tags = lopts.tags }), {
             src_change = not lopts.drop_change and args.src_change or nil,
             tags = lopts.tags,
+            remote = lopts.remote,
+            tracked = lopts.tracked,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch,
           })(args)
@@ -317,8 +329,10 @@ M.fns = {
     end)
   end,
 
-  --- @param opts {with_action?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
+  --- @param opts {with_action?: number, remote?: boolean, tracked?: boolean, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
   --- - with_action: 1 (default): create, 2: move, 4: delete
+  --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+  --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -331,6 +345,8 @@ M.fns = {
         return function(args)
           return helpers.with_bookmarks_or_tags(fn, {
             src_change = not lopts.drop_change and args.src_change or nil,
+            remote = lopts.remote,
+            tracked = lopts.tracked,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch, -- not yet supported by jj
             tags = true,
@@ -438,10 +454,12 @@ M.fns = {
     end)
   end,
 
-  --- @param opts {rebase?: number, with_change?: number, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean, tags?: boolean}
+  --- @param opts {rebase?: number, with_change?: number, remote?: boolean, tracked?: boolean, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean, tags?: boolean}
   --- - tags: List tags instead of bookmarks
   --- - rebase: 1 (default): revision, 2: with descendants, 4: branch
   --- - with_change: 1 (default): use change under cursor, 2: prompt for change id, 4: prompt for bookmark or tag, 8: use trunk()
+  --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+  --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
@@ -455,6 +473,8 @@ M.fns = {
         return helpers.search_change(function(args)
           return helpers.with_bookmarks_or_tags(helpers.with_bookmark_or_tag(fn, { tags = lopts.tags }), {
             src_change = not lopts.drop_change and args.src_change or nil,
+            remote = lopts.remote,
+            tracked = lopts.tracked,
             limit_to_change = lopts.limit_to_change,
             limit_to_branch = lopts.limit_to_branch,
             tags = lopts.tags,
@@ -507,11 +527,12 @@ M.fns = {
     return true
   end,
 
-  --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean, untracked?: boolean}
+  --- @param opts? WithOpts | {with_action?: number, args?: string[], tags?: boolean, remote?: boolean, tracked?: boolean}
   --- - with_action: 1 (default): switch, 2: close dynamic view, 4: view bookmark / tag, 8: file view, 16: manually enter revset, 32: description, 64: author, 128: manual input author
   --- - tags Handle tags instead of bookmarks
   --- - args: Additional arguments
-  --- - untrackd: List untracked bookmarks - not relevant for tags
+  --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+  --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
   s = function(opts)
     local lopts = opts or {}
     --- @param fn fun(args: WithArgs): boolean
@@ -605,7 +626,7 @@ M.fns = {
               log_view.add_dynamic_view(view)
               return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
             end, { tags = lopts.tags }),
-            { tags = lopts.tags, untracked = lopts.untracked }
+            { tags = lopts.tags, remote = lopts.remote, tracked = lopts.tracked }
           )(_args)
         elseif lopts.with_action == 2 ^ 1 then
           if vim.v.count > 0 then
@@ -1021,35 +1042,35 @@ M.nmaps = {
   },
   {
     key = "cbF",
-    fn = M.fns.cb({ with_action = 2 ^ 2, drop_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 2, drop_change = true, remote = false }),
     desc = "Forget any one bookmark locally keeping the remote intact",
   },
   {
     key = "cbf",
-    fn = M.fns.cb({ with_action = 2 ^ 2, limit_to_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 2, limit_to_change = true, remote = false }),
     desc = "Forget bookmark locally keeping the remote intact at change under the cursor",
   },
   {
     key = "cbM",
-    fn = M.fns.cb({ with_action = 2 ^ 1 }),
+    fn = M.fns.cb({ with_action = 2 ^ 1, remote = false }),
     with_force = true,
     desc = "Move any one bookmark to the change under the cursor",
   },
   {
     key = "cbm",
-    fn = M.fns.cb({ with_action = 2 ^ 1, limit_to_branch = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 1, limit_to_branch = true, remote = false }),
     with_force = true,
     desc = "Move one bookmark from the current branch to the change under the cursor",
   },
   {
     key = "cbR",
-    fn = M.fns.cb({ with_action = 2 ^ 4, drop_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 4, drop_change = true, remote = false }),
     desc = "Rename any one bookmark",
     with_force = true,
   },
   {
     key = "cbr",
-    fn = M.fns.cb({ with_action = 2 ^ 4, limit_to_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 4, limit_to_change = true, remote = false }),
     desc = "Rename bookmark at change under the cursor",
     with_force = true,
   },
@@ -1060,12 +1081,12 @@ M.nmaps = {
   },
   {
     key = "cbX",
-    fn = M.fns.cb({ with_action = 2 ^ 3, drop_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 3, drop_change = true, remote = false }),
     desc = "Delete any one bookmark including the remote boomark",
   },
   {
     key = "cbx",
-    fn = M.fns.cb({ with_action = 2 ^ 3, limit_to_change = true }),
+    fn = M.fns.cb({ with_action = 2 ^ 3, limit_to_change = true, remote = false }),
     desc = "Delete bookmark including remote boomark at change under the cursor",
   },
   {
@@ -1085,13 +1106,13 @@ M.nmaps = {
   },
   {
     key = "cpM",
-    fn = M.fns.cp({ with_change = 2 ^ 2 }),
+    fn = M.fns.cp({ with_change = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change `@` after any one bookmark",
   },
   {
     key = "cpm",
-    fn = M.fns.cp({ with_change = 2 ^ 2, limit_to_branch = true }),
+    fn = M.fns.cp({ with_change = 2 ^ 2, limit_to_branch = true, remote = false }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change `@` after a bookmark in the current branch",
   },
@@ -1208,7 +1229,7 @@ M.nmaps = {
   },
   {
     key = "cB",
-    fn = M.fns.cm({ with_action = 2 ^ 2 }),
+    fn = M.fns.cm({ with_action = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Merge `@` with any one bookmark",
   },
@@ -1471,25 +1492,25 @@ M.nmaps = {
   },
   {
     key = "rbM",
-    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Rebase the current change `@` on any one bookmark, together with its branch",
   },
   {
     key = "rbm",
-    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2 }),
+    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Alias of rbM",
   },
   {
     key = "rbO",
-    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2 }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Rebase only the current change `@` on any bookmark, without its descendants",
   },
   {
     key = "rbo",
-    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, limit_to_branch = true }),
+    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, limit_to_branch = true, remote = false }),
     with_force = true,
     desc = "Rebase only the current change `@` on a bookmark in the current branch, without its descendants",
   },
@@ -1642,7 +1663,7 @@ M.nmaps = {
           })
           return true
         end)),
-        { src_change = _args.src_change }
+        { src_change = _args.src_change, remote = false }
       )(_args)
     end),
     desc = "Push any bookmark to a specific git remote",
@@ -1661,7 +1682,7 @@ M.nmaps = {
           })
           return true
         end)),
-        { src_change = _args.src_change, limit_to_change = true }
+        { src_change = _args.src_change, limit_to_change = true, remote = false }
       )(_args)
     end),
     desc = "Push the bookmark under the cursor to a specific git remote",
@@ -1716,12 +1737,12 @@ M.nmaps = {
   },
   {
     key = "sB",
-    fn = M.fns.s({ with_action = 2 ^ 2, args = "::", untracked = true }),
+    fn = M.fns.s({ with_action = 2 ^ 2, args = "::" }),
     desc = "Add dynamic view that displays all changes that belong to the selected bookmark and all its children",
   },
   {
     key = "sb",
-    fn = M.fns.s({ with_action = 2 ^ 2, args = "+", untracked = true }),
+    fn = M.fns.s({ with_action = 2 ^ 2, args = "+" }),
     desc = "Add dynamic view that displays all changes that belong to the selected bookmark and its direct children",
   },
   {

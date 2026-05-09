@@ -2,7 +2,6 @@ local context = require("jiejie.context")
 local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
 local jujutsu = require("jiejie.jujutsu")
-local log_view = require("jiejie.log_view")
 local config = require("jiejie.config")
 
 --- Opeations that help with extracting data from the status log buffer
@@ -257,10 +256,10 @@ end
 
 --- Retrieve bookmarks or tags
 --- @param fn fun(args?: WithArgs): boolean Callback function
---- @param opts? WithOpts | {tracked?: boolean, untracked?: boolean, tags?: boolean, src_change?: Change, limit_to_change?: boolean, limit_to_branch?: boolean} Options
+--- @param opts? WithOpts | {remote?: boolean, tracked?: boolean, tags?: boolean, src_change?: Change, limit_to_change?: boolean, limit_to_branch?: boolean} Options
 --- - tags: List tags instead of bookmarks
---- - tracked: List tracked bookmarks - if set to false, don't list tracked bookmarks
---- - untracked: List untracked bookmarks - if set to nil or false, don't list untracked bookmarks
+--- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+--- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
 --- - src_change: Anchor point for bookmark selection, if missing, consider bookmarks on all (::) commits
 --- - limit_to_change: Limits bookmark search to the current change
 --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::)
@@ -310,10 +309,13 @@ function M.with_bookmarks_or_tags(fn, opts)
         local bts = {}
         for _, line in ipairs(vim.split(out.stdout, "\n")) do
           local bt = parsers.parse_bookmark_or_tag(line)
-          if bt and bt.present and bt.remote ~= "" then
-            -- if tracked is explicitly set to false, then drop tracked bookmarks
-            -- if untracked is nil or false, then drop untracked bookmarks
-            if (lopts.tracked == false and bt.tracked) or (not lopts.untracked and not bt.tracked) then
+          if bt and bt.present and bt.remote ~= "git" then
+            if
+              (lopts.remote == false and bt.remote and bt.remote ~= "")
+              or (lopts.remote == true and not bt.remote and bt.remote == "")
+              or (lopts.tracked == false and bt.tracked)
+              or (lopts.tracked == true and not bt.tracked)
+            then
               -- noop
             else
               bts = vim.list_extend(bts, { bt })
