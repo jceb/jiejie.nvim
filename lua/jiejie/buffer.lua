@@ -47,6 +47,7 @@ function M.buf_set_lines(ctx, data, start, end_)
   vim.bo[ctx.buf].modifiable = true
   vim.bo[ctx.buf].readonly = false
   vim.api.nvim_buf_set_lines(ctx.buf, start and start or 0, end_ and end_ or -1, false, data)
+  vim.bo[ctx.buf].modified = false
   vim.bo[ctx.buf].readonly = modifiable
   vim.bo[ctx.buf].modifiable = readonly
 end
@@ -65,6 +66,7 @@ function M.render_file(ctx, data, opts)
     data[#data] = nil
   end
   vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, data)
+  vim.bo[ctx.buf].modified = false
   vim.bo[ctx.buf].readonly = true
   vim.bo[ctx.buf].modifiable = false
   if lopts.filetype then

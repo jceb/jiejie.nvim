@@ -208,7 +208,6 @@ function M.setup(id)
         end
         vim.cmd.doau("BufReadPost")
       else
-        vim.bo[ev.buf].buftype = "nofile"
         M.load_object({ root = url.root, buf = ev.buf, curpos = nil }, url, function()
           local bufid = vim.api.nvim_get_current_buf()
           if bufid == ev.buf then
