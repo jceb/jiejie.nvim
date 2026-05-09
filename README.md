@@ -165,6 +165,11 @@ See [ROADMAP.md](./ROADMAP.md).
 - Changing the commit log and operation log
   [node icon style](https://docs.jj-vcs.dev/latest/config/#node-style) will
   break the plugin!
+- jj currently doesn't support pushing tags, see
+  [https://github.com/jj-vcs/jj/issues/7908#issuecomment-3585357172](). If you
+  create a tag via jj or jiejie, use the key binding `grt` or run
+  `git push --tags` manually to push them upstream. There's no command
+  `jj git push --tags`, yet!
 
 ## References
 

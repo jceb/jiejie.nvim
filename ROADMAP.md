@@ -60,34 +60,47 @@
 
 ## Priority 1
 
+- [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
+      the quickfix/location list see issue #1
+
 ## Priority 2
 
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
 - [ ] Bug: make log reload when `!` commands are executed
-- [ ] Commands: jj log [FILE] :Jclog/:Jllog for loading the commit history into
-      the quickfix/location list see issue #1
 - [ ] Navigation: implement `(, ), [c, ]c, [], ][ and [m, ]m`
 - [ ] Navigation: unify navigation across log types: oplog, evolog and status
       log
 - [ ] Log: improve cursor positioning by computing an expected new position,
       e.g. via `search()`
 - [ ] Commands: sign, unsign and sign-off commit
-- [ ] Log: Add `cT` mapping to create a merge commit with a tag
 - [ ] Evolog: make evolog work like the status log with `=`, file editing, etc.
+- [ ] Commands: split via a terminal and the interactive jj UI (current
+      workaround: commit one file instead of the whole change, then squash the
+      other files that should be part of the commit)
+- [ ] Key: pressing `X` on a hunk should restore it - not natively supported by
+      jj
+- [ ] Support file names without leading pipe sign and with a `~` sign:
+
+```
+@  oy	†‡commit message⌠⌡∫∬∮∴xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx∵ user@example.com∶∷bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb∼ current working copy∾1
+│  M file1.txt
+~  M file2.txt
+   M file3.txt
+```
 
 ## Priority 3
 
+- [ ] Log: Add `cT` mapping to create a merge commit with a tag
 - [ ] Log: display conflict status of files (`log --types` .. however this is
       currently incompatible with `--summary`)
 - [ ] Log: display signature status
+- [ ] Commands: command for making a pull request, see
+      <https://github.com/NicolasGB/jj.nvim#open-a-prmr-from-the-log-buffer>
 - [ ] Commands: fix
 - [ ] Commands: simplify-parents
 - [ ] Commands: sparse
 - [ ] Commands: granular squash via a terminal and the interactive jj UI
-- [ ] Commands: split via a terminal and the interactive jj UI (current
-      workaround: commit one file instead of the whole change, then squash the
-      other files that should be part of the commit)
 - [ ] Feature: add support for handling PRs
 - [ ] Statusline: provide status line integration, e.g. file name, diff id,
       change id
@@ -105,8 +118,6 @@
       status window
 - [ ] Commands: support pushing / pulling from different origins
 - [ ] Show conflicts in file names, see https://github.com/jj-vcs/jj/issues/1111
-- [ ] Key: pressing `X` on a hunk should restore it - not natively supported by
-      jj
 - [ ] Commands: keep open diffs open when reloading the log
 - [ ] Commands: add verbose mode for displaying the executed `jj` commands
 - [ ] Commands: Jedit directories
@@ -117,7 +128,8 @@
 - [ ] Commands: :Jgrep for loading the commit history into the quickfix list
 - [ ] Commands: :Jcd / Jlcd change directory relative to the repository :cd /
       :lcd
-- [ ] Commands: :JBrowse to open file in browser
+- [ ] Commands: :JBrowse to open file in browser see
+      <https://github.com/NicolasGB/jj.nvim#browse-current-file-on-remote>
 - [ ] Commands: support visual mode for squash, commit, split and restore key
       bindings
 - [ ] Configuration: make mappings configurable
