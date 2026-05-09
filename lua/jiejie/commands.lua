@@ -118,7 +118,7 @@ function M.Jdiffsplit(args)
       table.insert(files, { path = dst_object.filename or src.path, change = M.construct_dummy_change(dst_object.change_id) })
     end
   end
-  M.diff_split(ctx, files, { split_direction = spilt_direction })
+  api.diff_split(ctx, files, { split_direction = spilt_direction })
 end
 
 --- Configure commands
