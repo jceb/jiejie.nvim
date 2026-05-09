@@ -215,7 +215,7 @@ cc                      Commit currently edited change and create a new
 
                                        *jiejie_i* *jiejie_!i* *jiejie_ci* *jiejie_!ci*
 [!]ci                   Insert a new change inbetween the change under the
-[!]i                    cursor all its ancestors. With <bang>, ignore
+[!]i                    cursor and all its ancestors. With <bang>, ignore
                         immutability settings.
 
                                                           *jiejie_cB* *jiejie_!cB*

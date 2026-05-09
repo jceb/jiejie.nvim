@@ -1213,7 +1213,7 @@ M.nmaps = {
     key = "ci",
     fn = M.fns.cn({ with_action = 2 ^ 2 }),
     with_force = true,
-    desc = "Insert a new change inbetween the change under the cursor all its ancestors",
+    desc = "Insert a new change inbetween the change under the cursor and all its ancestors",
   },
   {
     key = "i",
