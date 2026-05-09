@@ -62,14 +62,15 @@
 
 ## Priority 1
 
+- [ ] Navigation: implement `(, ), [c, ]c, [], ][ and [m, ]m`
+- [ ] Navigation: unify navigation across log types: oplog, evolog and status
+      log
+
 ## Priority 2
 
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
 - [ ] Bug: make log reload when `!` commands are executed
-- [ ] Navigation: implement `(, ), [c, ]c, [], ][ and [m, ]m`
-- [ ] Navigation: unify navigation across log types: oplog, evolog and status
-      log
 - [ ] Log: improve cursor positioning by computing an expected new position,
       e.g. via `search()`
 - [ ] Commands: sign, unsign and sign-off commit
