@@ -815,6 +815,7 @@ function M.diff_split(ctx, files, opts)
   local lopts = opts or {}
   -- disable all diffs for all windows in the current tab since a new diff is going to be opened
   vim.cmd.diffoff({ bang = true })
+  log_diff.diff_close(ctx)
   local diffthis = function(winid)
     if not winid then
       return
@@ -824,7 +825,7 @@ function M.diff_split(ctx, files, opts)
     log_diff.diff_mark(ctx, { winid = winid })
   end
   if not lopts.open_first_file then
-    -- we're not a opening file, therefore put the current file in diff mode
+    -- we're not opening a file, therefore put the current file in diff mode
     diffthis(vim.api.nvim_get_current_win())
   end
   local first_file_winid
