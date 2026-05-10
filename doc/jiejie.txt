@@ -23,8 +23,12 @@ COMMANDS                                                       *jiejie-commands*
                         Press g? or see |jiejie-maps| for usage.
 
                                                                       *:Jj* *:Jj!*
-:Jj[!] [args]            Run an arbitrary jj command and display any output.
+:Jj[!] [args]           Run an arbitrary jj command and display any output.
                         With <bang>, add `--ignore-immutuable` to the command.
+                        |:Jj| log: opens log view.
+                        |:Jj| log: [FILE] sets the log view.
+                        |:Jj| evolog: opens the evolog view.
+                        |:Jj| oplog: opens the oplog view.
 
                                                                    *:Jdiffsplit*
 :Jdiffsplit [object]    Perform a |vimdiff| against the given file, or if a

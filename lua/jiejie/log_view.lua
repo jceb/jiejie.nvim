@@ -44,24 +44,27 @@ M.LOG_VIEWS_DYNAMIC = {}
 M.LOG_DEFAULT_VIEW = 1
 
 --- Get previous log view
+--- @param buf? integer Buffer number
 --- @return LogView?
-function M.get_log_view_previous()
-  if vim.b.jiejie_log_view_previous then
-    return M.get_log_view(vim.b.jiejie_log_view_previous)
+function M.get_log_view_previous(buf)
+  if vim.b[buf or 0].jiejie_log_view_previous then
+    return M.get_log_view(buf, vim.b[buf or 0].jiejie_log_view_previous)
   end
 end
 
 --- Get previous log view
+--- @param buf? integer Buffer number
 --- @return LogView?
-function M.get_log_view_current()
-  return M.get_log_view(vim.b.jiejie_log_view or M.LOG_DEFAULT_VIEW)
+function M.get_log_view_current(buf)
+  return M.get_log_view(buf, vim.b[buf or 0].jiejie_log_view or M.LOG_DEFAULT_VIEW)
 end
 
 --- Get current or specific log view
+--- @param buf? integer Buffer number
 --- @param nr? number View number
 --- @return LogView?
-function M.get_log_view(nr)
-  local view_nr = nr or vim.b.jiejie_log_view
+function M.get_log_view(buf, nr)
+  local view_nr = nr or vim.b[buf or 0].jiejie_log_view
   if view_nr and view_nr > 0 and view_nr <= (#M.LOG_VIEWS + #M.LOG_VIEWS_DYNAMIC) and view_nr then
     if view_nr <= #M.LOG_VIEWS then
       return M.LOG_VIEWS[view_nr]
@@ -84,10 +87,10 @@ function M.get_log_view_by_id(id)
 end
 
 --- Set log view
+--- @param buf? integer Buffer number
 --- @param view LogView Activate log view
 --- @return LogView?
-function M.set_log_view(view)
-  assert(view, "View is nil")
+function M.set_log_view(buf, view)
   local index
   for idx, v in ipairs(vim.list_extend(vim.list_extend({}, M.LOG_VIEWS), M.LOG_VIEWS_DYNAMIC)) do
     if v.id == view.id and v.revset == view.revset then
@@ -96,10 +99,10 @@ function M.set_log_view(view)
     end
   end
   if index then
-    if vim.b.jiejie_log_view ~= index then
-      vim.b.jiejie_log_view_previous = vim.b.jiejie_log_view
+    if vim.b[buf or 0].jiejie_log_view ~= index then
+      vim.b[buf or 0].jiejie_log_view_previous = vim.b[buf or 0].jiejie_log_view
     end
-    vim.b.jiejie_log_view = index
+    vim.b[buf or 0].jiejie_log_view = index
     return view
   end
 end
@@ -136,7 +139,6 @@ function M.remove_dynamic_view(view)
   M.LOG_VIEWS_DYNAMIC = vim
     .iter(M.LOG_VIEWS_DYNAMIC)
     :filter(function(v)
-      -- print("view", vim.inspect(view), vim.inspect(v))
       local res = v.id == view.id and v.revset == view.revset
       if not found and res then
         found = res
@@ -151,7 +153,8 @@ end
 --- @param ctx Context context
 --- @return Context
 function M.setup_buffer(ctx)
-  vim.b.jiejie_log_view = 1
+  assert(ctx, "Context not provided: ctx")
+  vim.b[ctx.buf or 0].jiejie_log_view = 1
   return ctx
 end
 
@@ -170,7 +173,7 @@ function M.setup()
     end
   end
   if cfg.default_view ~= nil then
-    local default_view = M.get_log_view(cfg.default_view)
+    local default_view = M.get_log_view(nil, cfg.default_view)
     if default_view then
       M.LOG_DEFAULT_VIEW = cfg.default_view
     else

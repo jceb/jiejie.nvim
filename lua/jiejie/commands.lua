@@ -3,6 +3,8 @@ local jujutsu = require("jiejie.jujutsu")
 local parsers = require("jiejie.parsers")
 local api = require("jiejie.api")
 local buffer = require("jiejie.buffer")
+local log_view = require("jiejie.log_view")
+local log_dirty_check = require("jiejie.log_dirty_check")
 
 --- Helper command to retrieve a file object from a parameter
 local getFile = function(filename)
@@ -33,12 +35,62 @@ local commands = {
   --- @param opts? {force?: boolean, vertical?: boolean} Options
   log = function(ctx, cmd, args, opts)
     local lopts = opts or {}
-    if #args == 1 then
+    if #args >= 1 then
       ---@diagnostic disable-next-line: missing-fields ingore missing fields, because they're not used
-      M.Jlog({ fargs = args })
-    else
-      api.show_log(ctx, { vertical = lopts.vertical, buffer_type = buffer.BUFFER_TYPE.LOG })
+      local files = {}
+      for _, fname in ipairs(args) do
+        local file = getFile(fname)
+        if file then
+          table.insert(files, file)
+        else
+          vim.notify("Ignoring unknown file or directory: " .. fname, vim.log.levels.WARN)
+        end
+      end
+      if #files > 0 then
+        local current_view = log_view.get_log_view_current(ctx.buf)
+        local revset = current_view and (current_view.revset or "::") or "::@"
+        local basenames = {}
+        for _, f in ipairs(files) do
+          table.insert(basenames, vim.fs.basename(f.path))
+        end
+        local description = table.concat(basenames, "_") or "::@"
+        local paths = {}
+        for _, f in ipairs(files) do
+          table.insert(paths, f.path)
+        end
+        local view = {
+          id = table.concat(paths, "_"),
+          revset = revset,
+          paths = paths,
+          description = description,
+        }
+        log_view.add_dynamic_view(view)
+        local au_id
+        -- Setting view indirectly, because we can't pass view as an argument to show_log
+        local set_view = function()
+          if au_id then
+            vim.api.nvim_del_autocmd(au_id)
+          end
+          if ctx.buf == nil then
+            ctx.buf = vim.fn.bufnr()
+          end
+          log_view.set_log_view(ctx.buf, view)
+          log_dirty_check.dirty_mark_content(ctx.buf)
+          log_dirty_check.do_dirty_check()
+        end
+        if ctx.buf ~= nil then
+          set_view()
+        else
+          au_id = vim.api.nvim_create_autocmd("User", {
+            pattern = "JiejieLogLoaded",
+            callback = set_view,
+          })
+        end
+      else
+        vim.notify("Failed to load file's change history: " .. args[1], vim.log.levels.ERROR)
+      end
     end
+    api.show_log(ctx, { vertical = lopts.vertical, buffer_type = buffer.BUFFER_TYPE.LOG })
   end,
 
   --- @param ctx Context context
@@ -136,8 +188,7 @@ end
 function M.Jlog(args)
   local file = nil
   local src_change = api.construct_dummy_change("@")
-  -- FIMXE: apparently args.count is 1 even is 0 is supplied!
-  if args.count == 1 then
+  if args.range == 1 and args.count == 0 then
     file = getFile(vim.fn.expand("%"))
   elseif #args.fargs == 1 then
     file = getFile(args.fargs[1])
@@ -156,7 +207,7 @@ end
 
 --- Configure commands
 function M.setup()
-  local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*", range = 2 }
+  local cmdOpts = { desc = "Jujutsu command wrapper - shows log when no argument is provided", nargs = "*", range = 2, complete = "file" }
   if vim.fn.exists(":J") ~= 2 then
     vim.api.nvim_create_user_command("J", M.Jj, cmdOpts)
   end
@@ -176,12 +227,12 @@ function M.setup()
   vim.api.nvim_create_user_command(
     "JcLog",
     M.Jlog,
-    { desc = "Load the change history into the quickfix list.", nargs = "?", bang = true, range = true, complete = "file" }
+    { desc = "Load the change history into the quickfix list.", nargs = "?", bang = true, count = 0, complete = "file" }
   )
   vim.api.nvim_create_user_command(
     "JlLog",
     M.Jlog,
-    { desc = "Load the change history into the location list.", nargs = "?", bang = true, range = true, complete = "file" }
+    { desc = "Load the change history into the location list.", nargs = "?", bang = true, count = 0, complete = "file" }
   )
   local id = vim.api.nvim_create_augroup("Jiejie", {})
   require("jiejie.log").setup(id)

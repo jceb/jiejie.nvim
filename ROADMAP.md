@@ -57,8 +57,10 @@
 - [x] Configuration: make default view configurable
 - [x] Configuration: make default dynamic views configurable
 - [x] Configuration: the number of log entries configurable
-- [x] Commands: jj log [FILE] :JcLog/:JlLog for loading the commit history into
-      the quickfix/location list see issue #1
+- [x] Commands: :JcLog/:JlLog [FILE] for loading the commit history into the
+      quickfix/location list see issue #1
+- [x] Commands: jj log [FILE] adding a dynamic filter to for the file commit
+      history
 
 ## Priority 1
 
@@ -68,6 +70,7 @@
 
 ## Priority 2
 
+- [ ] Commands: bookmark track and untrack
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
 - [ ] Bug: make log reload when `!` commands are executed

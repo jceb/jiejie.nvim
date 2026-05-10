@@ -24,7 +24,7 @@ M.load = function(ctx, callback)
   local log_diff = require("jiejie.log_diff")
   log_diff.setup_buffer(ctx) -- clear diffs as a workaround until reloading of diffs is implemented
   local cmd = "log"
-  local current_log_view = log_view.get_log_view_current()
+  local current_log_view = log_view.get_log_view_current(ctx.buf)
   assert(current_log_view, "Current log view is undefined")
   local idx = 1
   local build_log_view = function(views)
@@ -192,18 +192,21 @@ function M.setup(id)
           M.load(ctx, function(_ctx)
             context.set_context(_ctx)
             log_buffer.setup_buffer(_ctx)
+            vim.cmd.doau("User JiejieLogLoaded")
           end)
         elseif url.is_evolog then
           ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { evolog = ctx.buf })
           evolog.load(ctx, url.revision, function(_ctx)
             context.set_context(_ctx)
             evolog_buffer.setup_buffer(_ctx)
+            vim.cmd.doau("User JiejieEvoLogLoaded")
           end)
         elseif url.is_oplog then
           ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { oplog = ctx.buf })
           oplog.load(ctx, function(_ctx)
             context.set_context(_ctx)
             oplog_buffer.setup_buffer(_ctx)
+            vim.cmd.doau("User JiejieOpLogLoaded")
           end)
         end
         vim.cmd.doau("BufReadPost")

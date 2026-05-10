@@ -543,7 +543,7 @@ M.fns = {
         local largs = _args or {}
         --- @type LogView?
         local view
-        local current_view = log_view.get_log_view_current()
+        local current_view = log_view.get_log_view_current(_args.ctx.buf)
         if not current_view then
           error("Unable to determine current view")
         end
@@ -630,20 +630,20 @@ M.fns = {
           )(_args)
         elseif lopts.with_action == 2 ^ 1 then
           if vim.v.count > 0 then
-            current_view = log_view.get_log_view(vim.v.count)
+            current_view = log_view.get_log_view(_args.ctx.buf, vim.v.count)
           end
           if not current_view or not current_view.id or not log_view.remove_dynamic_view(current_view) then
             vim.notify("View isn't a dynamic and can't be removed", vim.log.levels.WARN)
             return false
           end
           if vim.v.count > 0 then
-            view = log_view.get_log_view_current()
+            view = log_view.get_log_view_current(_args.ctx.buf)
           end
           if not view then
-            view = log_view.get_log_view_previous()
+            view = log_view.get_log_view_previous(_args.ctx.buf)
           end
           if not view then
-            view = log_view.get_log_view(1)
+            view = log_view.get_log_view(_args.ctx.buf, 1)
           end
           if not view then
             vim.notify("Previous view does not exist", vim.log.levels.WARN)
@@ -653,14 +653,14 @@ M.fns = {
           local view_nr
           if vim.v.count > 0 then
             view_nr = vim.v.count
-            view = log_view.get_log_view(view_nr)
+            view = log_view.get_log_view(_args.ctx.buf, view_nr)
             if not view then
               vim.notify("View " .. view_nr .. " does not exist", vim.log.levels.WARN)
               return false
             end
           else
             -- switch to previous view
-            view = log_view.get_log_view_previous()
+            view = log_view.get_log_view_previous(_args.ctx.buf)
             if not view then
               vim.notify("Previous view does not exist, yet", vim.log.levels.WARN)
               return false
@@ -678,7 +678,7 @@ M.fns = {
       --- @return boolean
       function(args)
         if args.view then
-          log_view.set_log_view(args.view)
+          log_view.set_log_view(args.ctx.buf, args.view)
           local log_dirty_check = require("jiejie.log_dirty_check")
           log_dirty_check.dirty_mark_content(args.ctx.buf)
           log_dirty_check.do_dirty_check()
