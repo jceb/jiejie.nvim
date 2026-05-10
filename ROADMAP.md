@@ -61,10 +61,10 @@
       quickfix/location list see issue #1
 - [x] Commands: jj log [FILE] adding a dynamic filter to for the file commit
       history
+- [x] Navigation: implement `(, ), {, }, [m, ]m`
 
 ## Priority 1
 
-- [ ] Navigation: implement `(, ), [c, ]c, [], ][ and [m, ]m`
 - [ ] Navigation: unify navigation across log types: oplog, evolog and status
       log
 
@@ -94,6 +94,8 @@
 
 ## Priority 3
 
+- [ ] Navigation: implement hunk navigation `[c, ]c`
+- [ ] Navigation: implement end section navigation `[], ][`
 - [ ] Log: Add `cT` mapping to create a merge commit with a tag
 - [ ] Log: display conflict status of files (`log --types` .. however this is
       currently incompatible with `--summary`)

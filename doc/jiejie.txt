@@ -100,11 +100,29 @@ O                       Open the file or |jiejie-object| under the cursor in a
                                                                       *jiejie_K*
 K                       Open change under the cursor.
 
+                                                                      *jiejie_(*
+(                       Jump [count] changes or files backward.
+
+                                                                      *jiejie_)*
+)                       Jump [count] changes or files forward.
+
+                                                                      *jiejie_{*
+{                       Jump [count] changes backward.
+
+                                                                      *jiejie_}*
+}                       Jump [count] changes forward
+
                                                                      *jiejie_[[*
 [[                      Jump [count] sections backward.
 
                                                                      *jiejie_]]*
 ]]                      Jump [count] sections forward.
+
+                                                                     *jiejie_[m*
+[m                      Jump [count] files backward.
+
+                                                                     *jiejie_]m*
+]m                      Jump [count] files forward.
 
                                                                       *jiejie-d*
 Diff maps ~

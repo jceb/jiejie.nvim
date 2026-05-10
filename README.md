@@ -42,12 +42,13 @@ mappings more easily, these rules might prove helpful:
 - Use quickfix and location list to navigate the change history via `JcLog` and
   `JlLog`
 
-### Status log buffer (`:J`, `:Jj`, `Jj log`)
+### Status log buffer (`:J`, `:Jj`, `:Jj log`)
 
 - Includes the list of modified files alongside the status log
 - Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sB`,`sb`, `sd`, `sf`,
   `sr`, `sq`, `ss`, `1ss`, `..ss`, `sT`, `st`)
-- Navigation between changes, files and hunks (`[[`, `]]`, `<Tab>`)
+- Navigation between changes, files and hunks (`(`, `)`, `{`, `}`, `[m`, `]m`,
+  `[[`, `]]`, `<Tab>`)
 - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
 - Close status log buffer (`q`, `gq`)
 - Reload status log (`R`)

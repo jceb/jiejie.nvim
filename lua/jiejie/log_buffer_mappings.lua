@@ -14,6 +14,7 @@ M.fns = {
 
   --- @param opts {bang?: boolean}
   --- - bang: Execute a shell command instead of a vim command
+  --- @return fun(args?: WithArgs): boolean
   ["."] = function(opts)
     return helpers.search_file(function(args)
       local lopts = opts or {}
@@ -23,8 +24,100 @@ M.fns = {
     end)
   end,
 
+  --- @param opts {key: string, search_downwards?: boolean, to_change?: boolean, to_file?: boolean, to_every_section?: boolean}
+  --- - key string Key that is invoking the call - when count is provided, this key is fed into vim for each iteration of count
+  --- - search_downwards: Search downwards
+  --- - to_change: Jump to next change, ignore other sections
+  --- - to_file: Jump to next file, ignore other sections
+  --- - to_every_section: Jump to next section
+  --- @return fun(args?: WithArgs): boolean
+  ["]"] = function(opts)
+    local lopts = opts or {}
+    -- search_downwards: could be 1, if no next file is discovered, we could skip past the actual heading
+    -- else: could be -1, if no next file is discovered, we could skip past the actual heading
+    local linenr_offset = lopts.search_downwards and 1 or -1
+    local cmp = function(v1, v2, smaller_than)
+      if smaller_than then
+        return v1 < v2
+      else
+        return v1 > v2
+      end
+    end
+    return helpers.search_file(
+      helpers.search_change(
+        helpers.search_file(
+          helpers.search_change(function(args)
+            local count = vim.v.count
+            local _winid = vim.api.nvim_get_current_win()
+            local cur_linenr = vim.api.nvim_win_get_cursor(_winid)[1]
+            local linenr = 1
+            local change_linenr = lopts.search_downwards and (args.src_change and args.src_change.linenr) or (args.cur_change and args.cur_change.linenr) or 1
+            if (not lopts.to_file and not args.cur_file and not args.file) or lopts.to_change then
+              -- Cursor is on a change, jump to next change
+              linenr = not args.cur_file and args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
+            else
+              -- Cursor is on a file
+              if args.file then
+                if cmp(args.file.linenr, change_linenr, lopts.search_downwards) then
+                  -- File is within the current change
+                  if lopts.to_file or lopts.to_every_section then
+                    linenr = args.file.linenr
+                  else
+                    linenr = not args.cur_file and args.src_change and args.src_change.linenr or args.file.linenr
+                  end
+                else
+                  if lopts.to_every_section then
+                    if
+                      (lopts.search_downwards and cur_linenr >= change_linenr and change_linenr < args.file.linenr)
+                      or (not lopts.search_downwards and cur_linenr <= change_linenr and change_linenr > args.file.linenr)
+                    then
+                      linenr = args.file.linenr
+                    else
+                      -- search_downwards: File is in the next change, jump to the next change
+                      -- else: File is in the next change, jump to the current change
+                      linenr = change_linenr
+                    end
+                  else
+                    if lopts.to_file then
+                      linenr = args.file.linenr
+                    else
+                      linenr = not args.cur_file and args.src_change and args.src_change.linenr or args.file.linenr
+                    end
+                  end
+                end
+              else
+                if lopts.to_file then
+                  linenr = args.cur_file and args.cur_file.linenr or cur_linenr
+                else
+                  -- search_downwards: File is in the next change, jump to the next change
+                  -- else: File is in the next change, jump to the current change
+                  linenr = cmp(cur_linenr, change_linenr, lopts.search_downwards) and change_linenr or cur_linenr
+                end
+              end
+            end
+            local pos = { linenr, 0 }
+            api.set_cursor(_winid, pos)
+            if count > 1 then
+              vim.fn.feedkeys((count - 1) .. lopts.key)
+            end
+            return true
+          end, {
+            search_downwards = lopts.search_downwards,
+            linenr_from_file = not lopts.search_downwards,
+            linenr_offset = linenr_offset,
+            err_continue = true,
+          }),
+          { search_downwards = lopts.search_downwards, linenr_offset = linenr_offset, skip_past_change = true, err_continue = true }
+        ),
+        { args_key = "cur_change", err_continue = true }
+      ),
+      { args_key = "cur_file", err_continue = true }
+    )
+  end,
+
   --- @param opts {backwards?: boolean}
   --- - backwards: Shift backwards
+  --- @return fun(args?: WithArgs): boolean
   [">"] = function(opts)
     --- @param args WithArgs
     return helpers.search_change(function(args)
@@ -102,6 +195,7 @@ M.fns = {
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
+  --- @return fun(args?: WithArgs): boolean
   cb = function(opts)
     local lopts = opts or {}
     local with_bookmarks = function(fn)
@@ -188,6 +282,7 @@ M.fns = {
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
+  --- @return fun(args?: WithArgs): boolean
   cm = function(opts)
     local lopts = opts or {}
     local with_input = function(fn)
@@ -242,6 +337,7 @@ M.fns = {
   --- @param opts {with_action?: number, args?: string[]}
   --- - with_action: 1 (default): new branch, 2: change before, 4: change inbetween
   --- - args: Additional arguments
+  --- @return fun(args?: WithArgs): boolean
   cn = function(opts)
     local lopts = opts or {}
     --- @param args WithArgs
@@ -287,6 +383,7 @@ M.fns = {
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
+  --- @return fun(args?: WithArgs): boolean
   cp = function(opts)
     local lopts = opts or {}
     local use_change = function(fn)
@@ -336,6 +433,7 @@ M.fns = {
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
+  --- @return fun(args?: WithArgs): boolean
   ct = function(opts)
     local lopts = opts or {}
     local with_tags = function(fn)
@@ -385,6 +483,7 @@ M.fns = {
 
   --- @param opts {negate?: boolean}
   --- - negate: Negate count
+  --- @return fun(args?: WithArgs): boolean
   ctrl_a = function(opts)
     local lopts = opts or {}
     --- @param args WithArgs
@@ -397,6 +496,7 @@ M.fns = {
   --- @param opts {split_direction?: SplitDirection, diff_commit_under_cursor?: boolean}
   --- - split_direction: Split direction
   --- - diff_commit_under_cursor: Diff commit under against its parents instead of diffing against @
+  --- @return fun(args?: WithArgs): boolean
   d = function(opts)
     --- @param args WithArgs
     return helpers.search_file(helpers.search_change(function(args)
@@ -423,6 +523,7 @@ M.fns = {
 
   --- @param opts {split_direction?: SplitDirection}
   --- - split_direction: Split direction
+  --- @return fun(args?: WithArgs): boolean
   o = function(opts)
     --- @param args WithArgs
     return helpers.search_file(helpers.search_change(function(args)
@@ -435,6 +536,7 @@ M.fns = {
 
   --- @param opts {close_current_window?: boolean}
   --- - close_current_window: Close the current window in addition to the preview window
+  --- @return fun(args?: WithArgs): boolean
   q = function(opts)
     local lopts = opts or {}
     return helpers.with_count(function(_)
@@ -463,6 +565,7 @@ M.fns = {
   --- - drop_change: Drops change and pass nil instead
   --- - limit_to_change: Limits bookmark / tag search to the current change
   --- - limit_to_branch: Limits bookmark search to the current branch (::@- | @+::) - not applie for tag selection
+  --- @return fun(args?: WithArgs): boolean
   r = function(opts)
     local lopts = opts or {}
     local use_change = function(fn)
@@ -533,6 +636,7 @@ M.fns = {
   --- - args: Additional arguments
   --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
   --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
+  --- @return fun(args?: WithArgs): boolean
   s = function(opts)
     local lopts = opts or {}
     --- @param fn fun(args: WithArgs): boolean
@@ -690,6 +794,7 @@ M.fns = {
 
   --- @param opts? {vertical?: boolean, log?: JiejieBufferType}
   --- - vertical: Split vertically
+  --- @return fun(args?: WithArgs): boolean
   so = function(opts)
     --- @param args WithArgs
     --- @return boolean
@@ -703,6 +808,7 @@ M.fns = {
   --- @param opts {commit_id?: boolean, message_or_filename?: boolean}
   --- - commit_id: Copy commit id or else the change id if not message_or_filename
   --- - message_or_filename: Copy commit message or file name
+  --- @return fun(args?: WithArgs): boolean
   y = function(opts)
     local lopts = opts or {}
     local locate = function(fn)
@@ -743,6 +849,8 @@ M.fns = {
       return true
     end)
   end,
+
+  --
 }
 
 --- @type table<number, {key: string, fn: fun(args?: WithArgs), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
@@ -846,101 +954,44 @@ M.nmaps = {
     desc = "Open change under the cursor",
   },
   {
+    key = "(",
+    fn = M.fns["]"]({ key = "(", search_downwards = false, to_every_section = true }),
+    desc = "Jump [count] changes or files backward",
+  },
+  {
+    key = ")",
+    fn = M.fns["]"]({ key = ")", search_downwards = true, to_every_section = true }),
+    desc = "Jump [count] changes or files forward",
+  },
+  {
+    key = "{",
+    fn = M.fns["]"]({ key = "{", search_downwards = false, to_change = true }),
+    desc = "Jump [count] changes forward",
+  },
+  {
+    key = "}",
+    fn = M.fns["]"]({ key = "}", search_downwards = true, to_change = true }),
+    desc = "Jump [count] changes forward",
+  },
+  {
     key = "[[",
-    fn = helpers.search_file(
-      helpers.search_change(
-        helpers.search_file(
-          helpers.search_change(function(args)
-            local count = vim.v.count
-            local _winid = vim.api.nvim_get_current_win()
-            local cur_change_linenr = args.cur_change and args.cur_change.linenr or 1
-            local linenr = 1
-            if not args.cur_file then
-              -- Cursor is on a change, jump to next change
-              linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
-            else
-              -- Cursor is on a file
-              if args.file then
-                if args.file.linenr > cur_change_linenr then
-                  -- File is within the current change
-                  linenr = args.file.linenr
-                else
-                  -- File is in the next change, jump to the current change
-                  linenr = cur_change_linenr
-                end
-              else
-                -- File is in the next change, jump to the current change
-                linenr = cur_change_linenr
-              end
-            end
-            local pos = { linenr, 0 }
-            api.set_cursor(_winid, pos)
-            if count > 1 then
-              vim.fn.feedkeys((count - 1) .. "[[")
-            end
-            return true
-          end, {
-            linenr_from_file = true,
-            -- could be -1, if no next file is discovered, we could skip past the actual heading
-            linenr_offset = -1,
-            err_continue = true,
-          }),
-          { linenr_offset = -1, skip_past_change = true, err_continue = true }
-        ),
-        { args_key = "cur_change", err_continue = true }
-      ),
-      { args_key = "cur_file", err_continue = true }
-    ),
+    fn = M.fns["]"]({ key = "[[", search_downwards = false }),
     desc = "Jump [count] sections backward",
   },
   {
     key = "]]",
-    fn = helpers.search_file(
-      helpers.search_change(
-        helpers.search_file(
-          helpers.search_change(function(args)
-            local count = vim.v.count
-            local _winid = vim.api.nvim_get_current_win()
-            local linenr = 1
-            local src_change_linenr = args.src_change and args.src_change.linenr or 1
-            if not args.cur_file then
-              -- Cursor is on a change, jump to next change
-              linenr = args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
-            else
-              -- Cursor is on a file
-              if args.file then
-                if args.file.linenr < src_change_linenr then
-                  -- File is within the current change
-                  linenr = args.file.linenr
-                else
-                  -- File is in the next change, jump to the next change
-                  linenr = src_change_linenr
-                end
-              else
-                -- File is in the next change, jump to the next change
-                linenr = src_change_linenr
-              end
-            end
-            local pos = { linenr, 0 }
-            api.set_cursor(_winid, pos)
-            if count > 1 then
-              vim.fn.feedkeys((count - 1) .. "]]")
-            end
-            return true
-          end, {
-            search_downwards = true,
-            linenr_from_file = false,
-            -- could be 1, if no next file is discovered, we could skip past the actual heading
-            linenr_offset = 1,
-            err_continue = true,
-          }),
-          { search_downwards = true, linenr_offset = 1, skip_past_change = true, err_continue = true }
-        ),
-        { args_key = "cur_change", err_continue = true }
-      ),
-      { args_key = "cur_file", err_continue = true }
-    ),
+    fn = M.fns["]"]({ key = "]]", search_downwards = true }),
     desc = "Jump [count] sections forward",
+  },
+  {
+    key = "[m",
+    fn = M.fns["]"]({ key = "[m", search_downwards = false, to_file = true }),
+    desc = "Jump [count] files backward",
+  },
+  {
+    key = "]m",
+    fn = M.fns["]"]({ key = "]m", search_downwards = true, to_file = true }),
+    desc = "Jump [count] files forward",
   },
 
   -- Diff maps {{{1

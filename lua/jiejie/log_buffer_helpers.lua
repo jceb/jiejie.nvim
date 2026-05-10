@@ -424,10 +424,12 @@ end
 
 --- Search diff hunk that position
 --- @param fn fun(args?: WithArgs): boolean Callback function
---- @param opts? WithOpts | {search_downwards?: boolean, linenr?: number, linenr_offset?: number, skip_past_change?: boolean} Options
+--- @param opts? WithOpts | {search_downwards?: boolean, linenr?: number, linenr_offset?: number, skip_past_change?: boolean, skip_past_file?: boolean} Options
 --- - search_downwards Search downwards, instead of upwards
 --- - linenr Line number the search should start from, if not provided, the cursor position is used
 --- - linenr_offset Offset that is added to line numer, e.g. 1 to start search in the next / previous line
+--- - skip_past_change Skip search past the next change
+--- - skip_past_file Skip search past the next file
 --- @return function
 function M.search_hunk(fn, opts)
   --- @param args? WithArgs Arguments
@@ -474,7 +476,7 @@ function M.search_hunk(fn, opts)
           break
         end
         local file = parsers.parse_filename(line, linenr)
-        if file then
+        if file and not lopts.skip_past_file then
           break
         end
         local change = parsers.parse_change(line, linenr)
@@ -484,7 +486,7 @@ function M.search_hunk(fn, opts)
         linenr = linenr - 1
       end
     end
-    if hunk == nil and not lopts.err_continue then
+    if not hunk and not lopts.err_continue then
       if lopts.err_notify or lopts.err_notify == nil then
         vim.notify("File data not found.", vim.log.levels.WARN)
       end
