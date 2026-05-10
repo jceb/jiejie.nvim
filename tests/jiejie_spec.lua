@@ -461,6 +461,35 @@ describe("jiejie join_url", function()
     eq(expected, result)
   end)
 
+  it("When joining a URL that is pointing change @, then the local file name shall be returned", function()
+    local result = require("jiejie.parsers").join_url({
+      is_log = false,
+      is_oplog = false,
+      is_evolog = false,
+      root = ".",
+      revision = "@",
+      path = "x/y",
+      workspace = "default",
+    })
+    local expected = "./x/y"
+    eq(expected, result)
+  end)
+
+  it("When joining a URL that is pointing to the current working copy, then the local file name shall be returned", function()
+    local result = require("jiejie.parsers").join_url({
+      is_log = false,
+      is_oplog = false,
+      is_evolog = false,
+      root = ".",
+      revision = "revision/2",
+      path = "x/y",
+      workspace = "default",
+      current_working_copy = true,
+    })
+    local expected = "./x/y"
+    eq(expected, result)
+  end)
+
   --
 end)
 

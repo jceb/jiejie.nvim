@@ -963,6 +963,7 @@ function M.load_history(ctx, src_change, opts)
             revision = change.id,
             workspace = "default", -- TODO: workspace is not yet supported
             path = lopts.file and lopts.file.path,
+            -- current_working_copy = change.current_working_copy, INFO: ensure that only proper jiejie objects are opened
           })
           local bufnr = vim.fn.bufadd(filename)
           change_list = vim.list_extend(change_list, {

@@ -179,6 +179,7 @@ end
 --- @field is_log? boolean Whether the URL is pointing to the log
 --- @field is_evolog? boolean Whether the URL is pointing to an evolog
 --- @field is_oplog? boolean Whether the URL is pointing to the oplog
+--- @field current_working_copy? boolean Whether the URL is pointing a revision that is the current working copy
 
 --- Parse jiejie:// URL into its componentens
 --- @param url string URL
@@ -304,7 +305,7 @@ function M.join_url(url)
     jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/oplog/index"
   elseif url.is_evolog then
     jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/evolog/" .. revision
-  elseif url.revision == "@" then
+  elseif url.revision == "@" or url.current_working_copy then
     jiejie_url = vim.fs.joinpath(url.root, url.path or "")
   else
     jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/rev/" .. revision .. "/" .. (url.path or "")
