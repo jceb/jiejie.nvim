@@ -82,34 +82,26 @@ end
 --- Mark everything dirty to trigger a reload
 --- @param buf number Buffer ID
 function M.dirty_mark_everything(buf)
-  vim.schedule(function()
-    set_dirty(buf, bit.bor(M.DIRTY_CONTENT, M.DIRTY_CURSOR))
-  end)
+  set_dirty(buf, bit.bor(M.DIRTY_CONTENT, M.DIRTY_CURSOR))
 end
 
 --- Run the autocommand that triggers a dirty check
 function M.do_dirty_check()
-  vim.schedule(function()
-    vim.cmd.doau("User JiejieDirtyCheck")
-  end)
+  vim.cmd.doau("User JiejieDirtyCheck")
 end
 
 --- Mark buffer content as dirty to trigger a reload
 --- @param buf number Buffer ID
 function M.dirty_mark_content(buf)
-  vim.schedule(function()
-    set_dirty(buf, M.DIRTY_CONTENT)
-  end)
+  set_dirty(buf, M.DIRTY_CONTENT)
 end
 
 --- Mark cursor position as dirty to trigger a reload
 --- @param ctx Context context
 function M.dirty_mark_cursor(ctx)
-  vim.schedule(function()
-    if set_dirty(ctx.buf, M.DIRTY_CURSOR) then
-      vim.api.nvim_buf_set_var(ctx.buf, "jiejie_dirty_cursor", ctx.curpos)
-    end
-  end)
+  if set_dirty(ctx.buf, M.DIRTY_CURSOR) then
+    vim.api.nvim_buf_set_var(ctx.buf, "jiejie_dirty_cursor", ctx.curpos)
+  end
 end
 
 --- Setup dirty checking for current buffer
