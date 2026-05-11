@@ -33,7 +33,7 @@ M.nmaps = {
     key = "K",
     fn = helpers.search_change(function(args)
       args.src_change.current_working_copy = false -- force the revision to be displayed
-      api.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit })
+      api.object_edit(args.ctx, nil, args.src_change, { edit_cmd = vim.cmd.pedit, is_oprev = true })
       return true
     end),
     desc = "Open change under the cursor",

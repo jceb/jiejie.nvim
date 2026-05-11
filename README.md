@@ -91,6 +91,7 @@ mappings more easily, these rules might prove helpful:
 - Restore repository at operation (`<CR>`)
 - Close operation log buffer (`q`)
 - Reload operation log (`R`)
+- Open full change in preview window (`K`)
 - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
 
 ### Evolog buffer (`:J evolog`, `:Jj evolog`)

@@ -179,6 +179,7 @@ end
 --- @field is_log? boolean Whether the URL is pointing to the log
 --- @field is_evolog? boolean Whether the URL is pointing to an evolog
 --- @field is_oplog? boolean Whether the URL is pointing to the oplog
+--- @field is_oprev? boolean Whether the URL is pointing an oplog revision
 --- @field current_working_copy? boolean Whether the URL is pointing a revision that is the current working copy
 
 --- Parse jiejie:// URL into its componentens
@@ -188,7 +189,8 @@ function M.parse_url(url)
   if not vim.startswith(url, "jiejie://") then
     return nil
   end
-  local match = vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)/\(log\|evolog\|oplog\|rev\)/\%(index$\|\([^/]\+\)\%(/\(.\+\)$\|$\)\?\)]])
+  local match =
+    vim.fn.matchlist(url, [[^\(jiejie://\)\(.\{-1,}\)/\.jj/\([^/]\+\)/\(log\|evolog\|oplog\|oprev\|rev\)/\%(index$\|\([^/]\+\)\%(/\(.\+\)$\|$\)\?\)]])
   if #match == 0 then
     return nil
   end
@@ -200,14 +202,17 @@ function M.parse_url(url)
   local is_log = false
   local is_evolog = false
   local is_oplog = false
+  local is_oprev = false
   if match[5] == "log" then
     is_log = true
   elseif match[5] == "evolog" then
     is_evolog = true
   elseif match[5] == "oplog" then
     is_oplog = true
-  elseif match[5] == "rev" then
-    is_log = false
+  elseif match[5] == "rev" or match[5] == "oprev" then
+    if match[5] == "oprev" then
+      is_oprev = true
+    end
   else
     error("Unknown path in URL: " .. url)
   end
@@ -220,6 +225,7 @@ function M.parse_url(url)
     is_log = is_log,
     is_evolog = is_evolog,
     is_oplog = is_oplog,
+    is_oprev = is_oprev,
   }
 end
 
@@ -305,6 +311,8 @@ function M.join_url(url)
     jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/oplog/index"
   elseif url.is_evolog then
     jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/evolog/" .. revision
+  elseif url.is_oprev then
+    jiejie_url = "jiejie://" .. url.root .. "/.jj/" .. url.workspace .. "/oprev/" .. revision .. "/" .. (url.path or "")
   elseif url.revision == "@" or url.current_working_copy then
     jiejie_url = vim.fs.joinpath(url.root, url.path or "")
   else

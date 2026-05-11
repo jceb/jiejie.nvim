@@ -40,7 +40,7 @@ syn match jiejieCommitId /[a-z0-9]\+/ contained nextgroup=jiejieChangeHidden,jie
 syn match jiejieChangeHidden /hidden/ contained nextgroup=jiejieChangeEmpty,jiejieChangeStatusConflict,jiejieChangeMessageEmpty,jiejieChangeMessage skipwhite
 syn match jiejieChangeEmpty /(empty)/ contained nextgroup=jiejieChangeStatusConflict,jiejieChangeMessageEmpty,jiejieChangeMessage skipwhite
 syn match jiejieChangeStatusConflict /(conflict)/ contained nextgroup=jiejieChangeMessageEmpty,jiejieChangeMessage skipwhite
-syn match jiejieChangeMessageEmpty /(no description set)/ contained skipwhite
+syn match jiejieChangeMessageEmpty /(no description set)/ contained
 syn match jiejieChangeMessage /.\+/ contained
 
 syn region jiejieFileSection start=/^[╭╮├┤╰─╯│]\%( \?[╭╮├┤╰─╯│] \?\)*  \+[MADRC]/ end=/^\%([╭╮├┤╰─╯│@×◆○][^@]\)\@=/ containedin=jiejieChangeSection contained
@@ -74,7 +74,6 @@ hi def link jiejieArgument TypeDef
 hi def link jiejieArgs NonText
 hi def link jiejieChangeHidden NonText
 hi def link jiejieElided NonText
-
 
 hi def link jiejieFileModified Type
 hi def link jiejieFileDeleted Type

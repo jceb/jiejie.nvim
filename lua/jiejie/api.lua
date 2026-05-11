@@ -603,7 +603,7 @@ end
 --- @param ctx Context context
 --- @param file? string File name
 --- @param change Change Change to edit file at
---- @param opts? {previous_win?: boolean, edit_cmd?: fun(filename: string), hunk?: Hunk, callback?: fun(winid: number)}
+--- @param opts? {previous_win?: boolean, edit_cmd?: fun(filename: string), hunk?: Hunk, callback?: fun(winid: number), is_oprev?: boolean}
 --- - previous_win: Navigate to previous window or split a new window before edting file, when current buffer is the log buffer
 --- - edit_cmd: Function that's called for editing file
 --- - callback: Callback function that's executed once the object has been opened in a buffer
@@ -618,6 +618,7 @@ function M.object_edit(ctx, file, change, opts)
     revision = change.current_working_copy and "@" or M.get_change_id(change),
     path = file,
     workspace = "default", -- TODO: workspace is not yet supported
+    is_oprev = lopts.is_oprev,
   })
   local winid = vim.api.nvim_get_current_win()
   local bufid = vim.api.nvim_get_current_buf()

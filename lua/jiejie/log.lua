@@ -94,14 +94,19 @@ end
 M.load_object = function(ctx, url, callback)
   local cmd, args, filetype
   if not url.path then
-    cmd = "show"
-    args = {
+    cmd = url.is_oprev and "op" or "show"
+    args = url.is_oprev and {
+      "show",
+      url.revision,
+      "-p",
+      "-s",
+    } or {
       "-r",
       url.revision,
       "-s",
       "--git",
     }
-    filetype = "jiejie_change"
+    filetype = url.is_oprev and "jiejie_opchange" or "jiejie_change"
   else
     cmd = "file"
     args = {
