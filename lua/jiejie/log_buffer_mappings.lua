@@ -54,7 +54,15 @@ M.fns = {
             local change_linenr = lopts.search_downwards and (args.src_change and args.src_change.linenr) or (args.cur_change and args.cur_change.linenr) or 1
             if (not lopts.to_file and not args.cur_file and not args.file) or lopts.to_change then
               -- Cursor is on a change, jump to next change
-              linenr = not args.cur_file and args.src_change and args.src_change.linenr or args.cur_change and args.cur_change.linenr or 1
+              if (not args.cur_file or lopts.to_change) and args.src_change then
+                linenr = args.src_change.linenr
+              elseif args.cur_change then
+                linenr = args.cur_change.linenr
+              end
+              if (lopts.search_downwards and linenr < cur_linenr) or (not lopts.search_downwards and linenr > cur_linenr) then
+                -- mitigate any logic imperfections
+                linenr = cur_linenr
+              end
             else
               -- Cursor is on a file
               if args.file then
