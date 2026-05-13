@@ -62,6 +62,7 @@
 - [x] Commands: jj log [FILE] adding a dynamic filter to for the file commit
       history
 - [x] Navigation: implement `(, ), {, }, [m, ]m`
+- [x] Commands: bookmark track and untrack
 
 ## Priority 1
 
@@ -70,7 +71,6 @@
 
 ## Priority 2
 
-- [ ] Commands: bookmark track and untrack
 - [ ] Commands: add convencience diffput and diffget mappings, d2p, d2o, ... in
       diff mode
 - [ ] Bug: make log reload when `!` commands are executed

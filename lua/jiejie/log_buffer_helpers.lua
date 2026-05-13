@@ -17,10 +17,10 @@ local M = {}
 --- @field file? ModifiedFile Modified file
 --- @field cur_file? ModifiedFile Modified file
 --- @field hunk? Hunk Hunk that has been found
---- @field bookmark? string Bookmark
+--- @field bookmark? BookmarkTag Bookmark
 --- @field bookmarks? BookmarkTag[] Selection of bookmarks to choose from
 --- @field remote? string Git remote
---- @field tag? string Tag
+--- @field tag? BookmarkTag Tag
 --- @field tags? BookmarkTag[] Selection of tags to choose from - opts.tags must be set for tags to be used
 --- @field force? boolean Sets force
 --- @field view? LogView Log view
@@ -211,7 +211,7 @@ function M.with_bookmark_or_tag(fn, opts)
     local prompt = lopts.prompt or (bts and ("Select " .. title .. ": ") or ("Enter " .. title .. " name: "))
     if bts then
       if #bts == 1 then
-        fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bts[1].name }))
+        fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bts[1] }))
       else
         vim.ui.select(bts, {
           prompt = prompt,
@@ -232,7 +232,7 @@ function M.with_bookmark_or_tag(fn, opts)
           if not bt then
             fn(largs)
           else
-            fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bt.name }))
+            fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bt }))
           end
         end)
       end
@@ -247,7 +247,7 @@ function M.with_bookmark_or_tag(fn, opts)
         if bt == "" then
           fn(largs)
         else
-          fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = bt }))
+          fn(vim.tbl_extend("force", largs, { [lopts.args_key or (lopts.tags and "tag" or "bookmark")] = { name = bt } }))
         end
       end)
     end
@@ -311,8 +311,10 @@ function M.with_bookmarks_or_tags(fn, opts)
           local bt = parsers.parse_bookmark_or_tag(line)
           if bt and bt.present and bt.remote ~= "git" then
             if
-              (lopts.remote == false and bt.remote and bt.remote ~= "")
-              or (lopts.remote == true and not bt.remote and bt.remote == "")
+              (lopts.remote == false and bt.remote)
+              or (lopts.remote == false and bt.remote ~= "")
+              or (lopts.remote == true and not bt.remote)
+              or (lopts.remote == true and bt.remote == "")
               or (lopts.tracked == false and bt.tracked)
               or (lopts.tracked == true and not bt.tracked)
             then

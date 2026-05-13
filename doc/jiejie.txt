@@ -215,6 +215,12 @@ cbf                     Forget bookmark locally keeping the remote intact at
 [!]cbt                  Move default bookmark (`trunk()`) to the change under
                         the cursor. With <bang>, allow backwards movement.
 
+                                                                    *jiejie_cbT*
+cbT                     Track bookmark.
+
+                                                                    *jiejie_cbU*
+cbU                     Untrack bookmark.
+
                                                                     *jiejie_cbX*
 cbX                     Delete any one bookmark including the remote boomark.
 

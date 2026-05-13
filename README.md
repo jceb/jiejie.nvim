@@ -79,7 +79,7 @@ mappings more easily, these rules might prove helpful:
   `rr`, `rtD`, `rtd`, `rtO`, `rto`, `rtt` `rtT`)
 - Undo / redo last operation (`u`, `<C-r>`)
 - Bookmark management (`cba`, `cbb`, `cbc`, `cbF`, `cbf`, `cbM`, `cbm`, `cbR`,
-  `cbr`, `cbt`, `cbX`, `cbx`)
+  `cbr`, `cbt`, `cbT`, `cbU`, `cbX`, `cbx`)
 - Tag management (`ctc`, `ctm`, `ctt`, `ctX`, `ctx`)
 - Untrack and track files (`x`, `!x`)
 - Focus / open operation log (`so`, `sO`)

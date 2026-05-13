@@ -197,7 +197,7 @@ M.fns = {
   end,
 
   --- @param opts {with_action?: number, remote?: boolean, tracked?: boolean, drop_change?: boolean, limit_to_change?: boolean, limit_to_branch?: boolean}
-  --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename, 32: move trunk(), 64: move closest bookmark
+  --- - with_action: 1 (default): create, 2: move, 4: forget, 8: delete, 16: rename, 32: move trunk(), 64: move closest bookmark, 128: track bookark, 256: untrack bookmark
   --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
   --- - tracked: If set to nil, consider untracked and tracked bookmarks, if set to false, only consider untracked bookmarks, if set to true, only consider tracked bookmarks
   --- - drop_change: Drops change and pass nil instead
@@ -222,7 +222,24 @@ M.fns = {
       end
       return fn
     end
-    if lopts.with_action == 2 ^ 6 then
+    if lopts.with_action == 2 ^ 7 or lopts.with_action == 2 ^ 8 then
+      return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
+        local action = lopts.with_action == 2 ^ 7 and "track" or "untrack"
+        local msg = lopts.with_action == 2 ^ 7 and "Started" or "Stopped"
+        local cargs = { action, args.bookmark.name }
+        if args.remote then
+          table.insert(cargs, "--remote")
+          table.insert(cargs, args.bookmark.remote)
+        end
+        api.cli(args.ctx, "bookmark", {
+          args = cargs,
+          on_exit = function()
+            vim.notify(msg .. "tracking " .. args.bookmark.name .. " on change " .. args.bookmark.id_short, vim.log.levels.INFO)
+          end,
+        })
+        return true
+      end)))
+    elseif lopts.with_action == 2 ^ 6 then
       return helpers.search_change(function(args)
         local cargs = { "advance", "-t", api.get_change_id(args.src_change) }
         api.cli(args.ctx, "bookmark", {
@@ -243,39 +260,39 @@ M.fns = {
     return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
       if lopts.with_action == 2 ^ 4 then
         helpers.with_bookmark_or_tag(function(__args)
-          local cargs = { "rename", args.bookmark, __args.bookmark }
+          local cargs = { "rename", args.bookmark.name, __args.bookmark.name }
           if __args.force then
             table.insert(cargs, "--overwrite-existing")
           end
           api.cli(args.ctx, "bookmark", {
             args = cargs,
             on_exit = function()
-              vim.notify("Bookmark renamed: " .. args.bookmark .. " → " .. __args.bookmark, vim.log.levels.INFO)
+              vim.notify("Bookmark renamed: " .. args.bookmark.name .. " → " .. __args.bookmark.name, vim.log.levels.INFO)
             end,
           })
           return true
-        end, { prompt = "Enter new name for bookmark " .. args.bookmark .. ": " })({ ctx = args.ctx, args_key = "bookmark" })
+        end, { prompt = "Enter new name for bookmark " .. args.bookmark.name .. ": " })({ ctx = args.ctx, args_key = "bookmark" })
       elseif lopts.with_action == 2 ^ 3 then
         api.cli(args.ctx, "bookmark", {
-          args = { "delete", args.bookmark },
+          args = { "delete", args.bookmark.name },
           on_exit = function()
-            vim.notify("Bookmark deleted: " .. args.bookmark, vim.log.levels.INFO)
+            vim.notify("Bookmark deleted: " .. args.bookmark.name, vim.log.levels.INFO)
           end,
         })
       elseif lopts.with_action == 2 ^ 2 then
         api.cli(args.ctx, "bookmark", {
-          args = { "forget", args.bookmark },
+          args = { "forget", args.bookmark.name },
           on_exit = function()
-            vim.notify("Bookmark forgotten: " .. args.bookmark, vim.log.levels.INFO)
+            vim.notify("Bookmark forgotten: " .. args.bookmark.name, vim.log.levels.INFO)
           end,
         })
       elseif lopts.with_action == 2 ^ 1 then
-        api.bookmark_move(args.ctx, args.src_change, args.bookmark, { force = args.force })
+        api.bookmark_move(args.ctx, args.src_change, args.bookmark.name, { force = args.force })
       else
         api.cli(args.ctx, "bookmark", {
-          args = { "create", "-r", api.get_change_id(args.src_change), args.bookmark },
+          args = { "create", "-r", api.get_change_id(args.src_change), args.bookmark.name },
           on_exit = function()
-            vim.notify("Bookmark created: " .. args.bookmark, vim.log.levels.INFO)
+            vim.notify("Bookmark created: " .. args.bookmark.name, vim.log.levels.INFO)
           end,
         })
       end
@@ -316,7 +333,7 @@ M.fns = {
     return helpers.search_change(with_input(function(args)
       local changes = { api.construct_dummy_change("@") }
       if lopts.with_action == 2 ^ 2 then
-        table.insert(changes, api.construct_dummy_change(args.bookmark))
+        table.insert(changes, api.construct_dummy_change(args.bookmark.name))
       elseif lopts.with_action == 2 ^ 1 then
         table.insert(changes, args.dst_change)
       else
@@ -417,7 +434,7 @@ M.fns = {
     return use_change(function(args)
       local src_change = api.construct_dummy_change("@")
       ---@diagnostic disable-next-line: param-type-mismatch param is defined
-      local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag or args.bookmark) or args.dst_change
+      local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag.name or args.bookmark.name) or args.dst_change
       api.cli(args.ctx, "duplicate", {
         args = jujutsu.ignore_immtuable({
           "-d",
@@ -465,23 +482,23 @@ M.fns = {
     return helpers.search_change(with_tags(helpers.with_bookmark_or_tag(function(args)
       if lopts.with_action == 2 ^ 2 then
         api.cli(args.ctx, "tag", {
-          args = { "delete", args.tag },
+          args = { "delete", args.tag.name },
           on_exit = function()
-            vim.notify("Tag deleted: " .. args.tag, vim.log.levels.INFO)
+            vim.notify("Tag deleted: " .. args.tag.name, vim.log.levels.INFO)
           end,
         })
       elseif lopts.with_action == 2 ^ 1 then
         api.cli(args.ctx, "tag", {
-          args = { "set", "-r", api.get_change_id(args.src_change), "--allow-move", args.tag },
+          args = { "set", "-r", api.get_change_id(args.src_change), "--allow-move", args.tag.name },
           on_exit = function()
-            vim.notify("Tag " .. args.tag .. " moved to change " .. api.get_change_id(args.src_change), vim.log.levels.INFO)
+            vim.notify("Tag " .. args.tag.name .. " moved to change " .. api.get_change_id(args.src_change), vim.log.levels.INFO)
           end,
         })
       else
         api.cli(args.ctx, "tag", {
-          args = { "set", "-r", api.get_change_id(args.src_change), args.tag },
+          args = { "set", "-r", api.get_change_id(args.src_change), args.tag.name },
           on_exit = function()
-            vim.notify("Tag created: " .. args.tag, vim.log.levels.INFO)
+            vim.notify("Tag created: " .. args.tag.name, vim.log.levels.INFO)
           end,
         })
       end
@@ -605,7 +622,7 @@ M.fns = {
       function(args)
         local src_change = api.construct_dummy_change("@")
         ---@diagnostic disable-next-line: param-type-mismatch tag or bookmark are always set
-        local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag or args.bookmark) or args.dst_change
+        local dst_change = lopts.with_change == 2 ^ 2 and api.construct_dummy_change(lopts.tags and args.tag.name or args.bookmark.name) or args.dst_change
         if lopts.with_change == 2 ^ 2 then
           dst_change.immutable = false
         end
@@ -728,8 +745,8 @@ M.fns = {
           return helpers.with_bookmarks_or_tags(
             --- @param args WithArgs
             helpers.with_bookmark_or_tag(function(args)
-              local bm_revset = "::" .. (lopts.tags and args.tag or args.bookmark)
-              local revset = bm_revset .. " | " .. (lopts.tags and args.tag or args.bookmark) .. (lopts.args and lopts.args or "")
+              local bm_revset = "::" .. (lopts.tags and args.tag.name or args.bookmark.name)
+              local revset = bm_revset .. " | " .. (lopts.tags and args.tag.name or args.bookmark.name) .. (lopts.args and lopts.args or "")
               view = {
                 id = revset,
                 revset = revset,
@@ -1137,6 +1154,16 @@ M.nmaps = {
     key = "cbt",
     fn = M.fns.cb({ with_action = 2 ^ 5 }),
     desc = "Move default bookmark (`trunk()`) to the change under the cursor",
+  },
+  {
+    key = "cbT",
+    fn = M.fns.cb({ with_action = 2 ^ 7, remote = true, tracked = false, drop_change = true }),
+    desc = "Track bookmark",
+  },
+  {
+    key = "cbU",
+    fn = M.fns.cb({ with_action = 2 ^ 8, remote = true, tracked = true, drop_change = true }),
+    desc = "Untrack bookmark",
   },
   {
     key = "cbX",
@@ -1713,9 +1740,9 @@ M.nmaps = {
       return helpers.with_bookmarks_or_tags(
         helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
           api.cli(args.ctx, "git", {
-            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
+            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark.name },
             on_exit = function()
-              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
+              vim.notify("Bookmark " .. args.bookmark.name .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
             end,
           })
           return true
@@ -1732,9 +1759,9 @@ M.nmaps = {
       return helpers.with_bookmarks_or_tags(
         helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
           api.cli(args.ctx, "git", {
-            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark },
+            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark.name },
             on_exit = function()
-              vim.notify("Bookmark " .. args.bookmark .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
+              vim.notify("Bookmark " .. args.bookmark.name .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
             end,
           })
           return true
