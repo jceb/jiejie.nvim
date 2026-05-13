@@ -1422,12 +1422,7 @@ M.nmaps = {
     key = "u",
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = function(args)
-      api.cli(args.ctx, "op", {
-        args = { "revert" },
-        on_exit = function()
-          vim.notify("Operation reverted", vim.log.levels.INFO)
-        end,
-      })
+      api.cli(args.ctx, "op", { args = { "revert" } })
       return true
     end,
     desc = "Undo last operation",
@@ -1438,9 +1433,6 @@ M.nmaps = {
     fn = function(args)
       api.cli(args.ctx, "op", {
         args = { "revert" },
-        on_exit = function()
-          vim.notify("Operation reverted", vim.log.levels.INFO)
-        end,
       })
       return true
     end,
@@ -1670,9 +1662,6 @@ M.nmaps = {
     fn = function(args)
       api.cli(args.ctx, "git", {
         args = { "fetch", "--all-remotes" },
-        on_exit = function()
-          vim.notify("Changes fetched", vim.log.levels.INFO)
-        end,
       })
       return true
     end,
@@ -1684,9 +1673,6 @@ M.nmaps = {
     fn = function(args)
       api.cli(args.ctx, "git", {
         args = { "push", "--tracked", "--deleted" },
-        on_exit = function()
-          vim.notify("Changes pushed", vim.log.levels.INFO)
-        end,
       })
       return true
     end,
