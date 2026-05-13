@@ -290,8 +290,9 @@ cc                      Commit currently edited change and create a new
 cR                      Revert the change under the cursor.
 
                                                         *jiejie_crM* *jiejie_!crM*
-[!]crM                 Merge `@` with any one bookmark. With <bang>, ignore
-                       immutability settings.
+                                                        *jiejie_crB* *jiejie_!crB*
+[!]crB                 Merge `@` with any one bookmark. With <bang>, ignore
+[!]crM                 immutability settings.
 
                                                           *jiejie_cM* *jiejie_!cM*
                                                         *jiejie_crR* *jiejie_!crR*
@@ -471,11 +472,14 @@ grA                     Push all bookmarks to a specific git remote.
 gra                     Push all bookmarks.
 
                                                                     *jiejie_grB*
+                                                                    *jiejie_grM*
 grB                     Push any bookmark to a specific git remote.
+grM
 
                                                                     *jiejie_grb*
+                                                                    *jiejie_grm*
 grb                     Push the bookmark under the cursor to a specific git
-                        remote.
+grm                     remote.
 
                                                                     *jiejie_grT*
 grT                     Push git tags to a specific git remote.

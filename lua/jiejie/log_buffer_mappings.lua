@@ -1326,10 +1326,16 @@ M.nmaps = {
     desc = "Alias of crr",
   },
   {
-    key = "crM",
+    key = "crB",
     fn = M.fns.cm({ with_action = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Merge `@` with any one bookmark",
+  },
+  {
+    key = "crM",
+    fn = M.fns.cm({ with_action = 2 ^ 2, remote = false }),
+    with_force = true,
+    desc = "Alias of crB",
   },
   {
     key = "cM",
@@ -1753,6 +1759,13 @@ M.nmaps = {
     desc = "Push any bookmark to a specific git remote",
   },
   {
+    key = "grM",
+    fn = function()
+      vim.api.nvim_feedkeys("grB", "n", false)
+    end,
+    desc = "Alias of grB",
+  },
+  {
     key = "grb",
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = helpers.search_change(function(_args)
@@ -1770,6 +1783,13 @@ M.nmaps = {
       )(_args)
     end),
     desc = "Push the bookmark under the cursor to a specific git remote",
+  },
+  {
+    key = "grm",
+    fn = function()
+      vim.api.nvim_feedkeys("grb", "n", false)
+    end,
+    desc = "Alias of grb",
   },
   {
     key = "grT",
