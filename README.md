@@ -66,7 +66,7 @@ mappings more easily, these rules might prove helpful:
   line (`cd`)
 - Copy change description of change / commit ID (`yy`, `yc`, `yC`)
 - Create a new change (`c?`, `A`, `a`, `cA`, `ca`, `cI`, `ci`, `i`, `I`, `cn`)
-- Create a merge commit (`cB`, `cm`, `cM`)
+- Create a merge commit (`cm`, `cM`, `crr`, `crR`, `crM`)
 - Commit change or file under the cursor (`cc`)
 - Squash change or file into parent or into the change under the cursor (`cs`,
   `cS`)
