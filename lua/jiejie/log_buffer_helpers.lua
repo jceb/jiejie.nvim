@@ -217,7 +217,7 @@ function M.with_bookmark_or_tag(fn, opts)
           prompt = prompt,
           format_item = function(item)
             return item.name
-              .. (item.remote and item.remote ~= "" and ("@" .. item.remote) or "")
+              .. (item.remote and item.remote ~= "" and item.remote ~= "git" and ("@" .. item.remote) or "")
               .. (item.id_short ~= "" and (" (" .. item.id_short .. ")") or item.id and (" (" .. item.id .. ")") or "")
               .. (not item.tracked and item.remote and item.remote ~= "" and " untracked!" or "")
               .. (item.description_first_line and (" " .. item.description_first_line) or "")
@@ -309,12 +309,12 @@ function M.with_bookmarks_or_tags(fn, opts)
         local bts = {}
         for _, line in ipairs(vim.split(out.stdout, "\n")) do
           local bt = parsers.parse_bookmark_or_tag(line)
-          if bt and bt.present and bt.remote ~= "git" then
+          -- exclude bookmarks without a remote - jujutsu has them, their use hasn't materialized for me, yet
+          if bt and bt.present and bt.remote ~= "" then
             if
-              (lopts.remote == false and bt.remote)
-              or (lopts.remote == false and bt.remote ~= "")
+              (lopts.remote == false and not (bt.remote == "" or bt.remote == "git"))
               or (lopts.remote == true and not bt.remote)
-              or (lopts.remote == true and bt.remote == "")
+              or (lopts.remote == true and bt.remote == "git")
               or (lopts.tracked == false and bt.tracked)
               or (lopts.tracked == true and not bt.tracked)
             then
