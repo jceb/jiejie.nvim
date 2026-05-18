@@ -212,6 +212,7 @@ function M.setup()
     vim.api.nvim_create_user_command("J", M.Jj, cmdOpts)
   end
   vim.api.nvim_create_user_command("Jj", M.Jj, cmdOpts)
+  vim.api.nvim_create_user_command("JJ", M.Jj, cmdOpts)
   vim.api.nvim_create_user_command("Jedit", M.Jedit, { desc = ":edit a jiejie-object", nargs = "?" })
   vim.api.nvim_create_user_command("Jdiffsplit", M.Jdiffsplit, { desc = "Perform a vimdiff against the given file", nargs = "?", bang = true })
   vim.api.nvim_create_user_command(

@@ -14,11 +14,11 @@ CONFIGURATION                                                    *jiejie-config*
 COMMANDS                                                       *jiejie-commands*
 
                                                                             *:J*
-:J [args]               Same as :Jj, but one character shorter.
+:J [args]               Same as :JJ, but one character shorter.
 
                                                                 *jiejie-summary*
-:Jj                     With no arguments, bring up a log window. If a summary
-                        window is already open for the current repository, it
+:JJ                     With no arguments, bring up a log window. If a summary
+:Jj                     window is already open for the current repository, it
                         is focused instead.
                         Press g? or see |jiejie-maps| for usage.
 

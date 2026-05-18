@@ -42,7 +42,7 @@ mappings more easily, these rules might prove helpful:
 - Use quickfix and location list to navigate the change history via `JcLog` and
   `JlLog`
 
-### Status log buffer (`:J`, `:Jj`, `:Jj log`)
+### Status log buffer (`:J`, `:JJ`, `:Jj`, `:JJ log`)
 
 - Includes the list of modified files alongside the status log
 - Adjust view of displayed log entries (`s?`, `sA`, `sa`, `sB`,`sb`, `sd`, `sf`,
@@ -85,7 +85,7 @@ mappings more easily, these rules might prove helpful:
 - Focus / open operation log (`so`, `sO`)
 - Focus / open evolog (`se`, `sE`)
 
-### Operation log buffer (`:J oplog`, `:Jj oplog`)
+### Operation log buffer (`:J oplog`)
 
 - Focus / open status log buffer (`so`, `sO`)
 - Restore repository at operation (`<CR>`)
@@ -94,7 +94,7 @@ mappings more easily, these rules might prove helpful:
 - Open full change in preview window (`K`)
 - Increase or decrease the number of log entries shown (`<C-a>`, `<C-x>`)
 
-### Evolog buffer (`:J evolog`, `:Jj evolog`)
+### Evolog buffer (`:J evolog`)
 
 - Focus / open status log buffer (`se`, `sE`)
 - Edit change (`<CR>`)
