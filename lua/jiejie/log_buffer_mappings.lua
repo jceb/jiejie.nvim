@@ -288,13 +288,17 @@ M.fns = {
         })
       elseif lopts.with_action == 2 ^ 1 then
         api.bookmark_move(args.ctx, args.src_change, args.bookmark.name, { force = args.force })
-      else
+      elseif lopts.with_action == 2 ^ 0 then
         api.cli(args.ctx, "bookmark", {
           args = { "create", "-r", api.get_change_id(args.src_change), args.bookmark.name },
           on_exit = function()
             vim.notify("Bookmark created: " .. args.bookmark.name, vim.log.levels.INFO)
           end,
         })
+      else
+        vim.notify("Unknown action", vim.log.levels.ERROR)
+        error("Unknown action")
+        return false
       end
       return true
     end)))
@@ -325,8 +329,12 @@ M.fns = {
         end
       elseif lopts.with_action == 2 ^ 1 then
         return helpers.with_target_change(fn)
-      else
+      elseif lopts.with_action == 2 ^ 0 then
         return fn
+      else
+        vim.notify("Unknown action", vim.log.levels.ERROR)
+        error("Unknown action")
+        return function() end
       end
     end
     --- @param args WithArgs
@@ -336,12 +344,16 @@ M.fns = {
         table.insert(changes, api.construct_dummy_change(args.bookmark.name))
       elseif lopts.with_action == 2 ^ 1 then
         table.insert(changes, args.dst_change)
-      else
+      elseif lopts.with_action == 2 ^ 0 then
         if args.src_change.current_working_copy then
           vim.notify("Can't merge @ with itself", vim.log.levels.ERROR)
           return
         end
         table.insert(changes, args.src_change)
+      else
+        vim.notify("Unknown action", vim.log.levels.ERROR)
+        error("Unknown action")
+        return
       end
       api.change_new(args.ctx, {
         force = args.force,
@@ -386,7 +398,7 @@ M.fns = {
             vim.notify("Added new change before " .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
           end,
         })
-      else
+      elseif lopts.with_action == 2 ^ 0 then
         api.change_new(args.ctx, {
           force = args.force,
           changes = { args.src_change },
@@ -395,6 +407,10 @@ M.fns = {
             vim.notify("Added new change branch after " .. api.get_change_id(args.src_change, true), vim.log.levels.INFO)
           end,
         })
+      else
+        vim.notify("Unknown action", vim.log.levels.ERROR)
+        error("Unknown action")
+        return false
       end
       return true
     end)
@@ -426,8 +442,12 @@ M.fns = {
             limit_to_branch = lopts.limit_to_branch,
           })(args)
         end)
-      else
+      elseif lopts.with_change == 2 ^ 0 then
         return helpers.search_change(fn, { args_key = "dst_change" })
+      else
+        vim.notify("Unknown action", vim.log.levels.ERROR)
+        error("Unknown action")
+        return function() end
       end
     end
     --- @param args WithArgs
@@ -494,13 +514,17 @@ M.fns = {
             vim.notify("Tag " .. args.tag.name .. " moved to change " .. api.get_change_id(args.src_change), vim.log.levels.INFO)
           end,
         })
-      else
+      elseif lopts.with_action == 2 ^ 0 then
         api.cli(args.ctx, "tag", {
           args = { "set", "-r", api.get_change_id(args.src_change), args.tag.name },
           on_exit = function()
             vim.notify("Tag created: " .. args.tag.name, vim.log.levels.INFO)
           end,
         })
+      else
+        vim.notify("Unknown action", vim.log.levels.ERROR)
+        error("Unknown action")
+        return false
       end
       return true
     end, { tags = true })))
@@ -612,8 +636,12 @@ M.fns = {
         return function(args)
           return fn(vim.tbl_extend("force", args, { dst_change = api.construct_dummy_change("trunk()") }))
         end
-      else
+      elseif lopts.with_change == 2 ^ 0 then
         return helpers.search_change(fn, { args_key = "dst_change" })
+      else
+        vim.notify("Unknown action", vim.log.levels.ERROR)
+        error("Unknown action")
+        return function() end
       end
     end
     return use_change(
@@ -778,7 +806,7 @@ M.fns = {
             vim.notify("Previous view does not exist", vim.log.levels.WARN)
             return false
           end
-        else
+        elseif lopts.with_action == 2 ^ 0 then
           local view_nr
           if vim.v.count > 0 then
             view_nr = vim.v.count
@@ -795,6 +823,10 @@ M.fns = {
               return false
             end
           end
+        else
+          vim.notify("Unknown action", vim.log.levels.ERROR)
+          error("Unknown action")
+          return false
         end
         if view then
           return fn(vim.tbl_extend("force", largs, { [lopts.args_key or "view"] = view }))
