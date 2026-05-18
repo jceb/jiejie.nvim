@@ -183,7 +183,6 @@ number of references that I find helpful:
 - [Jujutsu documentation](https://docs.jj-vcs.dev/latest/)
 - [Jujutsu's Wiki - Neovim integration](https://github.com/jj-vcs/jj/wiki/Vim,-Neovim)
 - [Jujutsu Tutorial by Steve Klabnik](https://steveklabnik.github.io/jujutsu-tutorial/)
-- [Git Is Not Fine by Bridget Phillips](https://www.billjings.com/posts/title/git-is-not-fine/)
 - Jujutsu introductions:
   - Git Merge 2024
     [intro](https://www.youtube.com/watch?app=desktop&v=LV0JzI8IcCY) by Martin
@@ -191,3 +190,6 @@ number of references that I find helpful:
   - GitButler's [intro](https://www.youtube.com/watch?app=desktop&v=dwyMlLYIrPk)
     and [advanced](https://www.youtube.com/watch?v=PsiXflgIC8Q) videos
   - And [more](https://github.com/jj-vcs/jj/wiki/Media)
+- Other relevant articles:
+  - [Git Is Not Fine by Bridget Phillips](https://www.billjings.com/posts/title/git-is-not-fine/)
+  - [Jujutsu megamerges for fun and profit](https://isaaccorbrey.com/notes/jujutsu-megamerges-for-fun-and-profit)
