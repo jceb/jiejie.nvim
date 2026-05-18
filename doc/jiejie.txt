@@ -460,7 +460,10 @@ r<space>                Populate command line with `:Jj rebase`.
 Git maps ~
 
                                                                      *jiejie_gu*
-gu                      Fetch changes from git remote.
+gu                      Fetch changes from all git remotes.
+
+                                                                     *jiejie_gP*
+gP                      Push changes to a specific git remote.
 
                                                                      *jiejie_gp*
 gp                      Push changes to git remote.

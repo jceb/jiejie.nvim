@@ -60,8 +60,8 @@ mappings more easily, these rules might prove helpful:
 
 - Add `!` prefix to mappings when modifying immutable changes
 - Edit change (`<CR>`)
-- Pull and push changes to git (`gu`, `gp`, `grA`, `gra`, `grB`, `grb`, `grT`,
-  `grt`)
+- Pull and push changes to git (`gu`, `gP`, `gp`, `grA`, `gra`, `grB`, `grb`,
+  `grT`, `grt`)
 - Modify change description in an editor window (`ce`) or quick edit the first
   line (`cd`)
 - Copy change description of change / commit ID (`yy`, `yc`, `yC`)

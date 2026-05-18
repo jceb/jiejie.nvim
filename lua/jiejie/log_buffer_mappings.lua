@@ -1730,7 +1730,18 @@ M.nmaps = {
       })
       return true
     end,
-    desc = "Fetch changes from remote",
+    desc = "Fetch changes from all git remotes",
+  },
+  {
+    key = "gP",
+    --- @type fun(args?: WithArgs): boolean Callback function
+    fn = helpers.with_remote(function(args)
+      api.cli(args.ctx, "git", {
+        args = { "push", "--tracked", "--deleted" },
+      })
+      return true
+    end),
+    desc = "Push changes to a specific git remote",
   },
   {
     key = "gp",
@@ -1741,7 +1752,7 @@ M.nmaps = {
       })
       return true
     end,
-    desc = "Push changes to remote",
+    desc = "Push changes to git remote",
   },
   {
     key = "grA",
