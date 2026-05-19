@@ -68,6 +68,14 @@
 
 - [ ] Navigation: unify navigation across log types: oplog, evolog and status
       log
+- [ ] Commands: add cN to ask for a new change ID, allowing multiple inputs
+- [ ] Commands: make cM accept multiple inputs
+- [ ] Commands: absorb
+- [ ] Commands: metaedit --update-author --update-author-timestamp
+- [ ] Mapping: . - make mappings repeatable
+- [ ] Commands: split via a terminal and the interactive jj UI (current
+      workaround: commit one file instead of the whole change, then squash the
+      other files that should be part of the commit)
 
 ## Priority 2
 
@@ -78,9 +86,6 @@
       e.g. via `search()`
 - [ ] Commands: sign, unsign and sign-off commit
 - [ ] Evolog: make evolog work like the status log with `=`, file editing, etc.
-- [ ] Commands: split via a terminal and the interactive jj UI (current
-      workaround: commit one file instead of the whole change, then squash the
-      other files that should be part of the commit)
 - [ ] Key: pressing `X` on a hunk should restore it - not natively supported by
       jj
 - [ ] Support file names without leading pipe sign and with a `~` sign:
@@ -111,7 +116,6 @@
       change id
 - [ ] Commands: blame / file annotate
 - [ ] Refactor: remove notification from api.lua into log_buffer_mappings
-- [ ] Commands: absorb
 - [ ] Commands: parallelize
 - [ ] Docs: make video that show how to use jiejie - which-key for help with key
       bindings
