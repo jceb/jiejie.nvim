@@ -1737,7 +1737,7 @@ M.nmaps = {
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = helpers.with_remote(function(args)
       api.cli(args.ctx, "git", {
-        args = { "push", "--tracked", "--deleted" },
+        args = { "push", "--tracked", "--deleted", "--remote", args.remote },
       })
       return true
     end),
@@ -1766,7 +1766,7 @@ M.nmaps = {
       })
       return true
     end),
-    desc = "Push all bookmarks to a specific git remote",
+    desc = "Push all bookmarks to git remote",
   },
   {
     key = "gra",
