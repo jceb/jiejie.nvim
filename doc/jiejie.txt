@@ -211,8 +211,8 @@ cbf                     Forget bookmark locally keeping the remote intact at
                         <bang>, allow renaming to overwrite an existing
                         bookmark.
 
-                                                        *jiejie_cbt* *jiejie_!cbt*
-[!]cbt                  Move default bookmark (`trunk()`) to the change under
+                                                        *jiejie_cbd* *jiejie_!cbd*
+[!]cbd                  Move default bookmark (`trunk()`) to the change under
                         the cursor. With <bang>, allow backwards movement.
 
                                                                     *jiejie_cbT*

@@ -1149,6 +1149,11 @@ M.nmaps = {
     desc = "Create new bookmark at change under the cursor",
   },
   {
+    key = "cbd",
+    fn = M.fns.cb({ with_action = 2 ^ 5 }),
+    desc = "Move default bookmark (`trunk()`) to the change under the cursor",
+  },
+  {
     key = "cbF",
     fn = M.fns.cb({ with_action = 2 ^ 2, drop_change = true, remote = false }),
     desc = "Forget any one bookmark locally keeping the remote intact",
@@ -1181,11 +1186,6 @@ M.nmaps = {
     fn = M.fns.cb({ with_action = 2 ^ 4, limit_to_change = true, remote = false }),
     desc = "Rename bookmark at change under the cursor",
     with_force = true,
-  },
-  {
-    key = "cbt",
-    fn = M.fns.cb({ with_action = 2 ^ 5 }),
-    desc = "Move default bookmark (`trunk()`) to the change under the cursor",
   },
   {
     key = "cbT",
