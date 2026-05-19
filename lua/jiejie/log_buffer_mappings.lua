@@ -223,21 +223,32 @@ M.fns = {
       return fn
     end
     if lopts.with_action == 2 ^ 7 or lopts.with_action == 2 ^ 8 then
-      return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(args)
+      return helpers.search_change(with_bookmarks(helpers.with_bookmark_or_tag(function(_args)
         local action = lopts.with_action == 2 ^ 7 and "track" or "untrack"
         local msg = lopts.with_action == 2 ^ 7 and "Started" or "Stopped"
-        local cargs = { action, args.bookmark.name }
-        if args.remote then
-          table.insert(cargs, "--remote")
-          table.insert(cargs, args.bookmark.remote)
+        local fn_action = function(args)
+          local cargs = { action, args.bookmark.name }
+          if args.remote then
+            table.insert(cargs, "--remote")
+            table.insert(cargs, args.remote)
+          end
+          api.cli(args.ctx, "bookmark", {
+            args = cargs,
+            on_exit = function()
+              vim.notify(
+                msg .. " tracking " .. args.bookmark.name .. " on change " .. args.bookmark.id_short .. " and remote " .. args.remote .. "",
+                vim.log.levels.INFO
+              )
+            end,
+          })
+          return true
         end
-        api.cli(args.ctx, "bookmark", {
-          args = cargs,
-          on_exit = function()
-            vim.notify(msg .. "tracking " .. args.bookmark.name .. " on change " .. args.bookmark.id_short, vim.log.levels.INFO)
-          end,
-        })
-        return true
+        if _args.bookmark.remote and _args.bookmark.remote ~= "" and _args.bookmark.remote ~= "git" then
+          _args.remote = _args.bookmark.remote
+          fn_action(_args)
+        else
+          return helpers.with_remote(fn_action, { prompt = "Select remote to " .. action .. " bookmark " .. _args.bookmark.name .. ": " })(_args)
+        end
       end)))
     elseif lopts.with_action == 2 ^ 6 then
       return helpers.search_change(function(args)
@@ -1189,13 +1200,18 @@ M.nmaps = {
   },
   {
     key = "cbT",
-    fn = M.fns.cb({ with_action = 2 ^ 7, remote = true, tracked = false, drop_change = true }),
-    desc = "Track bookmark",
+    fn = M.fns.cb({ with_action = 2 ^ 7, remote = false, tracked = true, drop_change = true }),
+    desc = "Track local bookmark on a remote",
   },
   {
-    key = "cbU",
+    key = "cbt",
+    fn = M.fns.cb({ with_action = 2 ^ 7, remote = true, tracked = false, drop_change = true }),
+    desc = "Track remote bookmark",
+  },
+  {
+    key = "cbu",
     fn = M.fns.cb({ with_action = 2 ^ 8, remote = true, tracked = true, drop_change = true }),
-    desc = "Untrack bookmark",
+    desc = "Untrack remote bookmark",
   },
   {
     key = "cbX",

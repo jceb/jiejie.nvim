@@ -216,10 +216,13 @@ cbf                     Forget bookmark locally keeping the remote intact at
                         the cursor. With <bang>, allow backwards movement.
 
                                                                     *jiejie_cbT*
-cbT                     Track bookmark.
+cbT                     Track local bookmark on a remote.
 
-                                                                    *jiejie_cbU*
-cbU                     Untrack bookmark.
+                                                                    *jiejie_cbt*
+cbt                     Track remote bookmark.
+
+                                                                    *jiejie_cbu*
+cbu                     Untrack remote bookmark.
 
                                                                     *jiejie_cbX*
 cbX                     Delete any one bookmark including the remote boomark.
