@@ -310,10 +310,9 @@ function M.with_bookmarks_or_tags(fn, opts)
         for _, line in ipairs(vim.split(out.stdout, "\n")) do
           local bt = parsers.parse_bookmark_or_tag(line)
           -- exclude bookmarks without a remote - jujutsu has them, their use hasn't materialized for me, yet
-          if bt and bt.present and bt.remote ~= "" then
+          if bt and bt.present and bt.remote and bt.remote ~= "" then
             if
-              (lopts.remote == false and not (bt.remote == "" or bt.remote == "git"))
-              or (lopts.remote == true and not bt.remote)
+              (lopts.remote == false and bt.remote ~= "git")
               or (lopts.remote == true and bt.remote == "git")
               or (lopts.tracked == false and bt.tracked)
               or (lopts.tracked == true and not bt.tracked)
