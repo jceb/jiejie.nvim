@@ -594,6 +594,37 @@ M.fns = {
     end))
   end,
 
+  --- @param opts {limit_to_change?: boolean, remote?: boolean}
+  --- - limit_to_change?: boolean
+  --- - remote: If set to nil, consider local and remote bookmarks, if set to false, only consider local bookmarks, if set to true, only consider remote bookmarks
+  --- @return fun(args?: WithArgs): boolean
+  gr = function(opts)
+    local lopts = opts or {}
+    --- @param ___args WithArgs
+    return helpers.search_change(function(___args)
+      return helpers.with_bookmarks_or_tags(function(__args)
+        return helpers.with_bookmark_or_tag(function(_args)
+          return helpers.with_remote(function(args)
+            api.cli(args.ctx, "git", {
+              args = { "push", "--remote", args.remote, "--bookmark", args.bookmark.name },
+              on_exit = function()
+                vim.notify("Bookmark " .. args.bookmark.name .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
+              end,
+            })
+            return true
+          end, {
+            prompt = "Select remote to push bookmark " .. _args.bookmark.name .. " to: ",
+          })(_args)
+        end)(__args)
+      end, {
+        src_change = ___args.src_change,
+        limit_to_change = lopts.limit_to_change,
+        remote = lopts.remote,
+        prompt = "Select bookmark to be pushed to a specific remote",
+      })(___args)
+    end)
+  end,
+
   --- @param opts {close_current_window?: boolean}
   --- - close_current_window: Close the current window in addition to the preview window
   --- @return fun(args?: WithArgs): boolean
@@ -1801,20 +1832,7 @@ M.nmaps = {
   {
     key = "grB",
     --- @type fun(args?: WithArgs): boolean Callback function
-    fn = helpers.search_change(function(_args)
-      return helpers.with_bookmarks_or_tags(
-        helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
-          api.cli(args.ctx, "git", {
-            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark.name },
-            on_exit = function()
-              vim.notify("Bookmark " .. args.bookmark.name .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
-            end,
-          })
-          return true
-        end)),
-        { src_change = _args.src_change, remote = false }
-      )(_args)
-    end),
+    fn = M.fns.gr({ remote = false }),
     desc = "Push any bookmark to a specific git remote",
   },
   {
@@ -1827,20 +1845,7 @@ M.nmaps = {
   {
     key = "grb",
     --- @type fun(args?: WithArgs): boolean Callback function
-    fn = helpers.search_change(function(_args)
-      return helpers.with_bookmarks_or_tags(
-        helpers.with_bookmark_or_tag(helpers.with_remote(function(args)
-          api.cli(args.ctx, "git", {
-            args = { "push", "--remote", args.remote, "--bookmark", args.bookmark.name },
-            on_exit = function()
-              vim.notify("Bookmark " .. args.bookmark.name .. " pushed to remote " .. args.remote, vim.log.levels.INFO)
-            end,
-          })
-          return true
-        end)),
-        { src_change = _args.src_change, limit_to_change = true, remote = false }
-      )(_args)
-    end),
+    fn = M.fns.gr({ limit_to_change = true, remote = false }),
     desc = "Push the bookmark under the cursor to a specific git remote",
   },
   {
