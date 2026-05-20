@@ -6,7 +6,7 @@
 
 --- @type Configuration
 local DEFAULT_CONFIG = {
-  excluded_revset = nil,
+  excluded_revset = "",
   -- default_view = 1,
   dynamic_views = {},
   log_revisions = 10,
