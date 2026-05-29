@@ -167,18 +167,18 @@ function M.Jdiffsplit(args)
   local spilt_direction = args.name == "Jvdiffsplit" and M.SPLIT_DIRECTION.vertical or args.name == "Jhdiffsplit" and M.SPLIT_DIRECTION.horizontal or nil
   local files = {}
   local src = getFile(vim.fn.expand("%"))
-  table.insert(files, { path = src.path, M.construct_dummy_change(src.change_id or "@") })
+  table.insert(files, { path = src.path, api.construct_dummy_change(src.change_id or "@") })
   local ctx = context.get_context(src.root)
   assert(ctx, "Working directory does not belong to a Jujutsu repository. File: " .. src.filename)
   if #args.fargs > 0 then
     local dst_object = parsers.parse_object(args.fargs[1]) or {}
     if vim.startswith(dst_object.change_id, "@") then
-      local ancestors = M.get_ancestors(ctx, M.construct_dummy_change(dst_object.change_id))
+      local ancestors = api.get_adjacent_changes(ctx, api.construct_dummy_change(dst_object.change_id))
       for _, change in ipairs(ancestors) do
         table.insert(files, { path = dst_object.filename or src.path, change = change })
       end
     else
-      table.insert(files, { path = dst_object.filename or src.path, change = M.construct_dummy_change(dst_object.change_id) })
+      table.insert(files, { path = dst_object.filename or src.path, change = api.construct_dummy_change(dst_object.change_id) })
     end
   end
   api.diff_split(ctx, files, { split_direction = spilt_direction })
