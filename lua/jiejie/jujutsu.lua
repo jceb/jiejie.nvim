@@ -71,12 +71,13 @@ function M.create_dummy_editor()
     string.gsub(
       [[
 #!/bin/sh
+set -eu
+echo "$@" > /tmp/xxx.x
 [ -f "$JIEJIE_EXIT" ] && cat "$JIEJIE_EXIT" >&2 && exit 1
 echo "$1" > "$JIEJIE_EDIT"
-while [ -f "$JIEJIE_EDIT" -a ! -f "$JIEJIE_EXIT" ]; do sleep 0.05 2>/dev/null || sleep 1; done
+while [ -f "$JIEJIE_EDIT" ] && [ ! -f "$JIEJIE_EXIT" ]; do sleep 0.05 2>/dev/null || sleep 1; done
 rm -f "$JIEJIE_EDIT" "$JIEJIE_EXIT"
-exit 0
-      ]],
+exit 0]],
       "$JIEJIE_EXIT",
       exitFile
     ),

@@ -28,8 +28,6 @@ local function start_dummy_editor(ctx, cmd, args, opts)
       { force = lopts.force }
     ),
     sys_opts = {
-      stdout = false,
-      stderr = false,
       env = {
         EDITOR = editor.script,
       },
@@ -568,7 +566,7 @@ function M.change_describe(ctx, change, opts)
     end)
     return true
   end
-  start_dummy_editor(ctx, "describe", { "--edit", M.get_change_id(change) }, { force = lopts.force })
+  start_dummy_editor(ctx, "describe", { M.get_change_id(change) }, { force = lopts.force })
   return true
 end
 
