@@ -15,7 +15,7 @@ local M = {}
 
 --- Template to retrieve log entries
 M.template =
-  [[change_id.shortest() ++ if(divergent, "??") ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", description.first_line()) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ if(git_head, " git_head()") ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id ++ "∵ " ++ author.email() ++ "∶" ++ if(divergent, " divergent") ++ "∷" ++ commit_id ++ "∼" ++ if(current_working_copy, " current working copy") ++ "∾" ++ parents.len() ++ "\n"]]
+  [[change_id.shortest() ++ if(divergent, "??") ++ "\t" ++ "†" ++ if(empty, "(empty) ") ++ "‡" ++ if(description.first_line().len() == 0, "(no description set)", description.first_line()) ++ "⌠" ++ if(bookmarks.len() > 0, " " ++ bookmarks) ++ "⌡" ++ if(tags.len() > 0, " " ++ tags) ++ "∫" ++ "" ++ "∬" ++ if(conflict, " conflict") ++ "∮" ++ if(immutable, " immutable") ++ "∴" ++ change_id ++ "∵ " ++ author.email() ++ "∶" ++ if(divergent, " divergent") ++ "∷" ++ commit_id ++ "∼" ++ if(current_working_copy, " current working copy") ++ "∾" ++ parents.len() ++ "\n"]]
 
 --- Load/reload log contents into the jujutsu buffer
 --- @param ctx Context context
