@@ -69,10 +69,8 @@ function M.create_dummy_editor()
   fd = assert(vim.uv.fs_open(editorScript, "w", tonumber("700", 8)))
   local editorScriptContent = string.gsub(
     string.gsub(
-      [[
-#!/bin/sh
-set -eu
-echo "$@" > /tmp/xxx.x
+      [[#!/bin/sh
+set -eux
 [ -f "$JIEJIE_EXIT" ] && cat "$JIEJIE_EXIT" >&2 && exit 1
 echo "$1" > "$JIEJIE_EDIT"
 while [ -f "$JIEJIE_EDIT" ] && [ ! -f "$JIEJIE_EXIT" ]; do sleep 0.05 2>/dev/null || sleep 1; done
