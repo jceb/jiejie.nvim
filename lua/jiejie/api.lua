@@ -541,20 +541,20 @@ function M.change_describe(ctx, change, opts)
         end
         local new_description = vim.list_extend({ vim.trim(input) }, vim.list_slice(current_description, 2, #current_description))
         local cmd = "describe"
+        local desc_args = jujutsu.ignore_immtuable({
+          "-r",
+          M.get_change_id(change),
+          "--stdin",
+          "--quiet",
+        }, { force = lopts.force })
         jujutsu.cli(ctx, cmd, {
-          args = jujutsu.ignore_immtuable({
-            "-r",
-            M.get_change_id(change),
-            "--stdin",
-            "--no-edit",
-            "--quiet",
-          }, { force = lopts.force }),
+          args = desc_args,
           sys_opts = {
             stdin = new_description,
           },
           on_exit = M.reload_or_error(
             ctx,
-            table.concat(vim.list_extend({ cmd }, args), " "),
+            table.concat(vim.list_extend({ cmd }, desc_args), " "),
             vim.tbl_extend("force", lopts, {
               on_exit = function()
                 vim.notify("Described change " .. M.get_change_id(change, true), vim.log.levels.INFO)
