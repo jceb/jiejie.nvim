@@ -1719,6 +1719,18 @@ M.nmaps = {
     desc = "Rebase only the current change `@` on the change under the cursor, without its descendants",
   },
   {
+    key = "rS",
+    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 1 }),
+    with_force = true,
+    desc = "Alias of rD",
+  },
+  {
+    key = "rs",
+    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 0 }),
+    with_force = true,
+    desc = "Alias of rd",
+  },
+  {
     key = "rR",
     fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1 }),
     with_force = true,

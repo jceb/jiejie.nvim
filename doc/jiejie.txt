@@ -411,15 +411,15 @@ r<space>                Populate command line with `:Jj rebase`.
                         (`trunk()`), together with its branch. With <bang>, ignore
                         immutability settings.
 
-                                                          *jiejie_rd* *jiejie_!rd*
-[!]rd                   Rebase the current change `@` on the change under the
-                        cursor, together with its descendants. With
-                        <bang>, ignore immutability settings.
-
                                                           *jiejie_rD* *jiejie_!rD*
 [!]rD                   Rebase the current change `@` on any change ID,
-                        together with its descendants. With <bang>, ignore
+[!]rS                   together with its descendants. With <bang>, ignore
                         immutability settings.
+
+                                                          *jiejie_rd* *jiejie_!rd*
+[!]rd                   Rebase the current change `@` on the change under the
+[!]rs                   cursor, together with its descendants. With
+                        <bang>, ignore immutability settings.
 
                                                           *jiejie_rO* *jiejie_!rO*
 [!]rO                   Rebase only the current change `@` on any change ID,
