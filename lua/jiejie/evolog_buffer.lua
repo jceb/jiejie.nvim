@@ -8,6 +8,25 @@ local M = {}
 --- @param ctx Context context
 --- @return Context
 function M.setup_buffer(ctx)
+  local winid = nil
+  local tmp_winid = vim.api.nvim_get_current_win()
+  local bufid = vim.api.nvim_win_get_buf(tmp_winid)
+  -- For some reason, the current window does not contain the exepected jiejie buffer. Hunt for it.
+  if bufid ~= ctx.buf then
+    local wins = vim.api.nvim_list_wins()
+    for index, _winid in ipairs(wins) do
+      if vim.api.nvim_win_get_buf(_winid) == ctx.buf then
+        winid = _winid
+        break
+      end
+    end
+  else
+    winid = tmp_winid
+  end
+  if not winid then
+    vim.notify("Failed to find jiejie buffer window", vim.log.levels.ERROR)
+    return ctx
+  end
   vim.bo[ctx.buf].buftype = "nofile"
   -- vim.bo[ctx.buf].buftype = "nowrite"
   vim.bo[ctx.buf].modeline = false
@@ -19,7 +38,6 @@ function M.setup_buffer(ctx)
   vim.bo[ctx.buf].tabstop = 4
   vim.bo[ctx.buf].undolevels = -1
   vim.bo[ctx.buf].swapfile = false
-  local winid = vim.api.nvim_get_current_win()
   vim.wo[winid][0].number = false
   vim.wo[winid][0].foldmethod = "syntax"
   vim.wo[winid][0].foldtext = "v:folddashes.substitute(substitute(getline(v:foldstart),'⌠.*','','g'), '[†‡]', '', 'g')"
