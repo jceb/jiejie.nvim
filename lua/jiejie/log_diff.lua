@@ -149,10 +149,7 @@ function M.diff_show(ctx, file, change)
       break
     end
   end
-  if offset == 0 then
-    offset = #diff + 1
-  end
-  if not diff[offset] then
+  if offset == 0 or not diff[offset] then
     vim.notify("Diff not available for file " .. file.filename, vim.log.levels.WARN)
   else
     local buffer = require("jiejie.buffer")

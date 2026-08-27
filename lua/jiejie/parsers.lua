@@ -243,7 +243,7 @@ end
 --- @param cursor_offset number Line number in log buffer that contains the hunk
 --- @return Hunk?
 function M.parse_hunk(line, linenr, cursor_offset)
-  local match = vim.fn.matchlist(line, [[^@@ -\([0-9]\+\),\([0-9]\+\) +\([0-9]\+\),\([0-9]\+\) @@$]])
+  local match = vim.fn.matchlist(line, [[^@@ -\([0-9]\+\),\([0-9]\+\) +\([0-9]\+\),\([0-9]\+\) @@]])
   if #match == 0 then
     return nil
   end
