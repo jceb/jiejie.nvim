@@ -952,7 +952,7 @@ M.fns = {
   --
 }
 
---- @type table<number, {key: string, fn: fun(args?: WithArgs), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
+--- @type table<number, {key: string|string[], fn: fun(args?: WithArgs), desc: string, with_force: boolean, with_allow_backwards?: boolean}>
 M.nmaps = {
   --
 
@@ -1181,12 +1181,7 @@ M.nmaps = {
     desc = "Advance closest bookmark to change under the cursor",
   },
   {
-    key = "cbb",
-    fn = M.fns.cb({ with_action = 2 ^ 0 }),
-    desc = "Alias of cbc",
-  },
-  {
-    key = "cbc",
+    key = { "cbb", "cbc" },
     fn = M.fns.cb({ with_action = 2 ^ 0 }),
     desc = "Create new bookmark at change under the cursor",
   },
@@ -1294,16 +1289,10 @@ M.nmaps = {
     desc = "Duplicate / cherry-pick current change after the change under the cursor",
   },
   {
-    key = "cpT",
+    key = { "cpt", "cpT" },
     fn = M.fns.cp({ with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Duplicate / cherry-pick current change `@` after any one tag",
-  },
-  {
-    key = "cpt",
-    fn = M.fns.cp({ with_change = 2 ^ 2, tags = true }),
-    with_force = true,
-    desc = "Alias of cpT",
   },
   {
     key = "ce",
@@ -1339,88 +1328,46 @@ M.nmaps = {
     desc = "Copy commit message or file name under the cursor",
   },
   {
-    key = "cA",
+    key = { "A", "cA" },
     fn = M.fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
     with_force = true,
     desc = "No-edit append a new change after the change under the cursor and before all its children",
   },
   {
-    key = "A",
-    fn = M.fns.cn({ with_action = 2 ^ 1, args = { "--no-edit" } }),
-    with_force = true,
-    desc = "Alias of cA",
-  },
-  {
-    key = "ca",
+    key = { "a", "ca" },
     fn = M.fns.cn({ with_action = 2 ^ 1 }),
     with_force = true,
     desc = "No-edit append a new change after the change under the cursor and before all its children",
   },
   {
-    key = "a",
-    fn = M.fns.cn({ with_action = 2 ^ 1 }),
-    with_force = true,
-    desc = "Alias of ca",
-  },
-  {
-    key = "cI",
+    key = { "I", "cI" },
     fn = M.fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
     with_force = true,
     desc = "Non-edit insert a new change inbetween the change under the cursor all its ancestors",
   },
   {
-    key = "I",
-    fn = M.fns.cn({ with_action = 2 ^ 2, args = { "--no-edit" } }),
-    with_force = true,
-    desc = "Alias of cI",
-  },
-  {
-    key = "ci",
+    key = { "i", "ci" },
     fn = M.fns.cn({ with_action = 2 ^ 2 }),
     with_force = true,
     desc = "Insert a new change inbetween the change under the cursor and all its ancestors",
   },
   {
-    key = "i",
-    fn = M.fns.cn({ with_action = 2 ^ 2 }),
-    with_force = true,
-    desc = "Alias of ci",
-  },
-  {
-    key = "crR",
+    key = { "cM", "crR" },
     fn = M.fns.cm({ with_action = 2 ^ 1 }),
     with_force = true,
     desc = "Merge `@` with any change ID",
   },
   {
-    key = "crr",
+    key = { "cm", "crr" },
     fn = M.fns.cm({ with_action = 2 ^ 0 }),
     with_force = true,
     desc = "Merge `@` with the change under the cursor",
   },
   {
-    key = "cm",
-    fn = M.fns.cm({ with_action = 2 ^ 0 }),
-    with_force = true,
-    desc = "Alias of crr",
-  },
-  {
-    key = "crB",
+    key = { "crM", "crB" },
     fn = M.fns.cm({ with_action = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Merge `@` with any one bookmark",
-  },
-  {
-    key = "crM",
-    fn = M.fns.cm({ with_action = 2 ^ 2, remote = false }),
-    with_force = true,
-    desc = "Alias of crB",
-  },
-  {
-    key = "cM",
-    fn = M.fns.cm({ with_action = 2 ^ 0 }),
-    with_force = true,
-    desc = "Alias of crR",
   },
   {
     key = "cn",
@@ -1506,7 +1453,7 @@ M.nmaps = {
     desc = "Squash current change into it's parent or into the change under the cursor if the cursor is not on the currently edited changed",
   },
   {
-    key = "ctc",
+    key = { "ctt", "ctc" },
     fn = M.fns.ct({ with_action = 2 ^ 0 }),
     desc = "Create new tag at change under the cursor",
   },
@@ -1514,11 +1461,6 @@ M.nmaps = {
     key = "ctm",
     fn = M.fns.ct({ with_action = 2 ^ 1 }),
     desc = "Move any one tag to change under the cursor",
-  },
-  {
-    key = "ctt",
-    fn = M.fns.ct({ with_action = 2 ^ 0 }),
-    desc = "Alias of ctc",
   },
   {
     key = "ctX",
@@ -1666,16 +1608,10 @@ M.nmaps = {
     desc = "Rebase only the current change `@` on the default bookmark (`trunk`), without its descendants",
   },
   {
-    key = "rbM",
+    key = { "rbm", "rbM" },
     fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, remote = false }),
     with_force = true,
     desc = "Rebase the current change `@` on any one bookmark, together with its branch",
-  },
-  {
-    key = "rbm",
-    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, remote = false }),
-    with_force = true,
-    desc = "Alias of rbM",
   },
   {
     key = "rbO",
@@ -1695,13 +1631,13 @@ M.nmaps = {
     desc = "Rebase the current change `@` on the default bookmark (`trunk`), together with its branch",
   },
   {
-    key = "rD",
+    key = { "rS", "rD" },
     fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 1 }),
     with_force = true,
     desc = "Rebase the current change `@` on any change ID, together with its descendants",
   },
   {
-    key = "rd",
+    key = { "rs", "rd" },
     fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 0 }),
     with_force = true,
     desc = "Rebase the current change `@` on the change under the cursor, together with its descendants",
@@ -1719,18 +1655,6 @@ M.nmaps = {
     desc = "Rebase only the current change `@` on the change under the cursor, without its descendants",
   },
   {
-    key = "rS",
-    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 1 }),
-    with_force = true,
-    desc = "Alias of rD",
-  },
-  {
-    key = "rs",
-    fn = M.fns.r({ rebase = 2 ^ 1, with_change = 2 ^ 0 }),
-    with_force = true,
-    desc = "Alias of rd",
-  },
-  {
     key = "rR",
     fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1 }),
     with_force = true,
@@ -1743,40 +1667,22 @@ M.nmaps = {
     desc = "Rebase the current change `@` on the change under the cursor, together with its branch",
   },
   {
-    key = "rtD",
+    key = { "rtd", "rtD" },
     fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
     with_force = true,
     desc = "Rebase the current change `@` on any one tag, together with its descendants",
   },
   {
-    key = "rtd",
-    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 1, tags = true }),
-    with_force = true,
-    desc = "Alias of rbd",
-  },
-  {
-    key = "rtO",
+    key = { "rto", "rtO" },
     fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Rebase only the current change `@` on any tag, without its descendants",
   },
   {
-    key = "rto",
-    fn = M.fns.r({ rebase = 2 ^ 0, with_change = 2 ^ 2, tags = true }),
-    with_force = true,
-    desc = "Alias of rtO",
-  },
-  {
-    key = "rtT",
+    key = { "rtt", "rtT" },
     fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
     with_force = true,
     desc = "Rebase the current change `@` on any one tag, together with its branch",
-  },
-  {
-    key = "rtt",
-    fn = M.fns.r({ rebase = 2 ^ 2, with_change = 2 ^ 2, tags = true }),
-    with_force = true,
-    desc = "Alias of rbT",
   },
 
   -- Git maps {{{1
@@ -1842,30 +1748,16 @@ M.nmaps = {
     desc = "Push all bookmarks",
   },
   {
-    key = "grB",
+    key = { "grM", "grB" },
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = M.fns.gr({ remote = false }),
     desc = "Push any bookmark to a specific git remote",
   },
   {
-    key = "grM",
-    fn = function()
-      vim.api.nvim_feedkeys("grB", "n", false)
-    end,
-    desc = "Alias of grB",
-  },
-  {
-    key = "grb",
+    key = { "grm", "grb" },
     --- @type fun(args?: WithArgs): boolean Callback function
     fn = M.fns.gr({ limit_to_change = true, remote = false }),
     desc = "Push the bookmark under the cursor to a specific git remote",
-  },
-  {
-    key = "grm",
-    fn = function()
-      vim.api.nvim_feedkeys("grb", "n", false)
-    end,
-    desc = "Alias of grb",
   },
   {
     key = "grT",
@@ -1926,14 +1818,9 @@ M.nmaps = {
     desc = "Add dynamic view that displays all changes that belong to the selected bookmark and its direct children",
   },
   {
-    key = "sD",
+    key = { "sd", "sD" },
     fn = M.fns.s({ with_action = 2 ^ 5 }),
     desc = "Add dynamic view that filters changes for a description",
-  },
-  {
-    key = "sd",
-    fn = M.fns.s({ with_action = 2 ^ 5 }),
-    desc = "Alias of sD",
   },
   {
     key = "sf",

@@ -14,7 +14,7 @@ function M.setup_buffer(ctx)
   -- For some reason, the current window does not contain the exepected jiejie buffer. Hunt for it.
   if bufid ~= ctx.buf then
     local wins = vim.api.nvim_list_wins()
-    for index, _winid in ipairs(wins) do
+    for _, _winid in ipairs(wins) do
       if vim.api.nvim_win_get_buf(_winid) == ctx.buf then
         winid = _winid
         break
@@ -60,14 +60,17 @@ function M.setup_buffer(ctx)
     return helpers.with_context(ctx.root, fn, opts)
   end
   for _, value in ipairs(mappings.nmaps) do
-    local plug = "<Plug>(jiejie-" .. value.key .. ")"
-    local fn = with_root_context(value.fn)
-    vim.keymap.set("n", value.key, plug, { desc = value.desc, nowait = true, buffer = true })
-    vim.keymap.set("n", plug, fn, { desc = value.desc, buffer = true })
-    if value.with_force then
-      local force_plug = "<Plug>(jiejie-!" .. value.key .. ")"
-      vim.keymap.set("n", "!" .. value.key, force_plug, { desc = value.desc, nowait = true, buffer = true })
-      vim.keymap.set("n", force_plug, helpers.with_force(fn), { desc = "Ignoring immutuability. " .. value.desc, buffer = true })
+    ---@diagnostic disable-next-line: param-type-mismatch for some unknown reason the type can't be determined properly
+    for _, key in ipairs(type(value.key) == "string" and { value.key } or value.key) do
+      local plug = "<Plug>(jiejie-" .. key .. ")"
+      local fn = with_root_context(value.fn)
+      vim.keymap.set("n", key, plug, { desc = value.desc, nowait = true, buffer = true })
+      vim.keymap.set("n", plug, fn, { desc = value.desc, buffer = true })
+      if value.with_force then
+        local force_plug = "<Plug>(jiejie-!" .. key .. ")"
+        vim.keymap.set("n", "!" .. key, force_plug, { desc = value.desc, nowait = true, buffer = true })
+        vim.keymap.set("n", force_plug, helpers.with_force(fn), { desc = "Ignoring immutuability. " .. value.desc, buffer = true })
+      end
     end
   end
   -- require("jiejie.log_diff").setup_buffer(ctx)
