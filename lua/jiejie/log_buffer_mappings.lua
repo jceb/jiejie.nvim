@@ -123,8 +123,8 @@ M.fns = {
     )
   end,
 
-  --- @param opts {backwards?: boolean}
-  --- - backwards: Shift backwards
+  --- @param opts {before?: boolean}
+  --- - before: Shift before the current commit
   --- @return fun(args?: WithArgs): boolean
   [">"] = function(opts)
     --- @param args WithArgs
@@ -144,13 +144,13 @@ M.fns = {
           "-r",
           ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
           api.get_change_id(src_change),
-          lopts.backwards and "-B" or "-A",
+          lopts.before and "-B" or "-A",
           api.get_change_id(_dst_change),
         }
-        local dst_adjacent_changes = api.get_adjacent_changes(args.ctx, _dst_change, { children = not lopts.backwards })
+        local dst_adjacent_changes = api.get_adjacent_changes(args.ctx, _dst_change, { children = not lopts.before })
         for _, c in ipairs(dst_adjacent_changes) do
           vim.list_extend(_args, {
-            lopts.backwards and "-A" or "-B",
+            lopts.before and "-A" or "-B",
             api.get_change_id(c),
           })
         end
@@ -160,16 +160,16 @@ M.fns = {
             ---@diagnostic disable-next-line: param-type-mismatch src_change is always set
             local src_id = api.get_change_id(src_change, true)
             local dst_id = api.get_change_id(_dst_change, true)
-            vim.notify("Shifted change " .. src_id .. " " .. (lopts.backwards and "before" or "after") .. " change " .. dst_id, vim.log.levels.INFO)
+            vim.notify("Shifted change " .. src_id .. " " .. (lopts.before and "before" or "after") .. " change " .. dst_id, vim.log.levels.INFO)
           end,
         })
       end
       if args.dst_change.current_working_copy then
         src_change = args.dst_change
-        local dst_changes = api.get_adjacent_changes(args.ctx, args.dst_change, { children = not lopts.backwards })
+        local dst_changes = api.get_adjacent_changes(args.ctx, args.dst_change, { children = not lopts.before })
         if #dst_changes > 1 then
           vim.ui.select(dst_changes, {
-            prompt = "Select " .. (lopts.backwards and "parent" or "child") .. "to swap position with",
+            prompt = "Select " .. (lopts.before and "parent" or "child") .. "to swap position with",
             format_item = function(change)
               return api.get_change_id(change, true) .. (change.description_first_line or "")
             end,
@@ -184,7 +184,7 @@ M.fns = {
           dst_change = dst_changes[1]
         else
           ---@diagnostic disable-next-line: param-type-mismatch srct_change is always set
-          vim.notify("No " .. (lopts.backwards and "parent" or "child") .. " found for change " .. api.get_change_id(src_change, true), vim.log.levels.WARN)
+          vim.notify("No " .. (lopts.before and "parent" or "child") .. " found for change " .. api.get_change_id(src_change, true), vim.log.levels.WARN)
           return false
         end
       else
@@ -1575,15 +1575,15 @@ M.nmaps = {
   },
   {
     key = "<<",
-    fn = M.fns[">"]({ backwards = true }),
+    fn = M.fns[">"](),
     with_force = true,
-    desc = "Shift the current change `@` before the change under the cursor",
+    desc = "Shift up the current change `@`, after the change under the cursor",
   },
   {
     key = ">>",
-    fn = M.fns[">"](),
+    fn = M.fns[">"]({ before = true }),
     with_force = true,
-    desc = "Shift the current change `@` after the change under the cursor",
+    desc = "Shift down the current change `@`, before the change under the cursor",
   },
   {
     key = "rbD",
