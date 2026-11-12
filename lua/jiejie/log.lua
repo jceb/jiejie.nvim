@@ -243,11 +243,13 @@ function M.setup(id)
                 local winnr = vim.api.nvim_win_get_number(winid)
                 vim.cmd.windo({ range = { winnr }, args = { "filetype", "detect" } })
                 vim.cmd.windo({ range = { winnr }, args = { "doau", "BufReadPost" } })
-                local bdir = vim.fs.joinpath(url.root, url.path and vim.fs.dirname(url.path) or "")
-                if vim.fn.isdirectory(bdir) then
-                  vim.cmd.windo({ range = { winnr }, args = { "bcd", vim.fn.fnameescape(bdir) } })
+                if vim.version.ge(vim.version(), "0.13.0-dev") then
+                  local bdir = vim.fs.joinpath(url.root, url.path and vim.fs.dirname(url.path) or "")
+                  if vim.fn.isdirectory(bdir) then
+                    vim.cmd.windo({ range = { winnr }, args = { "bcd", vim.fn.fnameescape(bdir) } })
+                  end
+                  break
                 end
-                break
               end
             end
             vim.api.nvim_tabpage_set_win(0, current_winid)
