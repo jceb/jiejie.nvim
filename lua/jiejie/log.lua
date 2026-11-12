@@ -192,6 +192,12 @@ function M.setup(id)
           return
         end
         ctx.buf = ev.buf
+        if vim.version.ge(vim.version(), "0.13.0-dev") then
+          local bdir = vim.fs.joinpath(url.root, url.path and vim.fs.dirname(url.path) or "")
+          if vim.fn.isdirectory(bdir) then
+            vim.cmd({ cmd = "bcd", args = { bdir } })
+          end
+        end
         if url.is_log then
           ctx.bufs = vim.tbl_extend("force", ctx.bufs or {}, { log = ctx.buf })
           M.load(ctx, function(_ctx)
@@ -222,6 +228,12 @@ function M.setup(id)
             -- dectect file type
             vim.cmd.filetype({ "detect" })
             vim.cmd.doau("BufReadPost")
+            if vim.version.ge(vim.version(), "0.13.0-dev") then
+              local bdir = vim.fs.joinpath(url.root, url.path and vim.fs.dirname(url.path) or "")
+              if vim.fn.isdirectory(bdir) then
+                vim.cmd({ cmd = "bcd", args = { bdir } })
+              end
+            end
           else
             -- special handling for when the file is loaded in a window that is not the current one
             local current_winid = vim.api.nvim_get_current_win()
@@ -231,6 +243,10 @@ function M.setup(id)
                 local winnr = vim.api.nvim_win_get_number(winid)
                 vim.cmd.windo({ range = { winnr }, args = { "filetype", "detect" } })
                 vim.cmd.windo({ range = { winnr }, args = { "doau", "BufReadPost" } })
+                local bdir = vim.fs.joinpath(url.root, url.path and vim.fs.dirname(url.path) or "")
+                if vim.fn.isdirectory(bdir) then
+                  vim.cmd.windo({ range = { winnr }, args = { "bcd", vim.fn.fnameescape(bdir) } })
+                end
                 break
               end
             end
